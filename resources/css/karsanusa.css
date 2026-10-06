@@ -43,3 +43,96 @@ textarea:focus-visible {
     outline: 3px solid rgb(85 189 211 / 35%);
     outline-offset: 2px;
 }
+
+.karsa-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5625rem;
+    min-height: 2.625rem;
+    padding: 0.6875rem 1.125rem;
+    border: 1px solid transparent;
+    border-radius: 0.625rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    transition:
+        transform 180ms ease,
+        background-color 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.karsa-btn:hover {
+    transform: translateY(-1px);
+}
+
+.karsa-btn-primary {
+    color: var(--karsa-white);
+    background: var(--karsa-primary);
+    box-shadow: 0 8px 18px rgb(33 71 127 / 20%);
+}
+
+.karsa-btn-primary:hover {
+    background: var(--karsa-primary-dark);
+}
+
+.karsa-btn-secondary {
+    color: var(--karsa-slate);
+    background: var(--karsa-white);
+    border-color: var(--karsa-border);
+}
+
+.karsa-btn-secondary:hover,
+.karsa-btn-ghost:hover {
+    background: var(--karsa-background);
+    border-color: #b8c5d4;
+}
+
+.karsa-btn-ghost {
+    color: var(--karsa-muted);
+    background: transparent;
+}
+
+.karsa-btn-danger {
+    color: #b91c1c;
+    background: #fee2e2;
+}
+
+.karsa-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3125rem;
+    width: fit-content;
+    padding: 0.3125rem 0.5625rem;
+    border-radius: 999px;
+    font-size: 0.625rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+.karsa-badge-primary {
+    color: var(--karsa-primary-dark);
+    background: var(--karsa-sky-soft);
+}
+
+.karsa-badge-blue {
+    color: #2563eb;
+    background: #dbeafe;
+}
+
+.karsa-badge-amber {
+    color: #b45309;
+    background: #fef3c7;
+}
+
+.karsa-badge-slate {
+    color: #475569;
+    background: #e2e8f0;
+}
+
+.karsa-badge-danger {
+    color: #b91c1c;
+    background: #fee2e2;
+}
