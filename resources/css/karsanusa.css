@@ -136,3 +136,24 @@ textarea:focus-visible {
     color: #b91c1c;
     background: #fee2e2;
 }
+
+.karsa-auth-submit {
+    min-height: 2.75rem;
+    border-radius: 0.625rem;
+    color: var(--karsa-white) !important;
+    background: var(--karsa-primary) !important;
+    box-shadow: 0 8px 18px rgb(33 71 127 / 20%);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.karsa-auth-submit:hover {
+    background: var(--karsa-primary-dark) !important;
+}
+
+.karsa-auth-submit:disabled {
+    opacity: 0.62;
+    cursor: not-allowed;
+    box-shadow: none;
+}

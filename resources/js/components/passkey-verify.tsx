@@ -45,14 +45,14 @@ export default function PasskeyVerify({
                 <Button
                     type="button"
                     variant="outline"
-                    className="w-full"
+                    className="h-11 w-full border-[var(--karsa-border)] bg-white text-[var(--karsa-primary)] shadow-none hover:border-[var(--karsa-sky)] hover:bg-[var(--karsa-sky-pale)] hover:text-[var(--karsa-primary-dark)]"
                     onClick={verify}
                     disabled={isLoading}
                 >
                     {isLoading ? <Spinner /> : <KeyRound className="h-4 w-4" />}
                     {isLoading
-                        ? (loadingLabel ?? 'Authenticating...')
-                        : (label ?? 'Sign in with a passkey')}
+                        ? (loadingLabel ?? 'Memverifikasi...')
+                        : (label ?? 'Masuk dengan passkey')}
                 </Button>
                 {error && (
                     <InputError message={error} className="text-center" />
@@ -61,11 +61,11 @@ export default function PasskeyVerify({
 
             <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                    <Separator className="w-full" />
+                    <Separator className="w-full bg-[var(--karsa-border)]" />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                        {separator ?? 'Or continue with email'}
+                <div className="relative flex justify-center">
+                    <span className="bg-white px-3 text-[8px] font-bold tracking-[0.12em] text-[var(--karsa-subtle)] uppercase">
+                        {separator ?? 'Atau lanjutkan dengan email'}
                     </span>
                 </div>
             </div>
