@@ -1,0 +1,45 @@
+:root {
+    --karsa-primary: #21477f;
+    --karsa-primary-dark: #173765;
+    --karsa-deep-navy: #0d2445;
+    --karsa-sky: #55bdd3;
+    --karsa-sky-soft: #d8f1f6;
+    --karsa-sky-pale: #f0f8fb;
+    --karsa-amber: #d98a48;
+    --karsa-amber-soft: #fff4e8;
+
+    --karsa-slate: #17233a;
+    --karsa-muted: #607087;
+    --karsa-subtle: #93a2b5;
+    --karsa-border: #dfe6ed;
+    --karsa-background: #f7f9fb;
+    --karsa-white: #ffffff;
+    --karsa-danger: #ef4444;
+
+    --karsa-shadow: 0 10px 30px rgb(23 55 101 / 8%);
+    --karsa-shadow-lg: 0 24px 70px rgb(13 36 69 / 18%);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    color: var(--karsa-slate);
+    -webkit-font-smoothing: antialiased;
+}
+
+button,
+a {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid rgb(85 189 211 / 35%);
+    outline-offset: 2px;
+}
