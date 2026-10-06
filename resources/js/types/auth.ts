@@ -2,6 +2,10 @@ export type User = {
     id: number;
     name: string;
     email: string;
+    role: 'worker' | 'employer' | 'admin';
+    phone: string | null;
+    verification_status: 'pending' | 'under_review' | 'approved' | 'rejected';
+    verified_at: string | null;
     avatar?: string;
     email_verified_at: string | null;
     /* @chisel-2fa */
