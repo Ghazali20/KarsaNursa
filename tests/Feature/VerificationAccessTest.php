@@ -54,7 +54,9 @@ class VerificationAccessTest extends TestCase
             ->actingAs($user)
             ->get(route('dashboard'));
 
-        $response->assertOk();
+        $response->assertRedirect(
+            route('worker.dashboard'),
+        );
     }
 
     public function test_approved_user_is_redirected_from_pending_page(): void
@@ -79,6 +81,8 @@ class VerificationAccessTest extends TestCase
             ->actingAs($admin)
             ->get(route('dashboard'));
 
-        $response->assertOk();
+        $response->assertRedirect(
+            route('admin.dashboard'),
+        );
     }
 }
