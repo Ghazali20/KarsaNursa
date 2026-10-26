@@ -1,4 +1,7 @@
 import { Head } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
+import { Button } from '@/components/ui/button';
+import { ClipboardPlus } from 'lucide-react';
 
 export default function EmployerDashboard() {
     return (
@@ -13,6 +16,17 @@ export default function EmployerDashboard() {
                     Halaman ini akan diisi dengan dashboard UMKM KarsaNusa.
                 </p>
             </section>
+
+            <Button asChild>
+                <Link href="/employer/tasks/create">
+                    <ClipboardPlus />
+                    Buat tugas baru
+                </Link>
+            </Button>
+
+            <Button asChild>
+                <Link href="/employer/tasks/create">Buat tugas pertama</Link>
+            </Button>
         </>
     );
 }

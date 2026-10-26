@@ -13,7 +13,6 @@ import {
     ShieldCheck,
     Store,
     Users,
-    WalletCards,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 

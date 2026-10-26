@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardRedirectController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\Employer\TaskController;
 
 Route::inertia('/', 'welcome')->name('home');
 
@@ -36,12 +37,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
             )->name('worker.dashboard');
         });
 
-        Route::middleware('role:employer')->group(function () {
+    Route::middleware('role:employer')
+        ->prefix('employer')
+        ->name('employer.')
+        ->group(function () {
             Route::inertia(
-                '/employer/dashboard',
+                '/dashboard',
                 'employer/dashboard',
-            )->name('employer.dashboard');
-        });
+            )->name('dashboard');
+
+            Route::get(
+                '/tasks/create',
+                [TaskController::class, 'create'],
+            )->name('tasks.create');
+
+            Route::post(
+                '/tasks',
+                [TaskController::class, 'store'],
+            )->name('tasks.store');
+    });
 
         Route::middleware('role:admin')->group(function () {
             Route::inertia(
