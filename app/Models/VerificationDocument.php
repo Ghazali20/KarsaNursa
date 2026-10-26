@@ -22,11 +22,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class VerificationDocument extends Model
 {
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
