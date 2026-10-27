@@ -57,6 +57,10 @@ class CreateNewUser implements CreatesNewUsers
             ],
 
             'password' => $this->passwordRules(),
+        ], [
+            'password.min' => 'Kata sandi minimal harus terdiri dari 8 karakter.',
+            'password.required' => 'Kata sandi wajib diisi.',
+            'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
         ])->validate();
 
         return DB::transaction(function () use ($validated): User {
