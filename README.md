@@ -18,7 +18,7 @@
 
 ## 📌 Tentang KarsaNusa
 
-**KarsaNusa** diserap dari kata *"Karsa"* (niat murni, kehendak, dan daya cipta) serta *"Nusa"* (Nusantara). Aplikasi ini dirancang sebagai solusi inovatif untuk menjembatani pelaku **Usaha Mikro, Kecil, dan Menengah (UMKM)** yang membutuhkan bantuan operasional harian (*micro-tasks*) secara mendadak dengan pencari kerja paruh waktu lokal (mahasiswa dan masyarakat sekitar) secara adil, transparan, dan terstruktur.
+**KarsaNusa** diserap dari kata _"Karsa"_ (niat murni, kehendak, dan daya cipta) serta _"Nusa"_ (Nusantara). Aplikasi ini dirancang sebagai solusi inovatif untuk menjembatani pelaku **Usaha Mikro, Kecil, dan Menengah (UMKM)** yang membutuhkan bantuan operasional harian (_micro-tasks_) secara mendadak dengan pencari kerja paruh waktu lokal (mahasiswa dan masyarakat sekitar) secara adil, transparan, dan terstruktur.
 
 Platform ini dikembangkan untuk menjawab tantangan fragmentasi rekrutmen tenaga kerja informal, ketidakpastian upah, serta membantu meningkatkan efisiensi operasional UMKM lokal.
 
@@ -27,30 +27,30 @@ Platform ini dikembangkan untuk menjawab tantangan fragmentasi rekrutmen tenaga 
 ## ✨ Fitur Utama
 
 1. **Modul Pelaku UMKM (Employer Dashboard):**
-   - **Micro-Task Management:** Publikasi, pengeditan, dan penghapusan tugas harian (*create/edit/delete task*) lengkap dengan deskripsi, estimasi durasi, lokasi, kuota pekerja, dan nominal upah.
-   - **Applicant Management:** Verifikasi dan seleksi lamaran kerja dari tenaga kerja lokal secara cepat.
-   - **Operational Expense Ledger:** Dasbor rekapitulasi pengeluaran upah harian untuk mempermudah pembukuan usaha.
+    - **Micro-Task Management:** Publikasi, pengeditan, dan penghapusan tugas harian (_create/edit/delete task_) lengkap dengan deskripsi, estimasi durasi, lokasi, kuota pekerja, dan nominal upah.
+    - **Applicant Management:** Verifikasi dan seleksi lamaran kerja dari tenaga kerja lokal secara cepat.
+    - **Operational Expense Ledger:** Dasbor rekapitulasi pengeluaran upah harian untuk mempermudah pembukuan usaha.
 
 2. **Modul Pekerja / Mitra Lokal (Worker Dashboard):**
-   - **Task Marketplace:** Katalog penjelajahan lowongan tugas harian terdekat secara *real-time*.
-   - **Task Application & Submission:** Fitur pengajuan lamaran serta pelaporan bukti penyelesaian tugas (*task completion*).
-   - **Digital Work History:** Dompet riwayat pendapatan dan rekapitulasi jam kerja terverifikasi.
+    - **Task Marketplace:** Katalog penjelajahan lowongan tugas harian terdekat secara _real-time_.
+    - **Task Application & Submission:** Fitur pengajuan lamaran serta pelaporan bukti penyelesaian tugas (_task completion_).
+    - **Digital Work History:** Dompet riwayat pendapatan dan rekapitulasi jam kerja terverifikasi.
 
 3. **Modul Administrator (Admin Console):**
-   - Verifikasi identitas pengguna (UMKM dan Pekerja).
-   - Moderasi postingan tugas dan pengawasan transparansi sistem.
+    - Verifikasi identitas pengguna (UMKM dan Pekerja).
+    - Moderasi postingan tugas dan pengawasan transparansi sistem.
 
 4. **Modul Kepercayaan & Reputasi (Mutual Rating System):**
-   - Sistem penilaian bintang (1–5) dan ulasan dua arah antara UMKM dan Pekerja setelah tugas diselesaikan untuk menjaga kualitas ekosistem kerja.
+    - Sistem penilaian bintang (1–5) dan ulasan dua arah antara UMKM dan Pekerja setelah tugas diselesaikan untuk menjaga kualitas ekosistem kerja.
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **Backend Framework:** Laravel 11 (PHP 8.3)
-* **Database:** MySQL
-* **Frontend UI:** Tailwind CSS & Responsive Web Design (Berdasarkan desain UI Figma)
-* **Development Tools:** Git, Composer, NPM, VS Code
+- **Backend Framework:** Laravel 11 (PHP 8.3)
+- **Database:** MySQL
+- **Frontend UI:** Tailwind CSS & Responsive Web Design (Berdasarkan desain UI Figma)
+- **Development Tools:** Git, Composer, NPM, VS Code
 
 ---
 
@@ -59,6 +59,8 @@ Platform ini dikembangkan untuk menjawab tantangan fragmentasi rekrutmen tenaga 
 Ikuti langkah-langkah di bawah ini untuk menjalankan proyek KarsaNusa di komputer lokalmu:
 
 ### 1. Clone Repository & Masuk ke Direktori
+
 ```bash
 git clone [https://github.com/Ghazali20/KarsaNusa.git](https://github.com/Ghazali20/KarsaNusa.git)
 cd KarsaNusa
+```
