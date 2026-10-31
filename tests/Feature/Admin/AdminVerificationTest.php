@@ -40,8 +40,7 @@ class AdminVerificationTest extends TestCase
                 'user_id' => $user->id,
                 'document_type' => 'ktp',
                 'disk' => 'local',
-                'storage_path' =>
-                    "verifications/{$user->id}/test.pdf",
+                'storage_path' => "verifications/{$user->id}/test.pdf",
                 'original_name' => 'test.pdf',
                 'mime_type' => 'application/pdf',
                 'file_size' => 100,

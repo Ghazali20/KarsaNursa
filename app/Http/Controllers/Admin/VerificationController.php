@@ -185,8 +185,7 @@ class VerificationController extends Controller
 
             if ($target->verification_status !== 'pending') {
                 throw ValidationException::withMessages([
-                    'verification' =>
-                        'Akun ini sudah diproses. Muat ulang halaman.',
+                    'verification' => 'Akun ini sudah diproses. Muat ulang halaman.',
                 ]);
             }
 
@@ -194,8 +193,7 @@ class VerificationController extends Controller
                 ->where('status', 'pending')
                 ->exists()) {
                 throw ValidationException::withMessages([
-                    'verification' =>
-                        'Akun belum memiliki dokumen verifikasi berstatus pending.',
+                    'verification' => 'Akun belum memiliki dokumen verifikasi berstatus pending.',
                 ]);
             }
 
