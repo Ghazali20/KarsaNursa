@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\VerificationController;
 use App\Http\Controllers\DashboardRedirectController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -8,6 +9,8 @@ use Inertia\Inertia;
 Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+
+    // Halaman pengguna yang menunggu verifikasi.
     Route::get('/verification/pending', function (
         Request $request,
     ) {
@@ -19,16 +22,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         }
 
         return Inertia::render(
-            'auth/verification-pending',
+            'auth/verification-pending'
         );
     })->name('verification.pending');
 
     Route::middleware('approved')->group(function () {
+
+        // Redirect dashboard berdasarkan role.
         Route::get(
             '/dashboard',
             DashboardRedirectController::class,
         )->name('dashboard');
 
+        // ========================================
+        // PENCA​​RI KERJA
+        // ========================================
         Route::middleware('role:worker')->group(function () {
             Route::inertia(
                 '/worker/dashboard',
@@ -36,6 +44,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             )->name('worker.dashboard');
         });
 
+        // ========================================
+        // PEMILIK UMKM
+        // ========================================
         Route::middleware('role:employer')->group(function () {
             Route::inertia(
                 '/employer/dashboard',
@@ -43,11 +54,35 @@ Route::middleware(['auth', 'verified'])->group(function () {
             )->name('employer.dashboard');
         });
 
+        // ========================================
+        // ADMIN
+        // ========================================
         Route::middleware('role:admin')->group(function () {
-            Route::inertia(
+
+            // Dashboard Admin.
+            Route::get(
                 '/admin',
-                'admin/dashboard',
+                [VerificationController::class, 'index']
             )->name('admin.dashboard');
+
+            // Approve akun.
+            Route::post(
+                '/admin/verifications/{user}/approve',
+                [VerificationController::class, 'approve']
+            )->name('admin.verifications.approve');
+
+            // Reject akun.
+            Route::post(
+                '/admin/verifications/{user}/reject',
+                [VerificationController::class, 'reject']
+            )->name('admin.verifications.reject');
+
+            // Download dokumen verifikasi.
+            Route::get(
+                '/admin/verifications/documents/{document}',
+                [VerificationController::class, 'download']
+            )->name('admin.verifications.document');
+
         });
     });
 });
