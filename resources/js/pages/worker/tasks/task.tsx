@@ -10,12 +10,7 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 type WorkerTaskDetail = {
     id: number;
@@ -72,7 +67,11 @@ export default function WorkerTaskShow({ task }: WorkerTaskShowProps) {
                 <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
                     {/* TOMBOL KEMBALI */}
                     <div>
-                        <Button variant="ghost" asChild className="gap-2 pl-0 hover:bg-transparent">
+                        <Button
+                            variant="ghost"
+                            asChild
+                            className="gap-2 pl-0 hover:bg-transparent"
+                        >
                             <Link href="/worker/tasks">
                                 <ArrowLeft className="size-4" />
                                 Kembali ke Daftar Tugas
@@ -86,11 +85,14 @@ export default function WorkerTaskShow({ task }: WorkerTaskShowProps) {
                             <Card>
                                 <CardHeader className="space-y-4">
                                     <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold capitalize text-blue-700">
+                                        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 capitalize">
                                             {task.category}
                                         </span>
                                         <span className="text-xs text-muted-foreground">
-                                            Batas Lamaran: {formatDate(task.applicationDeadline)}
+                                            Batas Lamaran:{' '}
+                                            {formatDate(
+                                                task.applicationDeadline,
+                                            )}
                                         </span>
                                     </div>
 
@@ -100,7 +102,9 @@ export default function WorkerTaskShow({ task }: WorkerTaskShowProps) {
 
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                         <Building2 className="size-4 text-slate-500" />
-                                        <span className="font-medium text-slate-700">{task.business.name}</span>
+                                        <span className="font-medium text-slate-700">
+                                            {task.business.name}
+                                        </span>
                                     </div>
                                 </CardHeader>
 
@@ -108,22 +112,28 @@ export default function WorkerTaskShow({ task }: WorkerTaskShowProps) {
                                     {/* INFO UTAMA: Waktu, Lokasi, Kuota, Upah */}
                                     <div className="grid gap-4 rounded-2xl bg-slate-50 p-4 sm:grid-cols-2">
                                         <div className="flex items-start gap-3">
-                                            <CalendarDays className="mt-0.5 size-5 text-blue-600 shrink-0" />
+                                            <CalendarDays className="mt-0.5 size-5 shrink-0 text-blue-600" />
                                             <div>
-                                                <div className="text-xs text-muted-foreground">Jadwal Tugas</div>
-                                                <div className="text-sm font-medium text-slate-800">
-                                                    Mulai: {formatDate(task.startsAt)}
+                                                <div className="text-xs text-muted-foreground">
+                                                    Jadwal Tugas
                                                 </div>
                                                 <div className="text-sm font-medium text-slate-800">
-                                                    Selesai: {formatDate(task.endsAt)}
+                                                    Mulai:{' '}
+                                                    {formatDate(task.startsAt)}
+                                                </div>
+                                                <div className="text-sm font-medium text-slate-800">
+                                                    Selesai:{' '}
+                                                    {formatDate(task.endsAt)}
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <MapPin className="mt-0.5 size-5 text-rose-600 shrink-0" />
+                                            <MapPin className="mt-0.5 size-5 shrink-0 text-rose-600" />
                                             <div>
-                                                <div className="text-xs text-muted-foreground">Lokasi Kerja</div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    Lokasi Kerja
+                                                </div>
                                                 <div className="text-sm font-medium text-slate-800">
                                                     {task.locationAddress}
                                                 </div>
@@ -131,21 +141,28 @@ export default function WorkerTaskShow({ task }: WorkerTaskShowProps) {
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <Users className="mt-0.5 size-5 text-indigo-600 shrink-0" />
+                                            <Users className="mt-0.5 size-5 shrink-0 text-indigo-600" />
                                             <div>
-                                                <div className="text-xs text-muted-foreground">Kuota Pekerja</div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    Kuota Pekerja
+                                                </div>
                                                 <div className="text-sm font-medium text-slate-800">
-                                                    {task.workerQuota} orang dibutuhkan
+                                                    {task.workerQuota} orang
+                                                    dibutuhkan
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <WalletCards className="mt-0.5 size-5 text-emerald-600 shrink-0" />
+                                            <WalletCards className="mt-0.5 size-5 shrink-0 text-emerald-600" />
                                             <div>
-                                                <div className="text-xs text-muted-foreground">Upah / Gaji</div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    Upah / Gaji
+                                                </div>
                                                 <div className="text-base font-bold text-emerald-700">
-                                                    {formatCurrency(task.wageAmount)}
+                                                    {formatCurrency(
+                                                        task.wageAmount,
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -153,8 +170,10 @@ export default function WorkerTaskShow({ task }: WorkerTaskShowProps) {
 
                                     {/* DESKRIPSI TUGAS */}
                                     <div className="space-y-2">
-                                        <h3 className="text-base font-bold text-slate-900">Deskripsi Tugas</h3>
-                                        <div className="whitespace-pre-line text-sm leading-relaxed text-slate-600">
+                                        <h3 className="text-base font-bold text-slate-900">
+                                            Deskripsi Tugas
+                                        </h3>
+                                        <div className="text-sm leading-relaxed whitespace-pre-line text-slate-600">
                                             {task.description}
                                         </div>
                                     </div>
@@ -166,18 +185,24 @@ export default function WorkerTaskShow({ task }: WorkerTaskShowProps) {
                         <div>
                             <Card className="sticky top-6">
                                 <CardHeader>
-                                    <CardTitle className="text-lg">Kirim Lamaran</CardTitle>
+                                    <CardTitle className="text-lg">
+                                        Kirim Lamaran
+                                    </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <p className="text-sm text-muted-foreground">
-                                        Pastikan jadwal Anda kosong dan sesuai dengan persyaratan tugas yang tertera sebelum melamar.
+                                        Pastikan jadwal Anda kosong dan sesuai
+                                        dengan persyaratan tugas yang tertera
+                                        sebelum melamar.
                                     </p>
 
                                     <form onSubmit={handleApply}>
                                         <Button
                                             type="submit"
                                             className="w-full"
-                                            disabled={processing || task.hasApplied}
+                                            disabled={
+                                                processing || task.hasApplied
+                                            }
                                         >
                                             {task.hasApplied ? (
                                                 <>

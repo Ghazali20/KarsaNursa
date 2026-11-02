@@ -54,7 +54,6 @@ export default function EmployerDashboard({
 
             <main className="flex flex-1 flex-col bg-slate-50/70">
                 <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-
                     {/* HEADER */}
                     <header className="overflow-hidden rounded-3xl bg-[var(--karsa-deep-navy)] px-6 py-7 text-white shadow-sm sm:px-8 sm:py-8">
                         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
@@ -105,7 +104,8 @@ export default function EmployerDashboard({
                             </h2>
 
                             <p className="mt-1 text-sm text-slate-500">
-                                Pantau aktivitas usaha dan tugas yang sedang berjalan.
+                                Pantau aktivitas usaha dan tugas yang sedang
+                                berjalan.
                             </p>
                         </div>
 
@@ -145,7 +145,6 @@ export default function EmployerDashboard({
                     </section>
 
                     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.75fr)]">
-
                         {/* TUGAS TERBARU */}
                         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -155,7 +154,8 @@ export default function EmployerDashboard({
                                     </h2>
 
                                     <p className="mt-1 text-sm text-slate-500">
-                                        Daftar tugas terbaru yang dibuat oleh usaha Anda.
+                                        Daftar tugas terbaru yang dibuat oleh
+                                        usaha Anda.
                                     </p>
                                 </div>
 
@@ -177,8 +177,9 @@ export default function EmployerDashboard({
                                     </h3>
 
                                     <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-                                        Buat dan publikasikan tugas harian pertama
-                                        untuk menemukan pekerja yang sesuai.
+                                        Buat dan publikasikan tugas harian
+                                        pertama untuk menemukan pekerja yang
+                                        sesuai.
                                     </p>
 
                                     <Link
@@ -199,7 +200,8 @@ export default function EmployerDashboard({
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <span
                                                     className={
-                                                        task.status === 'published'
+                                                        task.status ===
+                                                        'published'
                                                             ? 'rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700'
                                                             : 'rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700'
                                                     }
@@ -223,13 +225,18 @@ export default function EmployerDashboard({
                                             <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-500">
                                                 {task.workerQuota !== null && (
                                                     <span>
-                                                        Kuota: {task.workerQuota} pekerja
+                                                        Kuota:{' '}
+                                                        {task.workerQuota}{' '}
+                                                        pekerja
                                                     </span>
                                                 )}
 
                                                 {task.wageAmount !== null && (
                                                     <span>
-                                                        Upah: {formatRupiah(task.wageAmount)}
+                                                        Upah:{' '}
+                                                        {formatRupiah(
+                                                            task.wageAmount,
+                                                        )}
                                                     </span>
                                                 )}
                                             </div>
@@ -263,7 +270,8 @@ export default function EmployerDashboard({
                                             Publikasikan tugas
                                         </p>
                                         <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            Masukkan lokasi, jadwal, kuota, dan nominal upah.
+                                            Masukkan lokasi, jadwal, kuota, dan
+                                            nominal upah.
                                         </p>
                                     </div>
                                 </div>
@@ -278,7 +286,8 @@ export default function EmployerDashboard({
                                             Seleksi pelamar
                                         </p>
                                         <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            Tinjau profil dan pilih pekerja yang sesuai.
+                                            Tinjau profil dan pilih pekerja yang
+                                            sesuai.
                                         </p>
                                     </div>
                                 </div>
@@ -293,7 +302,8 @@ export default function EmployerDashboard({
                                             Verifikasi pekerjaan
                                         </p>
                                         <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            Periksa bukti kerja dan validasi upah pekerja.
+                                            Periksa bukti kerja dan validasi
+                                            upah pekerja.
                                         </p>
                                     </div>
                                 </div>

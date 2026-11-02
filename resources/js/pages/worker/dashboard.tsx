@@ -1,4 +1,3 @@
-
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     BriefcaseBusiness,
@@ -11,10 +10,7 @@ import {
 } from 'lucide-react';
 
 import { DashboardStatCard } from '@/components/dashboard/dashboard-stat-card';
-import {
-    KarsaBadge,
-    KarsaLinkButton,
-} from '@/components/karsa/karsa-ui';
+import { KarsaBadge, KarsaLinkButton } from '@/components/karsa/karsa-ui';
 
 type RecommendedTask = {
     id: number;
@@ -56,7 +52,6 @@ export default function WorkerDashboard({
 
             <main className="flex flex-1 flex-col bg-slate-50/70">
                 <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-
                     {/* HEADER */}
                     <header className="overflow-hidden rounded-3xl bg-[var(--karsa-deep-navy)] px-6 py-7 text-white shadow-sm sm:px-8 sm:py-8">
                         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
@@ -181,9 +176,9 @@ export default function WorkerDashboard({
                                     </h3>
 
                                     <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-                                        Tugas yang telah dipublikasikan UMKM
-                                        dan masih menerima lamaran akan muncul
-                                        di sini.
+                                        Tugas yang telah dipublikasikan UMKM dan
+                                        masih menerima lamaran akan muncul di
+                                        sini.
                                     </p>
                                 </div>
                             ) : (

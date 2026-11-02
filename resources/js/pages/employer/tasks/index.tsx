@@ -1,4 +1,3 @@
-
 import { Head, Link, router } from '@inertiajs/react';
 import {
     CalendarDays,
@@ -64,9 +63,7 @@ function formatDate(value: string): string {
     }).format(new Date(value));
 }
 
-export default function EmployerTasksIndex({
-    tasks,
-}: EmployerTasksIndexProps) {
+export default function EmployerTasksIndex({ tasks }: EmployerTasksIndexProps) {
     function publishTask(task: TaskItem): void {
         const confirmed = window.confirm(
             `Publikasikan tugas "${task.title}" sekarang?`,
@@ -91,7 +88,6 @@ export default function EmployerTasksIndex({
 
             <main className="flex flex-1 flex-col bg-slate-50/70">
                 <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-
                     {/* Header */}
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                         <div>
@@ -100,7 +96,8 @@ export default function EmployerTasksIndex({
                             </h1>
 
                             <p className="mt-1 text-sm text-slate-500">
-                                Kelola draft dan tugas yang telah dipublikasikan.
+                                Kelola draft dan tugas yang telah
+                                dipublikasikan.
                             </p>
                         </div>
 
@@ -139,13 +136,13 @@ export default function EmployerTasksIndex({
                                 <Card key={task.id}>
                                     <CardHeader>
                                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-
                                             {/* Task Information */}
                                             <div>
                                                 <div className="flex flex-wrap items-center gap-2">
                                                     <span
                                                         className={
-                                                            task.status === 'published'
+                                                            task.status ===
+                                                            'published'
                                                                 ? 'rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700'
                                                                 : 'rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700'
                                                         }
@@ -153,7 +150,7 @@ export default function EmployerTasksIndex({
                                                         {task.statusLabel}
                                                     </span>
 
-                                                    <span className="text-xs font-medium capitalize text-muted-foreground">
+                                                    <span className="text-xs font-medium text-muted-foreground capitalize">
                                                         {task.category}
                                                     </span>
                                                 </div>
@@ -164,7 +161,9 @@ export default function EmployerTasksIndex({
 
                                                 <CardDescription className="mt-2">
                                                     Batas lamaran:{' '}
-                                                    {formatDate(task.applicationDeadline)}
+                                                    {formatDate(
+                                                        task.applicationDeadline,
+                                                    )}
                                                 </CardDescription>
                                             </div>
 
@@ -174,7 +173,9 @@ export default function EmployerTasksIndex({
                                                     variant="outline"
                                                     asChild
                                                 >
-                                                    <Link href={`/employer/tasks/${task.id}`}>
+                                                    <Link
+                                                        href={`/employer/tasks/${task.id}`}
+                                                    >
                                                         <Eye />
                                                         Detail
                                                     </Link>
@@ -183,7 +184,9 @@ export default function EmployerTasksIndex({
                                                 {task.canPublish && (
                                                     <Button
                                                         type="button"
-                                                        onClick={() => publishTask(task)}
+                                                        onClick={() =>
+                                                            publishTask(task)
+                                                        }
                                                     >
                                                         <Send />
                                                         Publikasikan
@@ -196,7 +199,6 @@ export default function EmployerTasksIndex({
                                     {/* Task Details */}
                                     <CardContent>
                                         <div className="grid gap-3 text-sm sm:grid-cols-3">
-
                                             <div className="flex items-center gap-2 text-muted-foreground">
                                                 <CalendarDays className="size-4" />
                                                 {formatDate(task.startsAt)}
@@ -209,16 +211,16 @@ export default function EmployerTasksIndex({
 
                                             <div className="flex items-center gap-2 text-muted-foreground">
                                                 <WalletCards className="size-4" />
-                                                {formatCurrency(task.wageAmount)}
+                                                {formatCurrency(
+                                                    task.wageAmount,
+                                                )}
                                             </div>
-
                                         </div>
                                     </CardContent>
                                 </Card>
                             ))}
                         </div>
                     )}
-
                 </div>
             </main>
         </>

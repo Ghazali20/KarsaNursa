@@ -1,4 +1,3 @@
-
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowRight,
@@ -66,9 +65,7 @@ function formatDate(value: string): string {
     }).format(new Date(value));
 }
 
-export default function WorkerTasksIndex({
-    tasks,
-}: WorkerTasksIndexProps) {
+export default function WorkerTasksIndex({ tasks }: WorkerTasksIndexProps) {
     return (
         <>
             <Head title="Cari Tugas" />
@@ -113,7 +110,7 @@ export default function WorkerTasksIndex({
                                 <Card key={task.id}>
                                     <CardHeader>
                                         <div className="flex items-center justify-between gap-3">
-                                            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold capitalize text-blue-700">
+                                            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 capitalize">
                                                 {task.category}
                                             </span>
 
@@ -134,9 +131,7 @@ export default function WorkerTasksIndex({
                                     <CardContent className="space-y-3">
                                         <div className="flex items-start gap-2 text-sm text-muted-foreground">
                                             <MapPin className="mt-0.5 size-4 shrink-0" />
-                                            <span>
-                                                {task.locationAddress}
-                                            </span>
+                                            <span>{task.locationAddress}</span>
                                         </div>
 
                                         <div className="flex items-center gap-2 text-sm text-muted-foreground">

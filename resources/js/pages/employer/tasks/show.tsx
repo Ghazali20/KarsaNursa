@@ -1,4 +1,3 @@
-
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -59,14 +58,8 @@ function formatDate(value: string): string {
 
 export default function ShowTask({ task }: ShowTaskProps) {
     const handlePublish = () => {
-        if (
-            confirm(
-                'Apakah Anda yakin ingin mempublikasikan tugas ini?',
-            )
-        ) {
-            router.patch(
-                `/employer/tasks/${task.id}/publish`,
-            );
+        if (confirm('Apakah Anda yakin ingin mempublikasikan tugas ini?')) {
+            router.patch(`/employer/tasks/${task.id}/publish`);
         }
     };
 
@@ -108,7 +101,7 @@ export default function ShowTask({ task }: ShowTaskProps) {
                                     {task.statusLabel}
                                 </span>
 
-                                <span className="text-sm capitalize text-muted-foreground">
+                                <span className="text-sm text-muted-foreground capitalize">
                                     {task.category}
                                 </span>
                             </div>
@@ -159,17 +152,15 @@ export default function ShowTask({ task }: ShowTaskProps) {
                                 <div className="font-bold">
                                     Deskripsi pekerjaan
                                 </div>
-                                <p className="mt-2 whitespace-pre-line text-sm leading-7 text-muted-foreground">
+                                <p className="mt-2 text-sm leading-7 whitespace-pre-line text-muted-foreground">
                                     {task.description}
                                 </p>
                             </section>
 
                             {task.requirements && (
                                 <section>
-                                    <div className="font-bold">
-                                        Persyaratan
-                                    </div>
-                                    <p className="mt-2 whitespace-pre-line text-sm leading-7 text-muted-foreground">
+                                    <div className="font-bold">Persyaratan</div>
+                                    <p className="mt-2 text-sm leading-7 whitespace-pre-line text-muted-foreground">
                                         {task.requirements}
                                     </p>
                                 </section>
@@ -180,7 +171,7 @@ export default function ShowTask({ task }: ShowTaskProps) {
                                     <div className="font-bold">
                                         Instruksi tambahan
                                     </div>
-                                    <p className="mt-2 whitespace-pre-line text-sm leading-7 text-muted-foreground">
+                                    <p className="mt-2 text-sm leading-7 whitespace-pre-line text-muted-foreground">
                                         {task.instructions}
                                     </p>
                                 </section>
