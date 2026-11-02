@@ -11,6 +11,10 @@ class RoleDashboardRoutingTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Test 1:
+     * Worker dapat mengakses Dashboard Pencari Kerja.
+     */
     public function test_worker_can_access_worker_dashboard(): void
     {
         $worker = User::factory()->create();
@@ -27,6 +31,11 @@ class RoleDashboardRoutingTest extends TestCase
             );
     }
 
+    /**
+     * Test 2:
+     * Worker tidak dapat mengakses Dashboard UMKM
+     * maupun Dashboard Admin.
+     */
     public function test_worker_cannot_access_employer_or_admin_dashboard(): void
     {
         $worker = User::factory()->create();
@@ -42,12 +51,31 @@ class RoleDashboardRoutingTest extends TestCase
             ->assertForbidden();
     }
 
+    /**
+     * Test 3:
+     * Employer diarahkan ke Dashboard UMKM
+     * dan dapat mengakses dashboard jika memiliki Business.
+     */
     public function test_employer_is_redirected_to_employer_dashboard(): void
     {
+        // Membuat akun Pemilik UMKM.
         $employer = User::factory()
             ->employer()
             ->create();
 
+        // Membuat profil usaha untuk akun Employer.
+        // Dashboard UMKM membutuhkan relasi Business.
+        $employer->business()->firstOrCreate(
+            [],
+            [
+                'name' => 'UMKM Pengujian KarsaNursa',
+                'document_type' => 'nib',
+                'category' => 'Kuliner',
+                'address' => 'Jl. Pengujian No. 1',
+            ]
+        );
+
+        // Memastikan Employer diarahkan ke dashboard UMKM.
         $this
             ->actingAs($employer)
             ->get(route('dashboard'))
@@ -55,6 +83,7 @@ class RoleDashboardRoutingTest extends TestCase
                 route('employer.dashboard'),
             );
 
+        // Memastikan Dashboard UMKM dapat dibuka.
         $this
             ->actingAs($employer)
             ->get(route('employer.dashboard'))
@@ -65,6 +94,10 @@ class RoleDashboardRoutingTest extends TestCase
             );
     }
 
+    /**
+     * Test 4:
+     * Admin diarahkan ke Dashboard Admin.
+     */
     public function test_admin_is_redirected_to_admin_dashboard(): void
     {
         $admin = User::factory()

@@ -1,4 +1,4 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     BriefcaseBusiness,
     CircleCheckBig,
@@ -7,16 +7,46 @@ import {
     Users,
     WalletCards,
 } from 'lucide-react';
+
 import { DashboardStatCard } from '@/components/dashboard/dashboard-stat-card';
-import { KarsaBadge, KarsaButton } from '@/components/karsa/karsa-ui';
+import { KarsaBadge } from '@/components/karsa/karsa-ui';
+import { Button } from '@/components/ui/button';
+
+type RecentTask = {
+    id: number;
+    title: string;
+    category: string | null;
+    status: 'draft' | 'published';
+    workerQuota: number | null;
+    wageAmount: number | null;
+};
+
+type EmployerDashboardProps = {
+    stats?: {
+        activeTasks?: number;
+    };
+    recentTasks?: RecentTask[];
+};
 
 function formatFirstName(name: string): string {
     return name.trim().split(/\s+/)[0] ?? name;
 }
 
-export default function EmployerDashboard() {
+function formatRupiah(value: number): string {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+    }).format(value);
+}
+
+export default function EmployerDashboard({
+    recentTasks,
+}: EmployerDashboardProps) {
     const { auth } = usePage().props;
     const user = auth.user;
+
+    const safeRecentTasks = recentTasks ?? [];
 
     return (
         <>
@@ -24,6 +54,8 @@ export default function EmployerDashboard() {
 
             <main className="flex flex-1 flex-col bg-slate-50/70">
                 <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+
+                    {/* HEADER */}
                     <header className="overflow-hidden rounded-3xl bg-[var(--karsa-deep-navy)] px-6 py-7 text-white shadow-sm sm:px-8 sm:py-8">
                         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
                             <div>
@@ -52,16 +84,17 @@ export default function EmployerDashboard() {
                                 </p>
                             </div>
 
-                            <KarsaButton
-                                disabled
-                                className="shrink-0 disabled:cursor-not-allowed disabled:opacity-60"
-                                icon={<ClipboardPlus className="size-4" />}
+                            <Link
+                                href="/employer/tasks/create"
+                                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-[var(--karsa-deep-navy)] transition hover:bg-slate-100"
                             >
+                                <ClipboardPlus className="size-4" />
                                 Buat tugas baru
-                            </KarsaButton>
+                            </Link>
                         </div>
                     </header>
 
+                    {/* STATISTIK */}
                     <section aria-labelledby="employer-summary-heading">
                         <div className="mb-4">
                             <h2
@@ -72,8 +105,7 @@ export default function EmployerDashboard() {
                             </h2>
 
                             <p className="mt-1 text-sm text-slate-500">
-                                Data akan tersedia setelah fitur publikasi tugas
-                                dikembangkan.
+                                Pantau aktivitas usaha dan tugas yang sedang berjalan.
                             </p>
                         </div>
 
@@ -113,41 +145,108 @@ export default function EmployerDashboard() {
                     </section>
 
                     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.75fr)]">
+
+                        {/* TUGAS TERBARU */}
                         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                            <div>
-                                <h2 className="text-lg font-bold text-slate-950">
-                                    Tugas terbaru
-                                </h2>
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-950">
+                                        Tugas terbaru
+                                    </h2>
 
-                                <p className="mt-1 text-sm text-slate-500">
-                                    Postingan tugas terbaru akan muncul di sini.
-                                </p>
-                            </div>
-
-                            <div className="mt-8 flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
-                                <div className="flex size-14 items-center justify-center rounded-2xl bg-white text-slate-500 shadow-sm">
-                                    <BriefcaseBusiness className="size-6" />
+                                    <p className="mt-1 text-sm text-slate-500">
+                                        Daftar tugas terbaru yang dibuat oleh usaha Anda.
+                                    </p>
                                 </div>
 
-                                <h3 className="mt-5 font-bold text-slate-950">
-                                    Belum ada tugas yang dibuat
-                                </h3>
-
-                                <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-                                    Setelah fitur publikasi micro-task tersedia,
-                                    Anda dapat membuat dan mengelola tugas dari
-                                    halaman ini.
-                                </p>
-
-                                <KarsaButton
-                                    disabled
-                                    className="mt-5 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    Buat tugas pertama
-                                </KarsaButton>
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link href="/employer/tasks">
+                                        Kelola Semua Tugas
+                                    </Link>
+                                </Button>
                             </div>
+
+                            {safeRecentTasks.length === 0 ? (
+                                <div className="mt-8 flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+                                    <div className="flex size-14 items-center justify-center rounded-2xl bg-white text-slate-500 shadow-sm">
+                                        <BriefcaseBusiness className="size-6" />
+                                    </div>
+
+                                    <h3 className="mt-5 font-bold text-slate-950">
+                                        Belum ada tugas yang dibuat
+                                    </h3>
+
+                                    <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
+                                        Buat dan publikasikan tugas harian pertama
+                                        untuk menemukan pekerja yang sesuai.
+                                    </p>
+
+                                    <Link
+                                        href="/employer/tasks/create"
+                                        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[var(--karsa-deep-navy)] px-5 py-3 text-sm font-bold text-white transition hover:opacity-90"
+                                    >
+                                        <ClipboardPlus className="size-4" />
+                                        Buat tugas pertama
+                                    </Link>
+                                </div>
+                            ) : (
+                                <div className="mt-6 space-y-3">
+                                    {safeRecentTasks.map((task) => (
+                                        <div
+                                            key={task.id}
+                                            className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-blue-200 hover:shadow-sm"
+                                        >
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span
+                                                    className={
+                                                        task.status === 'published'
+                                                            ? 'rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700'
+                                                            : 'rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700'
+                                                    }
+                                                >
+                                                    {task.status === 'published'
+                                                        ? 'Dipublikasikan'
+                                                        : 'Draft'}
+                                                </span>
+
+                                                {task.category && (
+                                                    <span className="text-xs text-slate-500">
+                                                        {task.category}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <h3 className="mt-3 text-base font-bold text-slate-950">
+                                                {task.title}
+                                            </h3>
+
+                                            <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-500">
+                                                {task.workerQuota !== null && (
+                                                    <span>
+                                                        Kuota: {task.workerQuota} pekerja
+                                                    </span>
+                                                )}
+
+                                                {task.wageAmount !== null && (
+                                                    <span>
+                                                        Upah: {formatRupiah(task.wageAmount)}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <Link
+                                                href={`/employer/tasks/${task.id}`}
+                                                className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline"
+                                            >
+                                                Lihat detail
+                                            </Link>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </section>
 
+                        {/* ALUR PENGGUNAAN */}
                         <aside className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                             <h2 className="text-lg font-bold text-slate-950">
                                 Alur penggunaan
@@ -164,8 +263,7 @@ export default function EmployerDashboard() {
                                             Publikasikan tugas
                                         </p>
                                         <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            Masukkan lokasi, jadwal, kuota, dan
-                                            nominal upah.
+                                            Masukkan lokasi, jadwal, kuota, dan nominal upah.
                                         </p>
                                     </div>
                                 </div>
@@ -180,8 +278,7 @@ export default function EmployerDashboard() {
                                             Seleksi pelamar
                                         </p>
                                         <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            Tinjau profil dan pilih pekerja yang
-                                            sesuai.
+                                            Tinjau profil dan pilih pekerja yang sesuai.
                                         </p>
                                     </div>
                                 </div>
@@ -196,8 +293,7 @@ export default function EmployerDashboard() {
                                             Verifikasi pekerjaan
                                         </p>
                                         <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            Periksa bukti kerja dan validasi
-                                            upah pekerja.
+                                            Periksa bukti kerja dan validasi upah pekerja.
                                         </p>
                                     </div>
                                 </div>
