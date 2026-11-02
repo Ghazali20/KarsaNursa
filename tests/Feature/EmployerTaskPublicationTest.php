@@ -10,12 +10,13 @@ use Tests\TestCase;
 class EmployerTaskPublicationTest extends TestCase
 {
     use RefreshDatabase;
-    protected function setUp(): void
-{
-    parent::setUp();
 
-    $this->withoutVite();
-}
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutVite();
+    }
 
     public function test_approved_employer_can_view_create_task_page(): void
     {
@@ -59,8 +60,9 @@ class EmployerTaskPublicationTest extends TestCase
                 ]),
             );
 
+        // Setelah menyimpan draft, diarahkan ke daftar tugas.
         $response->assertRedirect(
-            route('employer.dashboard'),
+            route('employer.tasks.index'),
         );
 
         $this->assertDatabaseHas('tasks', [
@@ -84,14 +86,15 @@ class EmployerTaskPublicationTest extends TestCase
                 ]),
             );
 
-        $response->assertRedirect(
-            route('employer.dashboard'),
-        );
-
         $task = $employer
             ->business
             ->tasks()
             ->firstOrFail();
+
+        // Setelah publikasi, diarahkan ke detail tugas.
+        $response->assertRedirect(
+            route('employer.tasks.show', $task),
+        );
 
         $this->assertSame(
             'published',
@@ -144,7 +147,7 @@ class EmployerTaskPublicationTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      * @return array<string, mixed>
      */
     private function validTaskData(

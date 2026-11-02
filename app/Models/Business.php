@@ -16,13 +16,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Business extends Model
 {
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return HasMany<Task, $this>
+     */
     public function tasks(): HasMany
     {
-    return $this->hasMany(Task::class);
+        return $this->hasMany(Task::class);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\TaskStatus;
 use App\Models\Task;
 use App\Models\User;
 
@@ -14,19 +15,39 @@ class TaskPolicy
             && $user->business()->exists();
     }
 
-    public function view(User $user, Task $task): bool
-    {
-        return $user->business?->is($task->business);
+    public function view(
+        User $user,
+        Task $task,
+    ): bool {
+        return $user->business?->is(
+            $task->business,
+        );
     }
 
-    public function update(User $user, Task $task): bool
-    {
-        return $user->business?->is($task->business);
+    public function update(
+        User $user,
+        Task $task,
+    ): bool {
+        return $user->business?->is(
+            $task->business,
+        );
     }
 
-    public function delete(User $user, Task $task): bool
-    {
-        return $user->business?->is($task->business)
-            && $task->status->value === 'draft';
+    public function publish(
+        User $user,
+        Task $task,
+    ): bool {
+        return $user->business?->is(
+            $task->business,
+        ) && $task->status === TaskStatus::Draft;
+    }
+
+    public function delete(
+        User $user,
+        Task $task,
+    ): bool {
+        return $user->business?->is(
+            $task->business,
+        ) && $task->status === TaskStatus::Draft;
     }
 }

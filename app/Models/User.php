@@ -34,19 +34,39 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
+    /**
+     * @return HasOne<WorkerProfile, $this>
+     */
     public function workerProfile(): HasOne
     {
         return $this->hasOne(WorkerProfile::class);
     }
 
+    /**
+     * @return HasOne<Business, $this>
+     */
     public function business(): HasOne
     {
         return $this->hasOne(Business::class);
     }
 
+    /**
+     * @return HasMany<VerificationDocument, $this>
+     */
     public function verificationDocuments(): HasMany
     {
         return $this->hasMany(VerificationDocument::class);
+    }
+
+    /**
+     * @return HasMany<TaskApplication, $this>
+     */
+    public function taskApplications(): HasMany
+    {
+        return $this->hasMany(
+            TaskApplication::class,
+            'worker_id'
+        );
     }
 
     protected function casts(): array
