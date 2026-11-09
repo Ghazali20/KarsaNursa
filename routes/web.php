@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\Admin\TaskReviewController;
 use App\Http\Controllers\Admin\VerificationController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\Employer\ApplicationInboxController;
 use App\Http\Controllers\Employer\DashboardController as EmployerDashboardController;
 use App\Http\Controllers\Employer\TaskApplicationController as EmployerTaskApplicationController;
 use App\Http\Controllers\Employer\TaskController as EmployerTaskController;
+use App\Http\Controllers\Employer\TaskPaymentController as EmployerTaskPaymentController;
 use App\Http\Controllers\Worker\DashboardController as WorkerDashboardController;
 use App\Http\Controllers\Worker\TaskApplicationController as WorkerTaskApplicationController;
 use App\Http\Controllers\Worker\TaskController as WorkerTaskController;
@@ -144,11 +146,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 [EmployerTaskController::class, 'update']
             )->name('employer.tasks.update');
 
-            // Publikasikan Draft
+            // Ajukan Draft untuk ditinjau Admin
             Route::patch(
-                '/employer/tasks/{task}/publish',
-                [EmployerTaskController::class, 'publish']
-            )->name('employer.tasks.publish');
+                '/employer/tasks/{task}/submit',
+                [EmployerTaskController::class, 'submit']
+            )->name('employer.tasks.submit');
 
             // Halaman pusat penerimaan pelamar UMKM.
             Route::get(
@@ -167,6 +169,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 '/employer/tasks/{task}/applications/{application}/decision',
                 [EmployerTaskApplicationController::class, 'decide']
             )->name('employer.tasks.applications.decide');
+
+            // Mencatat pembayaran upah pekerja yang diterima.
+            Route::patch(
+                '/employer/applications/{application}/mark-paid',
+                [EmployerTaskPaymentController::class, 'markPaid']
+            )->name('employer.applications.mark-paid');
         });
 
         // ========================================
@@ -180,6 +188,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 '/admin',
                 [VerificationController::class, 'index']
             )->name('admin.dashboard');
+
+            // Daftar tugas yang diajukan UMKM.
+            Route::get(
+                '/admin/tasks',
+                [TaskReviewController::class, 'index']
+            )->name('admin.tasks.index');
+
+            // Detail tugas untuk ditinjau.
+            Route::get(
+                '/admin/tasks/{task}',
+                [TaskReviewController::class, 'show']
+            )->name('admin.tasks.show');
+
+            // Menyetujui dan memublikasikan tugas.
+            Route::patch(
+                '/admin/tasks/{task}/approve',
+                [TaskReviewController::class, 'approve']
+            )->name('admin.tasks.approve');
+
+            // Menolak tugas beserta alasannya.
+            Route::patch(
+                '/admin/tasks/{task}/reject',
+                [TaskReviewController::class, 'reject']
+            )->name('admin.tasks.reject');
 
             // Menyetujui akun pengguna.
             Route::post(

@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { CheckCircle2, Users, XCircle } from 'lucide-react';
+import { CheckCircle2, Users, WalletCards, XCircle } from 'lucide-react';
 
 type Application = {
     id: number;
@@ -15,6 +15,10 @@ type Application = {
     appliedAt: string | null;
     reviewedAt: string | null;
     reviewNotes: string | null;
+    wageAmount: number;
+    paymentStatus: 'pending' | 'paid' | 'cancelled' | null;
+    paymentStatusLabel: string | null;
+    paidAt: string | null;
 };
 
 type Props = {
@@ -23,9 +27,18 @@ type Props = {
         pending: number;
         accepted: number;
         rejected: number;
+        pendingPayments: number;
     };
     applications: Application[];
 };
+
+function formatRupiah(value: number): string {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+    }).format(value);
+}
 
 export default function EmployerApplicationsIndex({
     stats,
@@ -76,6 +89,37 @@ export default function EmployerApplicationsIndex({
         );
     }
 
+    function markPaid(application: Application): void {
+        if (processingId !== null) return;
+
+        const confirmed = window.confirm(
+            `Catat upah ${application.workerName} sebesar ${formatRupiah(
+                application.wageAmount,
+            )} sebagai sudah dibayar?`,
+        );
+
+        if (!confirmed) return;
+
+        setProcessingId(application.id);
+
+        router.patch(
+            `/employer/applications/${application.id}/mark-paid`,
+            {},
+            {
+                preserveScroll: true,
+                onError: (responseErrors) => {
+                    setErrors((current) => ({
+                        ...current,
+                        [application.id]:
+                            responseErrors.payment ??
+                            'Gagal mencatat pembayaran upah.',
+                    }));
+                },
+                onFinish: () => setProcessingId(null),
+            },
+        );
+    }
+
     return (
         <>
             <Head title="Menerima Pelamar - KarsaNursa" />
@@ -89,12 +133,13 @@ export default function EmployerApplicationsIndex({
                         </p>
                     </header>
 
-                    <div className="grid gap-3 sm:grid-cols-4">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                         {[
                             ['Total Pelamar', stats.total],
                             ['Menunggu Seleksi', stats.pending],
                             ['Diterima', stats.accepted],
                             ['Ditolak', stats.rejected],
+                            ['Menunggu Pembayaran', stats.pendingPayments],
                         ].map(([label, value]) => (
                             <div
                                 key={label}
@@ -263,6 +308,50 @@ export default function EmployerApplicationsIndex({
                                                         }
                                                     </p>
                                                 )}
+                                            </div>
+                                        )}
+                                        {application.status === 'accepted' && (
+                                            <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 p-4">
+                                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                                    <div>
+                                                        <p className="flex items-center gap-2 text-sm font-bold text-violet-900">
+                                                            <WalletCards className="size-4" />
+                                                            Upah{' '}
+                                                            {formatRupiah(
+                                                                application.wageAmount,
+                                                            )}
+                                                        </p>
+                                                        <p className="mt-1 text-xs text-violet-700">
+                                                            {application.paymentStatusLabel ??
+                                                                'Catatan pembayaran belum tersedia'}
+                                                            {application.paidAt
+                                                                ? ` · ${application.paidAt}`
+                                                                : ''}
+                                                        </p>
+                                                    </div>
+
+                                                    {application.paymentStatus ===
+                                                        'pending' && (
+                                                        <button
+                                                            type="button"
+                                                            disabled={
+                                                                processingId !==
+                                                                null
+                                                            }
+                                                            onClick={() =>
+                                                                markPaid(
+                                                                    application,
+                                                                )
+                                                            }
+                                                            className="rounded-xl bg-violet-700 px-4 py-2 text-sm font-bold text-white hover:bg-violet-800 disabled:opacity-50"
+                                                        >
+                                                            {processingId ===
+                                                            application.id
+                                                                ? 'Memproses...'
+                                                                : 'Tandai Sudah Dibayar'}
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
                                     </article>

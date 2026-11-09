@@ -121,7 +121,7 @@ class StoreTaskRequest extends FormRequest
                 'required',
                 Rule::in([
                     'draft',
-                    'publish',
+                    'submit',
                 ]),
             ],
         ];
@@ -144,7 +144,7 @@ class StoreTaskRequest extends FormRequest
             'ends_at' => 'waktu selesai',
             'worker_quota' => 'jumlah pekerja',
             'wage_amount' => 'upah',
-            'action' => 'aksi publikasi',
+            'action' => 'aksi pengajuan',
         ];
     }
 }

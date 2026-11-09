@@ -7,7 +7,7 @@ use App\Models\Task;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
-class PublishTaskRequest extends FormRequest
+class SubmitTaskRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -15,7 +15,7 @@ class PublishTaskRequest extends FormRequest
 
         return $task !== null
             && $this->user()?->can(
-                'publish',
+                'submit',
                 $task,
             );
     }
@@ -39,13 +39,17 @@ class PublishTaskRequest extends FormRequest
                 return;
             }
 
-            if (
-                $task->status
-                !== TaskStatus::Draft->value
-            ) {
+            if (! in_array(
+                $task->status,
+                [
+                    TaskStatus::Draft->value,
+                    TaskStatus::Rejected->value,
+                ],
+                true,
+            )) {
                 $validator->errors()->add(
                     'task',
-                    'Hanya tugas draft yang dapat dipublikasikan.',
+                    'Hanya tugas draft atau yang ditolak admin yang dapat diajukan.',
                 );
             }
 
@@ -55,14 +59,14 @@ class PublishTaskRequest extends FormRequest
             ) {
                 $validator->errors()->add(
                     'application_deadline',
-                    'Batas waktu lamaran sudah lewat. Ubah jadwal sebelum mempublikasikan tugas.',
+                    'Batas waktu lamaran sudah lewat. Ubah jadwal sebelum mengajukan tugas.',
                 );
             }
 
             if ($task->starts_at === null || $task->starts_at->isPast()) {
                 $validator->errors()->add(
                     'starts_at',
-                    'Waktu mulai tugas sudah lewat. Ubah jadwal sebelum mempublikasikan tugas.',
+                    'Waktu mulai tugas sudah lewat. Ubah jadwal sebelum mengajukan tugas.',
                 );
             }
 

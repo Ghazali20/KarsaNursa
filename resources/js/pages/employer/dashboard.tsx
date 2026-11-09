@@ -24,6 +24,8 @@ type EmployerDashboardProps = {
     stats: {
         activeTasks: number;
         pendingApplicants: number;
+        pendingPayments: number;
+        monthlyExpenses: number;
     };
     recentTasks: RecentTask[];
 };
@@ -49,6 +51,8 @@ export default function EmployerDashboard({
 
     const activeTasks = stats?.activeTasks ?? 0;
     const pendingApplicants = stats?.pendingApplicants ?? 0;
+    const pendingPayments = stats?.pendingPayments ?? 0;
+    const monthlyExpenses = stats?.monthlyExpenses ?? 0;
     const safeRecentTasks = recentTasks ?? [];
 
     return (
@@ -130,17 +134,17 @@ export default function EmployerDashboard({
                             />
 
                             <DashboardStatCard
-                                label="Menunggu persetujuan"
-                                value={0}
-                                description="Bukti kerja yang perlu diperiksa."
+                                label="Menunggu pembayaran"
+                                value={pendingPayments}
+                                description="Upah pekerja diterima yang belum dicatat sebagai dibayar."
                                 icon={Clock3}
                                 tone="amber"
                             />
 
                             <DashboardStatCard
                                 label="Pengeluaran bulan ini"
-                                value="Rp0"
-                                description="Total upah pekerjaan yang telah disetujui."
+                                value={formatRupiah(monthlyExpenses)}
+                                description="Total upah yang dicatat sudah dibayar pada bulan ini."
                                 icon={WalletCards}
                                 tone="violet"
                             />
@@ -179,9 +183,8 @@ export default function EmployerDashboard({
                                     </h3>
 
                                     <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-                                        Buat dan publikasikan tugas harian
-                                        pertama untuk menemukan pekerja yang
-                                        sesuai.
+                                        Buat dan ajukan tugas harian pertama
+                                        untuk menemukan pekerja yang sesuai.
                                     </p>
 
                                     <Link
@@ -276,7 +279,7 @@ export default function EmployerDashboard({
 
                                     <div>
                                         <p className="text-sm font-semibold text-slate-900">
-                                            Publikasikan tugas
+                                            Ajukan tugas
                                         </p>
 
                                         <p className="mt-1 text-xs leading-5 text-slate-500">

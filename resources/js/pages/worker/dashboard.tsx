@@ -25,6 +25,9 @@ type RecommendedTask = {
 type WorkerDashboardProps = {
     recommendedTasks?: RecommendedTask[];
     pendingApplications?: number;
+    activeAssignments?: number;
+    pendingWages?: number;
+    monthlyWages?: number;
 };
 
 function formatFirstName(name: string): string {
@@ -42,6 +45,9 @@ function formatRupiah(value: number): string {
 export default function WorkerDashboard({
     recommendedTasks = [],
     pendingApplications = 0,
+    activeAssignments = 0,
+    pendingWages = 0,
+    monthlyWages = 0,
 }: WorkerDashboardProps) {
     const { auth } = usePage().props;
     const user = auth.user;
@@ -125,25 +131,25 @@ export default function WorkerDashboard({
                             />
 
                             <DashboardStatCard
-                                label="Tugas berjalan"
-                                value={0}
-                                description="Tugas yang telah diterima dan belum selesai."
+                                label="Tugas diterima"
+                                value={activeAssignments}
+                                description="Tugas diterima dengan upah yang masih menunggu pembayaran."
                                 icon={BriefcaseBusiness}
                                 tone="green"
                             />
 
                             <DashboardStatCard
-                                label="Menunggu persetujuan"
-                                value={0}
-                                description="Bukti kerja yang sedang ditinjau UMKM."
+                                label="Upah menunggu"
+                                value={formatRupiah(pendingWages)}
+                                description="Upah pekerjaan diterima yang belum dibayar UMKM."
                                 icon={Clock3}
                                 tone="amber"
                             />
 
                             <DashboardStatCard
-                                label="Total upah"
-                                value="Rp0"
-                                description="Upah dari pekerjaan yang sudah disetujui."
+                                label="Upah bulan ini"
+                                value={formatRupiah(monthlyWages)}
+                                description="Total upah yang dibayar pada bulan berjalan."
                                 icon={WalletCards}
                                 tone="violet"
                             />

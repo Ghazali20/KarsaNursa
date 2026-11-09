@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, ClipboardList } from 'lucide-react';
+import { ArrowLeft, ClipboardList, WalletCards } from 'lucide-react';
 
 type Application = {
     id: number;
@@ -9,6 +9,9 @@ type Application = {
     appliedAt: string | null;
     reviewNotes: string | null;
     reviewedAt: string | null;
+    wageAmount: number;
+    paymentStatus: 'pending' | 'paid' | 'cancelled' | null;
+    paidAt: string | null;
 };
 
 type Props = {
@@ -32,6 +35,14 @@ function statusStyle(status: Application['status']): string {
     }
 
     return 'bg-amber-100 text-amber-700';
+}
+
+function formatRupiah(value: number): string {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+    }).format(value);
 }
 
 export default function WorkerApplicationsIndex({ applications }: Props) {
@@ -141,6 +152,31 @@ export default function WorkerApplicationsIndex({ applications }: Props) {
                                                 <p className="mt-2">
                                                     Catatan:{' '}
                                                     {application.reviewNotes}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                    {application.status === 'accepted' && (
+                                        <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 p-4">
+                                            <p className="flex items-center gap-2 text-sm font-bold text-violet-900">
+                                                <WalletCards className="size-4" />
+                                                Upah{' '}
+                                                {formatRupiah(
+                                                    application.wageAmount,
+                                                )}
+                                            </p>
+
+                                            <p className="mt-2 text-sm text-violet-700">
+                                                {application.paymentStatus ===
+                                                'paid'
+                                                    ? 'Sudah dibayar'
+                                                    : 'Menunggu pembayaran UMKM'}
+                                            </p>
+
+                                            {application.paidAt && (
+                                                <p className="mt-1 text-xs text-violet-600">
+                                                    Dibayar:{' '}
+                                                    {application.paidAt}
                                                 </p>
                                             )}
                                         </div>

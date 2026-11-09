@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Employer;
 
+use App\Enums\TaskPaymentStatus;
 use App\Models\Task;
 use App\Models\TaskApplication;
 use App\Models\User;
@@ -120,6 +121,16 @@ class TaskApplicationTest extends TestCase
                 'reviewed_by' => $employer->id,
             ]
         );
+
+        $this->assertDatabaseHas(
+            'task_payments',
+            [
+                'task_application_id' => $application->id,
+                'amount' => 100000,
+                'status' => TaskPaymentStatus::Pending->value,
+                'paid_at' => null,
+            ]
+        );
     }
 
     /**
@@ -148,6 +159,13 @@ class TaskApplicationTest extends TestCase
                 'id' => $application->id,
                 'status' => 'rejected',
                 'review_notes' => 'Kualifikasi belum sesuai',
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'task_payments',
+            [
+                'task_application_id' => $application->id,
             ]
         );
     }

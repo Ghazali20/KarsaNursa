@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -40,6 +41,15 @@ class TaskApplication extends Model
     public function worker(): BelongsTo
     {
         return $this->belongsTo(User::class, 'worker_id');
+    }
+
+    /** @return HasOne<TaskPayment, $this> */
+    public function payment(): HasOne
+    {
+        return $this->hasOne(
+            TaskPayment::class,
+            'task_application_id',
+        );
     }
 
     /** @return BelongsTo<User, $this> */
