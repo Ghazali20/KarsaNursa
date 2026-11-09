@@ -2,252 +2,203 @@
 
 namespace App\Http\Controllers\Employer;
 
-use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Employer\PublishTaskRequest;
-use App\Http\Requests\Employer\StoreTaskRequest;
 use App\Models\Task;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class TaskController extends Controller
 {
-    /**
-     * Menampilkan daftar tugas milik UMKM.
-     */
-    public function index(
-        Request $request,
-    ): Response {
-        $business = $request
-            ->user()
-            ->business;
+    public function index(Request $request): Response
+    {
+        $business = $request->user()?->business;
 
-        abort_if(
-            $business === null,
-            403,
-            'Profil usaha belum tersedia.',
-        );
+        abort_if($business === null, 403, 'Profil usaha belum tersedia.');
 
-        $tasks = $business
-            ->tasks()
-            ->latest()
-            ->paginate(10)
-            ->through(fn (Task $task) => [
+        $tasks = $business->tasks()
+            ->latest('id')
+            ->get()
+            ->map(fn (Task $task): array => [
                 'id' => $task->id,
                 'title' => $task->title,
                 'category' => $task->category,
-                'status' => $task->status->value,
-                'statusLabel' => $task->status->label(),
+                'status' => $task->status,
+                'locationAddress' => $task->location_address,
                 'workerQuota' => $task->worker_quota,
-                'wageAmount' => $task->wage_amount,
-                'applicationDeadline' => $task
-                    ->application_deadline
-                    ->toIso8601String(),
-                'startsAt' => $task
-                    ->starts_at
-                    ->toIso8601String(),
-                'endsAt' => $task
-                    ->ends_at
-                    ->toIso8601String(),
-                'publishedAt' => $task
-                    ->published_at
-                    ?->toIso8601String(),
-                'canPublish' => $request
-                    ->user()
-                    ->can('publish', $task),
-                'applicantsCount' => $task
-                    ->applications()
-                    ->count(),
-            ]);
+                'wageAmount' => $task->wage_amount === null
+                    ? null
+                    : (int) $task->wage_amount,
+                'createdAt' => $task->created_at?->format('d/m/Y H:i'),
+                'applicationDeadline' => $task->application_deadline?->format('d/m/Y H:i'),
+                'canPublish' => $this->canPublish($task),
+            ])
+            ->values()
+            ->all();
 
-        return Inertia::render(
-            'employer/tasks/index',
-            [
-                'tasks' => $tasks,
-            ],
+        return Inertia::render('employer/tasks/index', [
+            'tasks' => $tasks,
+        ]);
+    }
+
+    public function create(Request $request): Response
+    {
+        abort_if(
+            $request->user()?->business === null,
+            403,
+            'Profil usaha belum tersedia.'
+        );
+
+        // Form create.tsx milikmu menggunakan state internal,
+        // sehingga tidak memerlukan categories/defaults dari server.
+        return Inertia::render('employer/tasks/create');
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $business = $request->user()?->business;
+
+        abort_if($business === null, 403, 'Profil usaha belum tersedia.');
+
+        $action = $request->validate([
+            'action' => ['required', Rule::in(['draft', 'publish'])],
+        ])['action'];
+
+        $isPublish = $action === 'publish';
+        $validated = $request->validate($this->taskRules($isPublish));
+
+        $validated['attendance_radius_meters'] ??= 100;
+        $validated['status'] = $isPublish ? 'published' : 'draft';
+        $validated['published_at'] = $isPublish ? now() : null;
+
+        // business_id hanya diambil dari akun UMKM yang login.
+        $business->tasks()->create($validated);
+
+        return to_route('employer.tasks.index')->with(
+            'success',
+            $isPublish
+                ? 'Tugas berhasil dipublikasikan.'
+                : 'Draft tugas berhasil disimpan. Kamu bisa melanjutkannya kapan saja.'
         );
     }
 
-    /**
-     * Menampilkan halaman pembuatan tugas.
-     */
-    public function create(): Response
+    public function edit(Request $request, Task $task): Response
     {
-        Gate::authorize('create', Task::class);
+        $task = $this->ownedTask($request, $task);
+        abort_unless($task->status === 'draft', 403, 'Hanya draft yang dapat diedit.');
 
-        return Inertia::render('employer/tasks/create', [
-            'categories' => [
-                [
-                    'value' => 'kuliner',
-                    'label' => 'Kuliner',
-                ],
-                [
-                    'value' => 'retail',
-                    'label' => 'Retail',
-                ],
-                [
-                    'value' => 'produksi',
-                    'label' => 'Produksi',
-                ],
-                [
-                    'value' => 'administrasi',
-                    'label' => 'Administrasi',
-                ],
-                [
-                    'value' => 'event',
-                    'label' => 'Event',
-                ],
-                [
-                    'value' => 'logistik',
-                    'label' => 'Logistik',
-                ],
-                [
-                    'value' => 'lainnya',
-                    'label' => 'Lainnya',
-                ],
-            ],
-            'defaults' => [
-                'attendanceRadiusMeters' => 150,
+        return Inertia::render('employer/tasks/edit', [
+            'task' => [
+                'id' => $task->id,
+                'title' => $task->title ?? '',
+                'category' => $task->category ?? '',
+                'description' => $task->description ?? '',
+                'requirements' => $task->requirements ?? '',
+                'instructions' => $task->instructions ?? '',
+                'location_address' => $task->location_address ?? '',
+                'latitude' => $task->latitude === null ? '' : (string) $task->latitude,
+                'longitude' => $task->longitude === null ? '' : (string) $task->longitude,
+                'attendance_radius_meters' => (string) ($task->attendance_radius_meters ?? 100),
+                'application_deadline' => $task->application_deadline?->format('Y-m-d\TH:i') ?? '',
+                'starts_at' => $task->starts_at?->format('Y-m-d\TH:i') ?? '',
+                'ends_at' => $task->ends_at?->format('Y-m-d\TH:i') ?? '',
+                'worker_quota' => $task->worker_quota === null ? '' : (string) $task->worker_quota,
+                'wage_amount' => $task->wage_amount === null ? '' : (string) $task->wage_amount,
             ],
         ]);
     }
 
-    /**
-     * Menyimpan tugas baru sebagai draft atau published.
-     */
-    public function store(
-        StoreTaskRequest $request,
-    ): RedirectResponse {
-        Gate::authorize('create', Task::class);
+    public function update(Request $request, Task $task): RedirectResponse
+    {
+        $task = $this->ownedTask($request, $task);
+        abort_unless($task->status === 'draft', 403, 'Hanya draft yang dapat diedit.');
 
-        $validated = $request->validated();
+        $validated = $request->validate($this->taskRules(false));
+        $validated['attendance_radius_meters'] ??= 100;
 
-        $action = $validated['action'];
+        // Status dan published_at sengaja tidak dapat diedit dari form.
+        $task->update($validated);
 
-        unset($validated['action']);
-
-        $status = $action === 'publish'
-            ? TaskStatus::Published
-            : TaskStatus::Draft;
-
-        $business = $request->user()->business;
-
-        abort_if(
-            $business === null,
-            403,
-            'Profil usaha belum tersedia.',
+        return to_route('employer.tasks.index')->with(
+            'success',
+            'Perubahan draft berhasil disimpan.'
         );
+    }
 
-        $task = $business
-            ->tasks()
-            ->create([
-                ...$validated,
-                'status' => $status,
-                'published_at' => $status === TaskStatus::Published
-                    ? now()
-                    : null,
+    public function publish(Request $request, Task $task): RedirectResponse
+    {
+        $task = $this->ownedTask($request, $task);
+
+        if ($task->status !== 'draft') {
+            return back()->withErrors([
+                'status' => 'Hanya tugas berstatus Draft yang dapat dipublikasikan.',
             ]);
-
-        if ($status === TaskStatus::Draft) {
-            return redirect()
-                ->route('employer.tasks.index')
-                ->with(
-                    'success',
-                    'Draft tugas berhasil disimpan. Anda dapat mempublikasikannya nanti.',
-                );
         }
 
-        return redirect()
-            ->route('employer.tasks.show', $task)
-            ->with(
-                'success',
-                'Tugas berhasil dipublikasikan.',
-            );
-    }
+        // Validasi ulang data tersimpan pada SAAT publikasi.
+        // Draft yang jadwalnya sudah lewat harus diedit dahulu.
+        $validator = Validator::make($task->getAttributes(), $this->taskRules(true));
 
-    /**
-     * Menampilkan detail tugas.
-     */
-    public function show(Task $task): Response
-    {
-        Gate::authorize('view', $task);
+        if ($validator->fails()) {
+            return back()->withErrors($validator);
+        }
 
-        return Inertia::render(
-            'employer/tasks/show',
-            [
-                'task' => [
-                    'id' => $task->id,
-                    'title' => $task->title,
-                    'category' => $task->category,
-                    'description' => $task->description,
-                    'requirements' => $task->requirements,
-                    'instructions' => $task->instructions,
-                    'locationAddress' => $task->location_address,
-                    'latitude' => $task->latitude,
-                    'longitude' => $task->longitude,
-                    'attendanceRadiusMeters' => $task->attendance_radius_meters,
-                    'applicationDeadline' => $task
-                        ->application_deadline
-                        ->toIso8601String(),
-                    'startsAt' => $task
-                        ->starts_at
-                        ->toIso8601String(),
-                    'endsAt' => $task
-                        ->ends_at
-                        ->toIso8601String(),
-                    'workerQuota' => $task->worker_quota,
-                    'wageAmount' => $task->wage_amount,
-                    'status' => $task->status->value,
-                    'statusLabel' => $task->status->label(),
-                    'publishedAt' => $task
-                        ->published_at
-                        ?->toIso8601String(),
-                ],
-            ],
-        );
-    }
-
-    /**
-     * Mempublikasikan tugas draft.
-     */
-    public function publish(
-        PublishTaskRequest $request,
-        Task $task,
-    ): RedirectResponse {
-        // Periksa kepemilikan dan izin publikasi.
-        Gate::authorize('publish', $task);
-
-        // Pastikan status tugas masih draft.
-        abort_unless(
-            $task->status === TaskStatus::Draft,
-            422,
-            'Tugas ini tidak dapat dipublikasikan.',
-        );
-
-        // Perbarui status dan waktu publikasi.
-        $task->forceFill([
-            'status' => TaskStatus::Published,
+        $task->update([
+            'status' => 'published',
             'published_at' => now(),
-        ])->save();
+        ]);
 
-        // Ambil ulang data dari database.
-        $task->refresh();
-
-        // Pastikan perubahan berhasil disimpan.
-        abort_unless(
-            $task->status === TaskStatus::Published,
-            500,
-            'Gagal menyimpan status publikasi tugas.',
+        return to_route('employer.tasks.index')->with(
+            'success',
+            'Tugas berhasil dipublikasikan dan dapat dilihat Worker.'
         );
+    }
 
-        return redirect()
-            ->route('employer.tasks.show', $task)
-            ->with(
-                'success',
-                'Tugas berhasil dipublikasikan dan sekarang dapat dilihat oleh pencari kerja.',
-            );
+    /** Memastikan task hanya dapat diubah oleh pemilik UMKM. */
+    private function ownedTask(Request $request, Task $task): Task
+    {
+        $business = $request->user()?->business;
+        abort_if($business === null, 403, 'Profil usaha belum tersedia.');
+
+        return $business->tasks()->whereKey($task->getKey())->firstOrFail();
+    }
+
+    /**
+     * Draft tetap membutuhkan field yang NOT NULL pada tabel tasks.
+     * Saat publish, tambah validasi kelengkapan deskripsi dan jadwal masa depan.
+     */
+    private function taskRules(bool $publishing): array
+    {
+        return [
+            'title' => ['required', 'string', 'max:150'],
+            'category' => ['required', 'string', 'max:50'],
+            'description' => [
+                'required', 'string',
+                ...($publishing ? ['min:20'] : []),
+            ],
+            'requirements' => ['nullable', 'string', 'max:5000'],
+            'instructions' => ['nullable', 'string', 'max:5000'],
+            'location_address' => ['required', 'string', 'max:1000'],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'attendance_radius_meters' => ['nullable', 'integer', 'between:50,10000'],
+            'application_deadline' => [
+                'required', 'date',
+                ...($publishing ? ['after:now'] : []),
+            ],
+            'starts_at' => ['required', 'date', 'after:application_deadline'],
+            'ends_at' => ['required', 'date', 'after:starts_at'],
+            'worker_quota' => ['required', 'integer', 'between:1,100'],
+            'wage_amount' => ['required', 'integer', 'min:1'],
+        ];
+    }
+
+    private function canPublish(Task $task): bool
+    {
+        return $task->status === 'draft'
+            && Validator::make($task->getAttributes(), $this->taskRules(true))->passes();
     }
 }

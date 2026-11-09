@@ -22,9 +22,7 @@ class Business extends Model
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * @return HasMany<Task, $this>
-     */
+    /** @return HasMany<Task, $this> */
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);

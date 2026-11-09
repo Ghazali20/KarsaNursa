@@ -2,31 +2,32 @@
 
 use App\Http\Controllers\Admin\VerificationController;
 use App\Http\Controllers\DashboardRedirectController;
-use App\Http\Controllers\Employer\TaskApplicationController as EmployerTaskApplicationController;
+use App\Http\Controllers\Employer\DashboardController as EmployerDashboardController;
+use App\Http\Controllers\Worker\DashboardController as WorkerDashboardController;
 use App\Http\Controllers\Employer\TaskController as EmployerTaskController;
-use App\Http\Controllers\EmployerDashboardController;
-use App\Http\Controllers\Worker\TaskApplicationController as WorkerTaskApplicationController;
 use App\Http\Controllers\Worker\TaskController as WorkerTaskController;
+use App\Http\Controllers\Worker\TaskApplicationController as WorkerTaskApplicationController;
+use App\Http\Controllers\Employer\TaskApplicationController as EmployerTaskApplicationController;
+use App\Http\Controllers\Employer\ApplicationInboxController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-// =====================================================
-// 1. HALAMAN UTAMA KARSANURSA
-// =====================================================
+// ========================================
+// HALAMAN UTAMA
+// ========================================
 
 Route::inertia('/', 'welcome')->name('home');
 
-// =====================================================
-// 2. ROUTE PENGGUNA YANG SUDAH LOGIN
-// =====================================================
+// ========================================
+// AUTHENTICATION
+// ========================================
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Halaman pengguna yang menunggu verifikasi.
-    Route::get('/verification/pending', function (
-        Request $request,
-    ) {
+    Route::get('/verification/pending', function (Request $request) {
+
         if (
             $request->user()->role === 'admin'
             || $request->user()->verification_status === 'approved'
@@ -37,160 +38,172 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('auth/verification-pending');
     })->name('verification.pending');
 
-    // Hanya pengguna approved yang dapat mengakses.
+    // Hanya pengguna approved yang dapat mengakses fitur.
     Route::middleware('approved')->group(function () {
 
-        // Redirect dashboard berdasarkan role.
+        // Redirect dashboard sesuai role.
         Route::get(
             '/dashboard',
-            DashboardRedirectController::class,
+            DashboardRedirectController::class
         )->name('dashboard');
 
-        // =================================================
-        // 3. ROUTE PENCA​RI KERJA (WORKER)
-        // =================================================
+        // ========================================
+        // PEN​​CARI KERJA (WORKER)
+        // ========================================
 
-        Route::middleware('role:worker')
-            ->prefix('worker')
-            ->name('worker.')
-            ->group(function () {
+        Route::middleware('role:worker')->group(function () {
 
-                // Dashboard Pencari Kerja.
-                Route::inertia(
-                    '/dashboard',
-                    'worker/dashboard',
-                )->name('dashboard');
+            // Dashboard Worker dengan data tugas terbaru.
+            Route::get(
+                '/worker/dashboard',
+                WorkerDashboardController::class
+            )->name('worker.dashboard');
 
-                // A. EKSPLORASI TUGAS
+            // Halaman Cari Tugas.
+            Route::get(
+                '/worker/tasks',
+                [WorkerTaskController::class, 'index']
+            )->name('worker.tasks.index');
 
-                Route::get(
-                    '/tasks',
-                    [WorkerTaskController::class, 'index'],
-                )->name('tasks.index');
+            // Halaman Daftar Lamaran.
+            Route::get(
+                '/worker/applications',
+                [WorkerTaskApplicationController::class, 'index']
+            )->name('worker.applications.index');
 
-                Route::get(
-                    '/tasks/{task}',
-                    [WorkerTaskController::class, 'show'],
-                )->name('tasks.show');
+            // Mengajukan lamaran untuk tugas tertentu.
+            Route::post(
+                '/worker/tasks/{task}/applications',
+                [WorkerTaskApplicationController::class, 'store']
+            )->name('worker.tasks.applications.store');
 
-                // B. LAMARAN TUGAS WORKER
+            // Halaman Detail Tugas.
+            Route::get(
+                '/worker/tasks/{task}',
+                [WorkerTaskController::class, 'show']
+            )->name('worker.tasks.show');
+        });
 
-                Route::post(
-                    '/tasks/{task}/applications',
-                    [WorkerTaskApplicationController::class, 'store'],
-                )->name('tasks.applications.store');
+        // ========================================
+        // PEMILIK UMKM (EMPLOYER)
+        // ========================================
 
-                Route::get(
-                    '/applications',
-                    [WorkerTaskApplicationController::class, 'index'],
-                )->name('applications.index');
+        Route::middleware('role:employer')->group(function () {
 
-                Route::get(
-                    '/applications/{application}',
-                    [WorkerTaskApplicationController::class, 'show'],
-                )->name('applications.show');
+            // Dashboard UMKM dengan data dari database.
+            Route::get(
+                '/employer/dashboard',
+                EmployerDashboardController::class
+            )->name('employer.dashboard');
 
-                Route::delete(
-                    '/applications/{application}',
-                    [WorkerTaskApplicationController::class, 'withdraw'],
-                )->name('applications.withdraw');
-            });
+            // Daftar semua tugas milik UMKM.
+            Route::get(
+                '/employer/tasks',
+                [EmployerTaskController::class, 'index']
+            )->name('employer.tasks.index');
 
-        // =================================================
-        // 4. ROUTE PEMILIK UMKM (EMPLOYER)
-        // =================================================
+            // Halaman form membuat tugas baru.
+            Route::get(
+                '/employer/tasks/create',
+                [EmployerTaskController::class, 'create']
+            )->name('employer.tasks.create');
 
-        Route::middleware('role:employer')
-            ->prefix('employer')
-            ->name('employer.')
-            ->group(function () {
+            // Menyimpan draft atau publikasi tugas.
+            Route::post(
+                '/employer/tasks',
+                [EmployerTaskController::class, 'store']
+            )->name('employer.tasks.store');
 
-                // Dashboard Pemilik UMKM.
-                Route::get(
-                    '/dashboard',
-                    EmployerDashboardController::class,
-                )->name('dashboard');
+            // Daftar tugas UMKM
+            Route::get(
+                '/employer/tasks',
+                [EmployerTaskController::class, 'index']
+            )->name('employer.tasks.index');
 
-                // A. PUBLIKASI DAN PENGELOLAAN TUGAS
+            // Form tugas baru
+            Route::get(
+                '/employer/tasks/create',
+                [EmployerTaskController::class, 'create']
+            )->name('employer.tasks.create');
 
-                Route::get(
-                    '/tasks',
-                    [EmployerTaskController::class, 'index'],
-                )->name('tasks.index');
+            // Simpan Draft atau Published
+            Route::post(
+                '/employer/tasks',
+                [EmployerTaskController::class, 'store']
+            )->name('employer.tasks.store');
 
-                Route::get(
-                    '/tasks/create',
-                    [EmployerTaskController::class, 'create'],
-                )->name('tasks.create');
+            // Form Edit Draft
+            Route::get(
+                '/employer/tasks/{task}/edit',
+                [EmployerTaskController::class, 'edit']
+            )->name('employer.tasks.edit');
 
-                Route::post(
-                    '/tasks',
-                    [EmployerTaskController::class, 'store'],
-                )->name('tasks.store');
+            // Simpan hasil Edit Draft
+            Route::patch(
+                '/employer/tasks/{task}',
+                [EmployerTaskController::class, 'update']
+            )->name('employer.tasks.update');
 
-                Route::get(
-                    '/tasks/{task}',
-                    [EmployerTaskController::class, 'show'],
-                )->name('tasks.show');
+            // Publikasikan Draft
+            Route::patch(
+                '/employer/tasks/{task}/publish',
+                [EmployerTaskController::class, 'publish']
+            )->name('employer.tasks.publish');
 
-                Route::patch(
-                    '/tasks/{task}/publish',
-                    [EmployerTaskController::class, 'publish'],
-                )->name('tasks.publish');
+            // Halaman pusat penerimaan pelamar UMKM.
+            Route::get(
+                '/employer/applications',
+                ApplicationInboxController::class
+            )->name('employer.applications.index');
 
-                // B. PENGELOLAAN PELAMAR UMKM
+            // Melihat pelamar pada tugas milik UMKM.
+            Route::get(
+                '/employer/tasks/{task}/applications',
+                [EmployerTaskApplicationController::class, 'index']
+            )->name('employer.tasks.applications.index');
 
-                Route::get(
-                    '/tasks/{task}/applications',
-                    [EmployerTaskApplicationController::class, 'index'],
-                )->name('tasks.applications.index');
+            // Menerima atau menolak pelamar.
+            Route::patch(
+                '/employer/tasks/{task}/applications/{application}/decision',
+                [EmployerTaskApplicationController::class, 'decide']
+            )->name('employer.tasks.applications.decide');
+        });
 
-                Route::patch(
-                    '/applications/{application}/accept',
-                    [EmployerTaskApplicationController::class, 'accept'],
-                )->name('applications.accept');
-
-                Route::patch(
-                    '/applications/{application}/reject',
-                    [EmployerTaskApplicationController::class, 'reject'],
-                )->name('applications.reject');
-            });
-
-        // =================================================
-        // 5. ROUTE ADMIN
-        // =================================================
+        // ========================================
+        // ADMIN
+        // ========================================
 
         Route::middleware('role:admin')->group(function () {
 
-            // Dashboard Admin dan verifikasi pengguna.
+            // Dashboard Admin.
             Route::get(
                 '/admin',
-                [VerificationController::class, 'index'],
+                [VerificationController::class, 'index']
             )->name('admin.dashboard');
 
-            // Approve akun.
+            // Menyetujui akun pengguna.
             Route::post(
                 '/admin/verifications/{user}/approve',
-                [VerificationController::class, 'approve'],
+                [VerificationController::class, 'approve']
             )->name('admin.verifications.approve');
 
-            // Reject akun.
+            // Menolak akun pengguna.
             Route::post(
                 '/admin/verifications/{user}/reject',
-                [VerificationController::class, 'reject'],
+                [VerificationController::class, 'reject']
             )->name('admin.verifications.reject');
 
-            // Download dokumen verifikasi.
+            // Mengunduh dokumen verifikasi pengguna.
             Route::get(
                 '/admin/verifications/documents/{document}',
-                [VerificationController::class, 'download'],
+                [VerificationController::class, 'download']
             )->name('admin.verifications.document');
         });
     });
 });
 
-// =====================================================
-// 6. ROUTE PENGATURAN AKUN
-// =====================================================
+// ========================================
+// SETTINGS
+// ========================================
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';

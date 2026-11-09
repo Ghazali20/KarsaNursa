@@ -60,7 +60,7 @@ export function LandingSections() {
         <>
             <section
                 id="solusi"
-                className="mx-auto w-full max-w-[1180px] px-5 py-24 lg:px-8"
+                className="mx-auto w-full max-w-[1440px] px-4 py-16 sm:px-7 sm:py-20 lg:px-6 lg:py-24 xl:px-4"
             >
                 <SectionHeading
                     eyebrow="SATU PLATFORM, DUA PELUANG"
@@ -68,7 +68,7 @@ export function LandingSections() {
                     description="Dibangun khusus untuk kebutuhan kerja operasional harian, bukan proyek panjang yang rumit."
                 />
 
-                <div className="mt-12 grid gap-5 lg:grid-cols-2">
+                <div className="mt-10 grid gap-5 lg:mt-12 lg:grid-cols-2">
                     <RoleCard
                         icon={<Users size={28} />}
                         badge="Untuk Pekerja Lokal"
@@ -97,15 +97,15 @@ export function LandingSections() {
                 id="cara-kerja"
                 className="bg-[var(--karsa-deep-navy)] px-5 py-24 text-white lg:px-8"
             >
-                <div className="mx-auto w-full max-w-[1180px]">
+                <div className="mx-auto w-full max-w-[1440px]">
                     <div className="mx-auto max-w-[650px] text-center">
-                        <span className="text-[10px] font-extrabold tracking-[0.18em] text-[var(--karsa-sky)]">
+                        <span className="text-[16px] font-extrabold tracking-[0.18em] text-[var(--karsa-sky)]">
                             MUDAH & TERSTRUKTUR
                         </span>
-                        <h2 className="mt-4 text-[30px] leading-tight font-extrabold tracking-[-0.035em] sm:text-[38px]">
+                        <h2 className="mt-4 text-[clamp(1.85rem,3.1vw,2.9rem)] leading-tight font-extrabold tracking-[-0.035em]">
                             Dari kebutuhan hingga tuntas
                         </h2>
-                        <p className="mt-4 text-[12px] leading-[1.8] text-[#b8cad8]">
+                        <p className="mt-4 text-[14px] leading-[1.8] text-[#b8cad8]">
                             Setiap tahap tercatat untuk menjaga keamanan dan
                             keadilan kedua pihak.
                         </p>
@@ -117,7 +117,7 @@ export function LandingSections() {
                                 key={step.number}
                                 className="relative rounded-[16px] border border-white/10 bg-white/[0.055] p-6"
                             >
-                                <span className="text-[12px] font-extrabold tracking-[0.12em] text-[var(--karsa-sky)]">
+                                <span className="text-[14px] font-extrabold tracking-[0.12em] text-[var(--karsa-sky)]">
                                     {step.number}
                                 </span>
 
@@ -128,10 +128,10 @@ export function LandingSections() {
                                     {index === 3 && <ShieldCheck size={21} />}
                                 </span>
 
-                                <h3 className="mt-5 text-[13px] font-bold">
+                                <h3 className="mt-5 text-[16px] font-bold">
                                     {step.title}
                                 </h3>
-                                <p className="mt-3 text-[9px] leading-[1.7] text-[#b8cad8]">
+                                <p className="mt-3 text-[16px] leading-[1.7] text-[#b8cad8]">
                                     {step.description}
                                 </p>
 
@@ -149,7 +149,7 @@ export function LandingSections() {
 
             <section
                 id="dampak"
-                className="mx-auto w-full max-w-[1180px] px-5 py-24 lg:px-8"
+                className="mx-auto w-full max-w-[1440px] px-4 py-16 sm:px-7 sm:py-20 lg:px-6 lg:py-24 xl:px-4"
             >
                 <div className="grid items-center gap-12 rounded-[24px] bg-[var(--karsa-sky-pale)] p-7 sm:p-10 lg:grid-cols-[1.05fr_0.95fr] lg:p-14">
                     <div>
@@ -158,11 +158,11 @@ export function LandingSections() {
                             Mendukung SDG 8
                         </KarsaBadge>
 
-                        <h2 className="mt-5 max-w-[560px] text-[30px] leading-[1.2] font-extrabold tracking-[-0.035em] text-[var(--karsa-deep-navy)] sm:text-[38px]">
+                        <h2 className="mt-5 max-w-[560px] text-[clamp(1.85rem,3.1vw,2.9rem)] leading-[1.2] font-extrabold tracking-[-0.035em] text-[var(--karsa-deep-navy)]">
                             Kerja layak dimulai dari lingkungan terdekat.
                         </h2>
 
-                        <p className="mt-5 max-w-[600px] text-[11px] leading-[1.8] text-[var(--karsa-muted)]">
+                        <p className="mt-5 max-w-[600px] text-[15px] leading-[1.8] text-[var(--karsa-muted)]">
                             KarsaNusa membantu menciptakan pertumbuhan ekonomi
                             yang inklusif melalui pekerjaan produktif, upah yang
                             adil, dan kesempatan yang setara.
@@ -180,21 +180,21 @@ export function LandingSections() {
                 </div>
             </section>
 
-            <footer className="bg-[var(--karsa-deep-navy)] px-5 py-12 text-white lg:px-8">
-                <div className="mx-auto grid w-full max-w-[1180px] items-center gap-7 text-center md:grid-cols-[auto_1fr_auto] md:text-left">
+            <footer className="bg-[var(--karsa-deep-navy)] px-4 py-12 text-white sm:px-7 lg:px-6 xl:px-4">
+                <div className="mx-auto grid w-full max-w-[1440px] items-center gap-7 text-center md:grid-cols-[auto_1fr_auto] md:text-left">
                     <KarsaLogo
                         light
                         className="mx-auto md:mx-0"
-                        imageClassName="w-[86px]"
+                        imageClassName="w-[110px]"
                     />
 
-                    <p className="text-[10px] leading-relaxed text-[#b8cad8]">
+                    <p className="text-[16px] leading-relaxed text-[#b8cad8]">
                         Mendorong kemandirian ekonomi lokal,
                         <br className="hidden md:block" /> dari daerah untuk
                         Indonesia.
                     </p>
 
-                    <div className="text-[8px] leading-relaxed text-[#8da9bd] md:text-right">
+                    <div className="text-[14px] leading-relaxed text-[#8da9bd] md:text-right">
                         <span className="block">© 2026 KarsaNusa</span>
                         <span>
                             Platform Pemberdayaan UMKM & Tenaga Kerja Lokal
@@ -218,7 +218,7 @@ function SectionHeading({
     return (
         <div className="grid items-end gap-6 lg:grid-cols-[1fr_390px]">
             <div>
-                <span className="text-[10px] font-extrabold tracking-[0.18em] text-[var(--karsa-primary)]">
+                <span className="text-[16px] font-extrabold tracking-[0.18em] text-[var(--karsa-primary)]">
                     {eyebrow}
                 </span>
                 <h2 className="mt-4 text-[30px] leading-tight font-extrabold tracking-[-0.035em] text-[var(--karsa-deep-navy)] sm:text-[38px]">
@@ -226,7 +226,7 @@ function SectionHeading({
                 </h2>
             </div>
 
-            <p className="text-[11px] leading-[1.8] text-[var(--karsa-muted)] lg:text-right">
+            <p className="text-[15px] leading-[1.8] text-[var(--karsa-muted)] lg:text-right">
                 {description}
             </p>
         </div>
@@ -279,8 +279,8 @@ function RoleCard({
             <h3
                 className={
                     employer
-                        ? 'mt-5 text-[22px] leading-tight font-extrabold tracking-[-0.025em] text-white'
-                        : 'mt-5 text-[22px] leading-tight font-extrabold tracking-[-0.025em] text-[var(--karsa-deep-navy)]'
+                        ? 'mt-5 text-[23px] leading-tight font-extrabold tracking-[-0.025em] text-white'
+                        : 'mt-5 text-[23px] leading-tight font-extrabold tracking-[-0.025em] text-[var(--karsa-deep-navy)]'
                 }
             >
                 {title}
@@ -289,8 +289,8 @@ function RoleCard({
             <p
                 className={
                     employer
-                        ? 'mt-4 text-[10px] leading-[1.8] text-[#b8cad8]'
-                        : 'mt-4 text-[10px] leading-[1.8] text-[var(--karsa-muted)]'
+                        ? 'mt-4 text-[16px] leading-[1.8] text-[#b8cad8]'
+                        : 'mt-4 text-[16px] leading-[1.8] text-[var(--karsa-muted)]'
                 }
             >
                 {description}
@@ -302,8 +302,8 @@ function RoleCard({
                         key={feature}
                         className={
                             employer
-                                ? 'flex items-center gap-3 text-[9px] font-semibold text-[#d9e5ee]'
-                                : 'flex items-center gap-3 text-[9px] font-semibold text-[var(--karsa-slate)]'
+                                ? 'flex items-center gap-3 text-[16px] font-semibold text-[#d9e5ee]'
+                                : 'flex items-center gap-3 text-[16px] font-semibold text-[var(--karsa-slate)]'
                         }
                     >
                         <span
@@ -338,10 +338,10 @@ function RoleCard({
 function ImpactStat({ value, label }: { value: string; label: string }) {
     return (
         <div className="rounded-[15px] border border-white bg-white p-4 text-center shadow-[var(--karsa-shadow)] sm:p-5">
-            <strong className="block text-[20px] font-extrabold text-[var(--karsa-primary)] sm:text-[25px]">
+            <strong className="block text-[22px] font-extrabold text-[var(--karsa-primary)] sm:text-[27px]">
                 {value}
             </strong>
-            <span className="mt-2 block text-[7px] leading-[1.5] text-[var(--karsa-muted)] sm:text-[8px]">
+            <span className="mt-2 block text-[14px] leading-[1.5] text-[var(--karsa-muted)] sm:text-[14px]">
                 {label}
             </span>
         </div>

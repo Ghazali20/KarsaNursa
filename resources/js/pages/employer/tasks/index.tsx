@@ -1,54 +1,33 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
-    CalendarDays,
+    ArrowLeft,
+    BriefcaseBusiness,
     ClipboardPlus,
-    Eye,
+    MapPin,
+    Pencil,
     Send,
     Users,
     WalletCards,
 } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-
-type TaskItem = {
+type Task = {
     id: number;
     title: string;
-    category: string;
-    status: string;
-    statusLabel: string;
-    workerQuota: number;
-    wageAmount: number;
-    applicationDeadline: string;
-    startsAt: string;
-    endsAt: string;
-    publishedAt: string | null;
+    category: string | null;
+    status: 'draft' | 'published';
+    locationAddress: string | null;
+    workerQuota: number | null;
+    wageAmount: number | null;
+    createdAt: string | null;
+    applicationDeadline: string | null;
     canPublish: boolean;
-    applicantsCount: number;
 };
 
-type PaginationLink = {
-    url: string | null;
-    label: string;
-    active: boolean;
+type Props = {
+    tasks: Task[];
 };
 
-type TasksPage = {
-    data: TaskItem[];
-    links: PaginationLink[];
-};
-
-type EmployerTasksIndexProps = {
-    tasks: TasksPage;
-};
-
-function formatCurrency(value: number): string {
+function rupiah(value: number): string {
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
@@ -56,168 +35,153 @@ function formatCurrency(value: number): string {
     }).format(value);
 }
 
-function formatDate(value: string): string {
-    return new Intl.DateTimeFormat('id-ID', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-    }).format(new Date(value));
-}
+export default function EmployerTasksIndex({ tasks }: Props) {
+    function publishTask(task: Task): void {
+        if (!window.confirm(`Publikasikan tugas \"${task.title}\" sekarang?`)) return;
 
-export default function EmployerTasksIndex({ tasks }: EmployerTasksIndexProps) {
-    function publishTask(task: TaskItem): void {
-        const confirmed = window.confirm(
-            `Publikasikan tugas "${task.title}" sekarang?`,
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
-        router.patch(
-            `/employer/tasks/${task.id}/publish`,
-            {},
-            {
-                preserveScroll: true,
+        router.patch(`/employer/tasks/${task.id}/publish`, {}, {
+            preserveScroll: true,
+            onError: (errors) => {
+                window.alert(Object.values(errors).join('\n') || 'Draft belum siap dipublikasikan.');
             },
-        );
+        });
     }
 
     return (
         <>
-            <Head title="Kelola Tugas" />
+            <Head title="Kelola Tugas UMKM" />
 
-            <main className="flex flex-1 flex-col bg-slate-50/70">
-                <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-                    {/* Header */}
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6">
+                <div className="mx-auto max-w-6xl space-y-6">
+                    <Link
+                        href="/employer/dashboard"
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700"
+                    >
+                        <ArrowLeft className="size-4" />
+                        Kembali ke Dashboard
+                    </Link>
+
+                    <header className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-[var(--karsa-deep-navy)] p-7 text-white">
                         <div>
-                            <h1 className="text-2xl font-extrabold text-slate-950">
-                                Kelola tugas
+                            <h1 className="text-2xl font-extrabold">
+                                Kelola Tugas
                             </h1>
-
-                            <p className="mt-1 text-sm text-slate-500">
-                                Kelola draft dan tugas yang telah
-                                dipublikasikan.
+                            <p className="mt-2 text-sm text-white/70">
+                                Semua tugas yang dibuat oleh usaha Anda.
                             </p>
                         </div>
 
-                        <Button asChild>
-                            <Link href="/employer/tasks/create">
-                                <ClipboardPlus />
-                                Buat tugas baru
-                            </Link>
-                        </Button>
+                        <Link
+                            href="/employer/tasks/create"
+                            className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-slate-900"
+                        >
+                            <ClipboardPlus className="size-4" />
+                            Buat Tugas Baru
+                        </Link>
+                    </header>
+
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                        <p className="text-sm text-slate-500">
+                            Total tugas yang dibuat
+                        </p>
+                        <p className="mt-1 text-3xl font-extrabold">
+                            {tasks.length}
+                        </p>
                     </div>
 
-                    {/* Empty State */}
-                    {tasks.data.length === 0 ? (
-                        <Card>
-                            <CardContent className="flex min-h-72 flex-col items-center justify-center text-center">
-                                <h2 className="text-lg font-bold">
-                                    Belum ada tugas
-                                </h2>
-
-                                <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                                    Buat draft atau publikasikan tugas pertama
-                                    untuk menemukan pekerja lokal.
-                                </p>
-
-                                <Button className="mt-5" asChild>
-                                    <Link href="/employer/tasks/create">
-                                        Buat tugas pertama
-                                    </Link>
-                                </Button>
-                            </CardContent>
-                        </Card>
+                    {tasks.length === 0 ? (
+                        <section className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+                            <BriefcaseBusiness className="mx-auto size-12 text-slate-400" />
+                            <h2 className="mt-4 text-lg font-bold">
+                                Belum ada tugas
+                            </h2>
+                            <p className="mt-2 text-sm text-slate-500">
+                                Mulai dengan membuat tugas harian pertama.
+                            </p>
+                        </section>
                     ) : (
-                        /* Task List */
-                        <div className="grid gap-4">
-                            {tasks.data.map((task) => (
-                                <Card key={task.id}>
-                                    <CardHeader>
-                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                            {/* Task Information */}
-                                            <div>
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <span
-                                                        className={
-                                                            task.status ===
-                                                            'published'
-                                                                ? 'rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700'
-                                                                : 'rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700'
-                                                        }
-                                                    >
-                                                        {task.statusLabel}
-                                                    </span>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            {tasks.map((task) => (
+                                <article
+                                    key={task.id}
+                                    className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                                >
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-xs font-semibold text-blue-700">
+                                            {task.category ||
+                                                'Belum ada kategori'}
+                                        </span>
 
-                                                    <span className="text-xs font-medium text-muted-foreground capitalize">
-                                                        {task.category}
-                                                    </span>
-                                                </div>
+                                        <span
+                                            className={
+                                                task.status === 'published'
+                                                    ? 'rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700'
+                                                    : 'rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700'
+                                            }
+                                        >
+                                            {task.status === 'published'
+                                                ? 'Dipublikasikan'
+                                                : 'Draft'}
+                                        </span>
+                                    </div>
 
-                                                <CardTitle className="mt-3">
-                                                    {task.title}
-                                                </CardTitle>
+                                    <h2 className="mt-4 text-lg font-bold text-slate-900">
+                                        {task.title}
+                                    </h2>
 
-                                                <CardDescription className="mt-2">
-                                                    Batas lamaran:{' '}
-                                                    {formatDate(
-                                                        task.applicationDeadline,
-                                                    )}
-                                                </CardDescription>
-                                            </div>
+                                    <div className="mt-5 space-y-3 text-sm text-slate-600">
+                                        <div className="flex items-start gap-2">
+                                            <MapPin className="mt-0.5 size-4 shrink-0" />
+                                            {task.locationAddress ||
+                                                'Lokasi belum diisi'}
+                                        </div>
 
-                                            {/* Task Actions */}
+                                        <div className="flex items-center gap-2">
+                                            <Users className="size-4" />
+                                            {task.workerQuota ?? '-'} pekerja
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <WalletCards className="size-4" />
+                                            {task.wageAmount === null
+                                                ? 'Upah belum diisi'
+                                                : rupiah(task.wageAmount)}
+                                        </div>
+                                    </div>
+
+                                    {task.status === 'draft' && (
+                                        <div className="mt-4 space-y-2">
                                             <div className="flex flex-wrap gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    asChild
+                                                <Link
+                                                    href={`/employer/tasks/${task.id}/edit`}
+                                                    className="inline-flex items-center gap-2 rounded-xl border border-blue-700 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
                                                 >
-                                                    <Link
-                                                        href={`/employer/tasks/${task.id}`}
-                                                    >
-                                                        <Eye />
-                                                        Detail
-                                                    </Link>
-                                                </Button>
+                                                    <Pencil className="size-4" />
+                                                    Edit Draft
+                                                </Link>
 
-                                                {task.canPublish && (
-                                                    <Button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            publishTask(task)
-                                                        }
-                                                    >
-                                                        <Send />
-                                                        Publikasikan
-                                                    </Button>
-                                                )}
+                                                <button
+                                                    type="button"
+                                                    disabled={!task.canPublish}
+                                                    onClick={() => publishTask(task)}
+                                                    className="inline-flex items-center gap-2 rounded-xl bg-[var(--karsa-deep-navy)] px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                                                >
+                                                    <Send className="size-4" />
+                                                    Publikasikan
+                                                </button>
                                             </div>
+                                            {!task.canPublish && (
+                                                <p className="text-xs text-amber-700">
+                                                    Draft belum dapat dipublikasikan. Edit dan periksa kembali data serta jadwal.
+                                                </p>
+                                            )}
                                         </div>
-                                    </CardHeader>
+                                    )}
 
-                                    {/* Task Details */}
-                                    <CardContent>
-                                        <div className="grid gap-3 text-sm sm:grid-cols-3">
-                                            <div className="flex items-center gap-2 text-muted-foreground">
-                                                <CalendarDays className="size-4" />
-                                                {formatDate(task.startsAt)}
-                                            </div>
-
-                                            <div className="flex items-center gap-2 text-muted-foreground">
-                                                <Users className="size-4" />
-                                                {task.workerQuota} pekerja
-                                            </div>
-
-                                            <div className="flex items-center gap-2 text-muted-foreground">
-                                                <WalletCards className="size-4" />
-                                                {formatCurrency(
-                                                    task.wageAmount,
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                    <p className="mt-5 border-t border-slate-100 pt-4 text-xs text-slate-400">
+                                        Dibuat: {task.createdAt || '-'}
+                                    </p>
+                                </article>
                             ))}
                         </div>
                     )}

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 import { DashboardStatCard } from '@/components/dashboard/dashboard-stat-card';
-import { KarsaBadge, KarsaLinkButton } from '@/components/karsa/karsa-ui';
+import { KarsaBadge } from '@/components/karsa/karsa-ui';
 
 type RecommendedTask = {
     id: number;
@@ -68,7 +68,7 @@ export default function WorkerDashboard({
                                 </div>
 
                                 <p className="text-sm font-medium text-white/70">
-                                    Selamat datang kembali
+                                    Selamat datang di Website KarsaNusa
                                 </p>
 
                                 <h1 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">
@@ -76,19 +76,19 @@ export default function WorkerDashboard({
                                 </h1>
 
                                 <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">
-                                    Temukan tugas harian di sekitar Anda dan
+                                    Temukan tugas harian yang tersedia dan
                                     pantau seluruh aktivitas pekerjaan dalam
                                     satu tempat.
                                 </p>
                             </div>
 
-                            <KarsaLinkButton
+                            <Link
                                 href="/worker/tasks"
-                                className="shrink-0"
-                                icon={<Search className="size-4" />}
+                                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-[var(--karsa-deep-navy)] transition hover:bg-slate-100"
                             >
+                                <Search className="size-4" />
                                 Cari tugas
-                            </KarsaLinkButton>
+                            </Link>
                         </div>
                     </header>
 
@@ -102,8 +102,16 @@ export default function WorkerDashboard({
                                 Ringkasan aktivitas
                             </h2>
 
+                            <Link
+                                href="/worker/applications"
+                                className="mt-3 inline-flex text-sm font-bold text-blue-700 hover:underline"
+                            >
+                                Lihat riwayat lamaran
+                            </Link>
+
                             <p className="mt-1 text-sm text-slate-500">
-                                Pantau aktivitas lamaran dan pekerjaan Anda.
+                                Pantau perkembangan lamaran dan aktivitas
+                                pekerjaan Anda.
                             </p>
                         </div>
 
@@ -142,8 +150,8 @@ export default function WorkerDashboard({
                         </div>
                     </section>
 
-                    {/* TUGAS TERSEDIA */}
                     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.75fr)]">
+                        {/* TUGAS TERSEDIA */}
                         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                             <div className="flex flex-wrap items-start justify-between gap-4">
                                 <div>
@@ -247,14 +255,13 @@ export default function WorkerDashboard({
                                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
                                         1
                                     </span>
-
                                     <div>
                                         <p className="text-sm font-semibold text-slate-900">
                                             Lengkapi profil
                                         </p>
                                         <p className="mt-1 text-xs leading-5 text-slate-500">
                                             Pastikan informasi kemampuan dan
-                                            lokasi Anda sudah sesuai.
+                                            lokasi Anda sesuai.
                                         </p>
                                     </div>
                                 </div>
@@ -263,14 +270,13 @@ export default function WorkerDashboard({
                                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
                                         2
                                     </span>
-
                                     <div>
                                         <p className="text-sm font-semibold text-slate-900">
                                             Temukan tugas
                                         </p>
                                         <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            Cari tugas berdasarkan kategori,
-                                            jadwal, upah, dan jarak.
+                                            Cari pekerjaan yang sesuai dengan
+                                            kebutuhan Anda.
                                         </p>
                                     </div>
                                 </div>
@@ -279,14 +285,13 @@ export default function WorkerDashboard({
                                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-bold text-amber-700">
                                         3
                                     </span>
-
                                     <div>
                                         <p className="text-sm font-semibold text-slate-900">
                                             Ajukan lamaran
                                         </p>
                                         <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            Pantau hasil seleksi langsung dari
-                                            dashboard Anda.
+                                            Lamar tugas dan pantau proses
+                                            seleksi UMKM.
                                         </p>
                                     </div>
                                 </div>

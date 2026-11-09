@@ -2,78 +2,139 @@
 
 namespace App\Http\Controllers\Worker;
 
-use App\Enums\TaskApplicationStatus;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Worker\StoreTaskApplicationRequest;
 use App\Models\Task;
 use App\Models\TaskApplication;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class TaskApplicationController extends Controller
 {
-    public function store(
-        StoreTaskApplicationRequest $request,
-        Task $task
-    ): RedirectResponse {
-        Gate::authorize(
-            'create',
-            [TaskApplication::class, $task]
-        );
-
-        $request->user()->taskApplications()->create([
-            'task_id' => $task->id,
-            'message' => $request->validated('message'),
-            'status' => TaskApplicationStatus::Pending,
-        ]);
-
-        return redirect()
-            ->route('worker.applications.index')
-            ->with('success', 'Lamaran berhasil dikirim.');
-    }
-
+    /**
+     * Menampilkan halaman Lamaran Saya.
+     */
     public function index(Request $request): Response
     {
-        $applications = $request
-            ->user()
-            ->taskApplications()
-            ->with('task:id,title')
-            ->latest()
-            ->paginate(10);
+        $worker = $request->user();
 
-        return Inertia::render(
-            'worker/applications/index',
-            ['applications' => $applications]
+        abort_unless(
+            $worker !== null && $worker->role === 'worker',
+            403
         );
-    }
 
-    public function show(
-        TaskApplication $application
-    ): Response {
-        Gate::authorize('view', $application);
+        $applications = TaskApplication::query()
+            ->where('worker_id', $worker->id)
+            ->with('task.business')
 
-        $application->load('task:id,title');
+            // PERBAIKAN: Gunakan created_at,
+            // karena applied_at tidak ada di database.
+            ->latest('created_at')
+            ->get()
+            ->map(fn (TaskApplication $application): array => [
+                'id' => $application->id,
 
-        return Inertia::render(
-            'worker/applications/show',
-            ['application' => $application]
-        );
-    }
+                'taskTitle' =>
+                    $application->task?->title
+                    ?? 'Tugas tidak tersedia',
 
-    public function withdraw(
-        TaskApplication $application
-    ): RedirectResponse {
-        Gate::authorize('withdraw', $application);
+                'businessName' =>
+                    $application->task?->business?->name
+                    ?? 'UMKM tidak tersedia',
 
-        $application->update([
-            'status' => TaskApplicationStatus::Withdrawn,
+                'status' => $application->status,
+
+                // PERBAIKAN: Waktu pengajuan
+                // diambil dari created_at.
+                'appliedAt' => $application->created_at
+                    ?->format('d/m/Y H:i'),
+
+                'reviewNotes' =>
+                    $application->review_notes ?? null,
+
+                'reviewedAt' => $application->reviewed_at
+                    ? Carbon::parse(
+                        $application->reviewed_at
+                    )->format('d/m/Y H:i')
+                    : null,
+            ])
+            ->values()
+            ->all();
+
+        return Inertia::render('worker/applications/index', [
+            'applications' => $applications,
         ]);
+    }
 
-        return redirect()
-            ->route('worker.applications.index')
-            ->with('success', 'Lamaran berhasil dibatalkan.');
+    /**
+     * Worker mengajukan lamaran ke tugas UMKM.
+     */
+    public function store(
+        Request $request,
+        Task $task
+    ): RedirectResponse {
+        $worker = $request->user();
+
+        abort_unless(
+            $worker !== null && $worker->role === 'worker',
+            403
+        );
+
+        DB::transaction(function () use ($worker, $task): void {
+
+            // Mengunci tugas selama proses pengajuan.
+            $lockedTask = Task::query()
+                ->with('business.user')
+                ->lockForUpdate()
+                ->findOrFail($task->id);
+
+            // Periksa apakah tugas masih tersedia.
+            $isAvailable =
+                $lockedTask->status === 'published'
+                && $lockedTask->published_at !== null
+                && $lockedTask->application_deadline !== null
+                && Carbon::parse(
+                    $lockedTask->application_deadline
+                )->isFuture()
+                && $lockedTask->business?->user
+                    ?->verification_status === 'approved';
+
+            abort_unless($isAvailable, 404);
+
+            // Mencegah Worker melamar tugas yang sama
+            // lebih dari satu kali.
+            $alreadyApplied = TaskApplication::query()
+                ->where('task_id', $lockedTask->id)
+                ->where('worker_id', $worker->id)
+                ->exists();
+
+            if ($alreadyApplied) {
+                throw ValidationException::withMessages([
+                    'application' =>
+                        'Kamu sudah pernah melamar tugas ini.',
+                ]);
+            }
+
+            // PERBAIKAN: Tidak lagi mengirim applied_at.
+            // created_at akan diisi otomatis oleh Eloquent
+            // apabila timestamps model aktif.
+            TaskApplication::query()->create([
+                'task_id' => $lockedTask->id,
+                'worker_id' => $worker->id,
+                'status' => 'pending',
+            ]);
+        });
+
+        return to_route(
+            'worker.tasks.show',
+            $task
+        )->with(
+            'success',
+            'Lamaran berhasil dikirim.'
+        );
     }
 }

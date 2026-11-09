@@ -10,7 +10,6 @@ import {
 
 import { DashboardStatCard } from '@/components/dashboard/dashboard-stat-card';
 import { KarsaBadge } from '@/components/karsa/karsa-ui';
-import { Button } from '@/components/ui/button';
 
 type RecentTask = {
     id: number;
@@ -22,10 +21,11 @@ type RecentTask = {
 };
 
 type EmployerDashboardProps = {
-    stats?: {
-        activeTasks?: number;
+    stats: {
+        activeTasks: number;
+        pendingApplicants: number;
     };
-    recentTasks?: RecentTask[];
+    recentTasks: RecentTask[];
 };
 
 function formatFirstName(name: string): string {
@@ -41,11 +41,14 @@ function formatRupiah(value: number): string {
 }
 
 export default function EmployerDashboard({
+    stats,
     recentTasks,
 }: EmployerDashboardProps) {
     const { auth } = usePage().props;
     const user = auth.user;
 
+    const activeTasks = stats?.activeTasks ?? 0;
+    const pendingApplicants = stats?.pendingApplicants ?? 0;
     const safeRecentTasks = recentTasks ?? [];
 
     return (
@@ -93,7 +96,7 @@ export default function EmployerDashboard({
                         </div>
                     </header>
 
-                    {/* STATISTIK */}
+                    {/* RINGKASAN OPERASIONAL */}
                     <section aria-labelledby="employer-summary-heading">
                         <div className="mb-4">
                             <h2
@@ -104,15 +107,15 @@ export default function EmployerDashboard({
                             </h2>
 
                             <p className="mt-1 text-sm text-slate-500">
-                                Pantau aktivitas usaha dan tugas yang sedang
-                                berjalan.
+                                Pantau perkembangan tugas dan aktivitas usaha
+                                Anda melalui dashboard ini.
                             </p>
                         </div>
 
                         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                             <DashboardStatCard
                                 label="Tugas aktif"
-                                value={0}
+                                value={activeTasks}
                                 description="Postingan tugas yang masih menerima pelamar."
                                 icon={BriefcaseBusiness}
                                 tone="blue"
@@ -120,7 +123,7 @@ export default function EmployerDashboard({
 
                             <DashboardStatCard
                                 label="Pelamar baru"
-                                value={0}
+                                value={pendingApplicants}
                                 description="Lamaran yang belum diperiksa oleh UMKM."
                                 icon={Users}
                                 tone="green"
@@ -147,23 +150,22 @@ export default function EmployerDashboard({
                     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.75fr)]">
                         {/* TUGAS TERBARU */}
                         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <h2 className="text-lg font-bold text-slate-950">
-                                        Tugas terbaru
-                                    </h2>
+                            <div>
+                                <h2 className="text-lg font-bold text-slate-950">
+                                    Tugas terbaru
+                                </h2>
 
-                                    <p className="mt-1 text-sm text-slate-500">
-                                        Daftar tugas terbaru yang dibuat oleh
-                                        usaha Anda.
-                                    </p>
-                                </div>
+                                <Link
+                                    href="/employer/tasks"
+                                    className="mt-3 inline-flex text-sm font-bold text-blue-700 hover:underline"
+                                >
+                                    Lihat semua tugas
+                                </Link>
 
-                                <Button variant="outline" size="sm" asChild>
-                                    <Link href="/employer/tasks">
-                                        Kelola Semua Tugas
-                                    </Link>
-                                </Button>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Daftar tugas terbaru yang dibuat oleh usaha
+                                    Anda.
+                                </p>
                             </div>
 
                             {safeRecentTasks.length === 0 ? (
@@ -197,6 +199,7 @@ export default function EmployerDashboard({
                                             key={task.id}
                                             className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-blue-200 hover:shadow-sm"
                                         >
+                                            {/* STATUS DAN KATEGORI */}
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <span
                                                     className={
@@ -218,10 +221,12 @@ export default function EmployerDashboard({
                                                 )}
                                             </div>
 
+                                            {/* JUDUL TUGAS */}
                                             <h3 className="mt-3 text-base font-bold text-slate-950">
                                                 {task.title}
                                             </h3>
 
+                                            {/* INFORMASI KUOTA DAN UPAH */}
                                             <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-500">
                                                 {task.workerQuota !== null && (
                                                     <span>
@@ -241,12 +246,16 @@ export default function EmployerDashboard({
                                                 )}
                                             </div>
 
-                                            <Link
-                                                href={`/employer/tasks/${task.id}`}
-                                                className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline"
-                                            >
-                                                Lihat detail
-                                            </Link>
+                                            {/* TOMBOL KELOLA PELAMAR */}
+                                            {task.status === 'published' && (
+                                                <Link
+                                                    href={`/employer/tasks/${task.id}/applications`}
+                                                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-blue-100"
+                                                >
+                                                    <Users className="size-4" />
+                                                    Kelola Pelamar
+                                                </Link>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -269,6 +278,7 @@ export default function EmployerDashboard({
                                         <p className="text-sm font-semibold text-slate-900">
                                             Publikasikan tugas
                                         </p>
+
                                         <p className="mt-1 text-xs leading-5 text-slate-500">
                                             Masukkan lokasi, jadwal, kuota, dan
                                             nominal upah.
@@ -285,6 +295,7 @@ export default function EmployerDashboard({
                                         <p className="text-sm font-semibold text-slate-900">
                                             Seleksi pelamar
                                         </p>
+
                                         <p className="mt-1 text-xs leading-5 text-slate-500">
                                             Tinjau profil dan pilih pekerja yang
                                             sesuai.
@@ -301,6 +312,7 @@ export default function EmployerDashboard({
                                         <p className="text-sm font-semibold text-slate-900">
                                             Verifikasi pekerjaan
                                         </p>
+
                                         <p className="mt-1 text-xs leading-5 text-slate-500">
                                             Periksa bukti kerja dan validasi
                                             upah pekerja.

@@ -1,56 +1,29 @@
 import { Head, Link } from '@inertiajs/react';
 import {
-    ArrowRight,
-    CalendarDays,
+    ArrowLeft,
+    BriefcaseBusiness,
     MapPin,
-    Search,
     Users,
     WalletCards,
 } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-
-type WorkerTask = {
+type Task = {
     id: number;
     title: string;
-    category: string;
-    description: string;
-    locationAddress: string;
-    workerQuota: number;
-    wageAmount: number;
-    applicationDeadline: string;
-    startsAt: string;
-    endsAt: string;
-    business: {
-        name: string;
-        address: string | null;
-    };
+    category: string | null;
+    description: string | null;
+    locationAddress: string | null;
+    workerQuota: number | null;
+    wageAmount: number | null;
+    businessName: string;
+    applicationDeadline: string | null;
 };
 
-type PaginationLink = {
-    url: string | null;
-    label: string;
-    active: boolean;
+type Props = {
+    tasks: Task[];
 };
 
-type TasksPage = {
-    data: WorkerTask[];
-    links: PaginationLink[];
-};
-
-type WorkerTasksIndexProps = {
-    tasks: TasksPage;
-};
-
-function formatCurrency(value: number): string {
+function rupiah(value: number): string {
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
@@ -58,109 +31,100 @@ function formatCurrency(value: number): string {
     }).format(value);
 }
 
-function formatDate(value: string): string {
-    return new Intl.DateTimeFormat('id-ID', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-    }).format(new Date(value));
-}
-
-export default function WorkerTasksIndex({ tasks }: WorkerTasksIndexProps) {
+export default function WorkerTasksIndex({ tasks }: Props) {
     return (
         <>
-            <Head title="Cari Tugas" />
+            <Head title="Cari Tugas - KarsaNursa" />
 
-            <main className="flex flex-1 flex-col bg-slate-50/70">
-                <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-                    {/* HEADER */}
-                    <header className="rounded-3xl bg-[var(--karsa-deep-navy)] px-6 py-8 text-white">
-                        <div className="flex size-12 items-center justify-center rounded-xl bg-white/10">
-                            <Search className="size-6" />
-                        </div>
+            <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6">
+                <div className="mx-auto max-w-6xl space-y-6">
+                    <Link
+                        href="/worker/dashboard"
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700"
+                    >
+                        <ArrowLeft className="size-4" />
+                        Kembali ke Dashboard
+                    </Link>
 
-                        <div className="mt-5 text-2xl font-extrabold">
-                            Temukan tugas harian
-                        </div>
-
-                        <p className="mt-2 max-w-2xl text-sm leading-6 text-white/70">
-                            Jelajahi tugas yang telah dipublikasikan UMKM dan
-                            pilih pekerjaan yang sesuai dengan jadwal Anda.
+                    <header className="rounded-3xl bg-[var(--karsa-deep-navy)] p-8 text-white">
+                        <h1 className="text-2xl font-extrabold">
+                            Cari Tugas Harian
+                        </h1>
+                        <p className="mt-2 text-sm text-white/70">
+                            Temukan pekerjaan yang dipublikasikan oleh Pemilik
+                            UMKM.
                         </p>
                     </header>
 
-                    {/* DAFTAR TUGAS */}
-                    {tasks.data.length === 0 ? (
-                        <Card>
-                            <CardContent className="flex min-h-72 flex-col items-center justify-center text-center">
-                                <Search className="size-8 text-muted-foreground" />
+                    <div>
+                        <h2 className="text-lg font-bold text-slate-950">
+                            Tugas Tersedia
+                        </h2>
+                        <p className="mt-1 text-sm text-slate-500">
+                            {tasks.length} pekerjaan tersedia
+                        </p>
+                    </div>
 
-                                <div className="mt-5 text-lg font-bold">
-                                    Belum ada tugas tersedia
-                                </div>
-
-                                <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                                    Tugas yang dipublikasikan UMKM dan masih
-                                    membuka lamaran akan muncul di halaman ini.
-                                </p>
-                            </CardContent>
-                        </Card>
+                    {tasks.length === 0 ? (
+                        <section className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+                            <BriefcaseBusiness className="mx-auto size-12 text-slate-400" />
+                            <h3 className="mt-4 font-bold">
+                                Belum ada tugas tersedia
+                            </h3>
+                            <p className="mt-2 text-sm text-slate-500">
+                                Tugas yang dipublikasikan UMKM akan muncul di
+                                halaman ini.
+                            </p>
+                        </section>
                     ) : (
-                        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                            {tasks.data.map((task) => (
-                                <Card key={task.id}>
-                                    <CardHeader>
-                                        <div className="flex items-center justify-between gap-3">
-                                            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 capitalize">
-                                                {task.category}
-                                            </span>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            {tasks.map((task) => (
+                                <article
+                                    key={task.id}
+                                    className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                                >
+                                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                                        {task.category || 'Lainnya'}
+                                    </span>
 
-                                            <span className="text-xs text-muted-foreground">
-                                                {task.business.name}
-                                            </span>
-                                        </div>
+                                    <h3 className="mt-4 text-lg font-bold text-slate-950">
+                                        {task.title}
+                                    </h3>
 
-                                        <CardTitle className="mt-3">
-                                            {task.title}
-                                        </CardTitle>
+                                    <p className="mt-1 text-sm font-semibold text-blue-700">
+                                        {task.businessName}
+                                    </p>
 
-                                        <CardDescription className="line-clamp-3">
-                                            {task.description}
-                                        </CardDescription>
-                                    </CardHeader>
+                                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
+                                        {task.description}
+                                    </p>
 
-                                    <CardContent className="space-y-3">
-                                        <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                                    <div className="mt-5 space-y-3 text-sm text-slate-600">
+                                        <div className="flex items-start gap-2">
                                             <MapPin className="mt-0.5 size-4 shrink-0" />
-                                            <span>{task.locationAddress}</span>
+                                            {task.locationAddress}
                                         </div>
 
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <CalendarDays className="size-4" />
-                                            {formatDate(task.startsAt)}
-                                        </div>
-
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <div className="flex items-center gap-2">
                                             <Users className="size-4" />
-                                            {task.workerQuota} pekerja
+                                            Kuota {task.workerQuota} pekerja
                                         </div>
 
-                                        <div className="flex items-center gap-2 font-bold text-slate-950">
-                                            <WalletCards className="size-4 text-emerald-600" />
-                                            {formatCurrency(task.wageAmount)}
+                                        <div className="flex items-center gap-2">
+                                            <WalletCards className="size-4" />
+                                            {task.wageAmount === null
+                                                ? 'Upah belum tersedia'
+                                                : rupiah(task.wageAmount)}
                                         </div>
-                                    </CardContent>
+                                    </div>
 
-                                    <CardFooter>
-                                        <Button className="w-full" asChild>
-                                            <Link
-                                                href={`/worker/tasks/${task.id}`}
-                                            >
-                                                Lihat detail
-                                                <ArrowRight />
-                                            </Link>
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
+                                    <Link
+                                        href={`/worker/tasks/${task.id}`}
+                                        className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-[var(--karsa-deep-navy)] px-5 py-3 text-sm font-bold text-white hover:opacity-90"
+                                    >
+                                        Lihat Detail Tugas
+                                    </Link>
+                                </article>
                             ))}
                         </div>
                     )}
