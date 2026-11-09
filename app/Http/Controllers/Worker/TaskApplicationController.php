@@ -29,7 +29,10 @@ class TaskApplicationController extends Controller
 
         $applications = TaskApplication::query()
             ->where('worker_id', $worker->id)
-            ->with('task.business')
+            ->with([
+                'task.business',
+                'payment',
+            ])
 
             // PERBAIKAN: Gunakan created_at,
             // karena applied_at tidak ada di database.
@@ -41,6 +44,14 @@ class TaskApplicationController extends Controller
                 'taskTitle' => $application->task->title,
 
                 'businessName' => $application->task->business->name,
+
+                'wageAmount' => $application->payment->amount
+                    ?? (int) $application->task->wage_amount,
+
+                'paymentStatus' => $application->payment?->status,
+
+                'paidAt' => $application->payment?->paid_at
+                    ?->format('d/m/Y H:i'),
 
                 'status' => $application->status,
 

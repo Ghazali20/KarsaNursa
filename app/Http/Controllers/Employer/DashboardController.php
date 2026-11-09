@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Employer;
 
+use App\Enums\TaskPaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Task;
 use App\Models\TaskApplication;
+use App\Models\TaskPayment;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,16 +27,12 @@ class DashboardController extends Controller
             'Profil usaha belum tersedia.'
         );
 
-        // Menghitung tugas published yang masih
-        // menerima lamaran.
         $activeTasks = $business->tasks()
             ->where('status', 'published')
             ->whereNotNull('published_at')
             ->where('application_deadline', '>', now())
             ->count();
 
-        // Menghitung semua lamaran pending pada
-        // tugas milik UMKM yang login.
         $pendingApplicants = TaskApplication::query()
             ->where('status', 'pending')
             ->whereHas('task', function ($query) use ($business) {
@@ -42,7 +40,30 @@ class DashboardController extends Controller
             })
             ->count();
 
-        // Menampilkan lima tugas terbaru milik UMKM.
+        $pendingPayments = TaskPayment::query()
+            ->where('status', TaskPaymentStatus::Pending->value)
+            ->whereHas(
+                'application.task',
+                function ($query) use ($business) {
+                    $query->where('business_id', $business->id);
+                }
+            )
+            ->count();
+
+        $monthlyExpenses = TaskPayment::query()
+            ->where('status', TaskPaymentStatus::Paid->value)
+            ->whereBetween('paid_at', [
+                now()->startOfMonth(),
+                now()->endOfMonth(),
+            ])
+            ->whereHas(
+                'application.task',
+                function ($query) use ($business) {
+                    $query->where('business_id', $business->id);
+                }
+            )
+            ->sum('amount');
+
         $recentTasks = $business->tasks()
             ->latest('id')
             ->limit(5)
@@ -64,6 +85,8 @@ class DashboardController extends Controller
             'stats' => [
                 'activeTasks' => $activeTasks,
                 'pendingApplicants' => $pendingApplicants,
+                'pendingPayments' => $pendingPayments,
+                'monthlyExpenses' => (int) $monthlyExpenses,
             ],
             'recentTasks' => $recentTasks,
         ]);

@@ -7,6 +7,7 @@ use App\Http\Controllers\Employer\ApplicationInboxController;
 use App\Http\Controllers\Employer\DashboardController as EmployerDashboardController;
 use App\Http\Controllers\Employer\TaskApplicationController as EmployerTaskApplicationController;
 use App\Http\Controllers\Employer\TaskController as EmployerTaskController;
+use App\Http\Controllers\Employer\TaskPaymentController as EmployerTaskPaymentController;
 use App\Http\Controllers\Worker\DashboardController as WorkerDashboardController;
 use App\Http\Controllers\Worker\TaskApplicationController as WorkerTaskApplicationController;
 use App\Http\Controllers\Worker\TaskController as WorkerTaskController;
@@ -168,6 +169,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 '/employer/tasks/{task}/applications/{application}/decision',
                 [EmployerTaskApplicationController::class, 'decide']
             )->name('employer.tasks.applications.decide');
+
+            // Mencatat pembayaran upah pekerja yang diterima.
+            Route::patch(
+                '/employer/applications/{application}/mark-paid',
+                [EmployerTaskPaymentController::class, 'markPaid']
+            )->name('employer.applications.mark-paid');
         });
 
         // ========================================

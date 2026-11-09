@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Employer;
 
+use App\Enums\TaskPaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Task;
 use App\Models\TaskApplication;
@@ -271,6 +272,14 @@ class TaskApplicationController extends Controller
             }
 
             $lockedApplication->update($updateData);
+
+            if ($validated['decision'] === 'accepted') {
+                $lockedApplication->payment()->create([
+                    'amount' => (int) $lockedTask->wage_amount,
+                    'status' => TaskPaymentStatus::Pending->value,
+                    'paid_at' => null,
+                ]);
+            }
 
         }, 3);
 

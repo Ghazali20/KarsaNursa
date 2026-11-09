@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Worker;
 
+use App\Enums\TaskApplicationStatus;
+use App\Enums\TaskPaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Task;
 use App\Models\TaskApplication;
+use App\Models\TaskPayment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -13,15 +16,7 @@ class DashboardController extends Controller
 {
     public function __invoke(Request $request): Response
     {
-        // ========================================
-        // 1. MENGAMBIL DATA PENCARI KERJA
-        // ========================================
-
         $worker = $request->user();
-
-        // ========================================
-        // 2. MENGAMBIL 4 TUGAS TERBARU
-        // ========================================
 
         $recommendedTasks = Task::query()
             ->where('status', 'published')
@@ -51,25 +46,52 @@ class DashboardController extends Controller
             ->values()
             ->all();
 
-        // ========================================
-        // 3. MENGHITUNG LAMARAN AKTIF
-        // ========================================
-
-        // Hanya menghitung lamaran milik worker
-        // yang sedang login dan berstatus pending.
-
         $pendingApplications = TaskApplication::query()
             ->where('worker_id', $worker->id)
-            ->where('status', 'pending')
+            ->where('status', TaskApplicationStatus::Pending->value)
             ->count();
 
-        // ========================================
-        // 4. MENGIRIM DATA KE DASHBOARD REACT
-        // ========================================
+        $activeAssignments = TaskApplication::query()
+            ->where('worker_id', $worker->id)
+            ->where('status', TaskApplicationStatus::Accepted->value)
+            ->whereHas('payment', function ($query) {
+                $query->where(
+                    'status',
+                    TaskPaymentStatus::Pending->value
+                );
+            })
+            ->count();
+
+        $pendingWages = TaskPayment::query()
+            ->where('status', TaskPaymentStatus::Pending->value)
+            ->whereHas(
+                'application',
+                function ($query) use ($worker) {
+                    $query->where('worker_id', $worker->id);
+                }
+            )
+            ->sum('amount');
+
+        $monthlyWages = TaskPayment::query()
+            ->where('status', TaskPaymentStatus::Paid->value)
+            ->whereBetween('paid_at', [
+                now()->startOfMonth(),
+                now()->endOfMonth(),
+            ])
+            ->whereHas(
+                'application',
+                function ($query) use ($worker) {
+                    $query->where('worker_id', $worker->id);
+                }
+            )
+            ->sum('amount');
 
         return Inertia::render('worker/dashboard', [
             'recommendedTasks' => $recommendedTasks,
             'pendingApplications' => $pendingApplications,
+            'activeAssignments' => $activeAssignments,
+            'pendingWages' => (int) $pendingWages,
+            'monthlyWages' => (int) $monthlyWages,
         ]);
     }
 }
