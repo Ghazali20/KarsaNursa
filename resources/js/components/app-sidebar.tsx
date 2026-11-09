@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
+    ClipboardCheck,
     ClipboardList,
     ClipboardPlus,
     FolderGit2,
@@ -122,6 +123,11 @@ export function AppSidebar() {
                           title: 'Dashboard',
                           href: '/admin',
                           icon: LayoutGrid,
+                      },
+                      {
+                          title: 'Persetujuan Tugas',
+                          href: '/admin/tasks',
+                          icon: ClipboardCheck,
                       },
                   ]
                 : [
