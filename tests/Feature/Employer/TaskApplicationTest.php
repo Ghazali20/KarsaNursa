@@ -51,9 +51,13 @@ class TaskApplicationTest extends TestCase
         return $employer->business->tasks()->create([
             'title' => 'Membantu Pengemasan',
             'category' => 'Kuliner',
-            'description' =>
-                'Membantu mengemas pesanan pelanggan.',
+            'description' => 'Membantu mengemas pesanan pelanggan.',
             'location_address' => 'Alamat pengujian',
+
+            // PERBAIKAN: Koordinat wajib di database.
+            'latitude' => -7.2500000,
+            'longitude' => 112.7500000,
+
             'application_deadline' => now()->addDay(),
             'starts_at' => now()->addDays(2),
             'ends_at' => now()->addDays(2)->addHours(4),
@@ -83,7 +87,6 @@ class TaskApplicationTest extends TestCase
             'task_id' => $task->id,
             'worker_id' => $worker->id,
             'status' => 'pending',
-            'applied_at' => now(),
         ]);
     }
 

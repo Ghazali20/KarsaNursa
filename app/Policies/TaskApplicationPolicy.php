@@ -12,11 +12,9 @@ class TaskApplicationPolicy
 {
     public function create(User $user, Task $task): bool
     {
-        $status = $task->status->value;
-
         return $user->role === 'worker'
             && $user->verification_status === 'approved'
-            && $task->status === TaskStatus::Published
+            && $task->status === TaskStatus::Published->value
             && $task->published_at !== null
             && $task->application_deadline !== null
             && $task->application_deadline->isFuture()
@@ -53,6 +51,6 @@ class TaskApplicationPolicy
     ): bool {
         return $user->role === 'worker'
             && $application->worker_id === $user->id
-            && $application->status === TaskApplicationStatus::Pending;
+            && $application->status === TaskApplicationStatus::Pending->value;
     }
 }

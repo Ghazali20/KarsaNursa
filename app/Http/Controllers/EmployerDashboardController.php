@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\TaskStatus;
+use App\Models\Task;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -34,12 +35,12 @@ class EmployerDashboardController extends Controller
             ->latest()
             ->limit(5)
             ->get()
-            ->map(fn ($task) => [
+            ->map(fn (Task $task): array => [
                 'id' => $task->id,
                 'title' => $task->title,
                 'category' => $task->category,
-                'status' => $task->status->value,
-                'statusLabel' => $task->status->label(),
+                'status' => $task->status,
+                'statusLabel' => TaskStatus::tryFrom($task->status)?->label() ?? $task->status,
                 'workerQuota' => $task->worker_quota,
                 'wageAmount' => $task->wage_amount,
                 'startsAt' => $task->starts_at?->toIso8601String(),

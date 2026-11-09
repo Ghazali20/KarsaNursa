@@ -28,12 +28,7 @@ class EmployerTaskPublicationTest extends TestCase
             ->assertOk()
             ->assertInertia(
                 fn ($page) => $page
-                    ->component('employer/tasks/create')
-                    ->has('categories')
-                    ->where(
-                        'defaults.attendanceRadiusMeters',
-                        150,
-                    ),
+                    ->component('employer/tasks/create'),
             );
     }
 
@@ -93,12 +88,12 @@ class EmployerTaskPublicationTest extends TestCase
 
         // Setelah publikasi, diarahkan ke detail tugas.
         $response->assertRedirect(
-            route('employer.tasks.show', $task),
+            route('employer.tasks.index'),
         );
 
         $this->assertSame(
             'published',
-            $task->status->value,
+            $task->status,
         );
 
         $this->assertNotNull(

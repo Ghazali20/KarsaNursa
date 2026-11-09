@@ -32,13 +32,22 @@ export default function Welcome() {
                     <KarsaLogo imageClassName="w-[94px] sm:w-[108px] lg:w-[114px]" />
 
                     <div className="hidden items-center gap-9 text-[15px] font-semibold text-[var(--karsa-muted)] lg:flex xl:gap-12">
-                        <a href="#cara-kerja" className="transition-colors hover:text-[var(--karsa-primary)]">
+                        <a
+                            href="#cara-kerja"
+                            className="transition-colors hover:text-[var(--karsa-primary)]"
+                        >
                             Cara Kerja
                         </a>
-                        <a href="#solusi" className="transition-colors hover:text-[var(--karsa-primary)]">
+                        <a
+                            href="#solusi"
+                            className="transition-colors hover:text-[var(--karsa-primary)]"
+                        >
                             Solusi
                         </a>
-                        <a href="#dampak" className="transition-colors hover:text-[var(--karsa-primary)]">
+                        <a
+                            href="#dampak"
+                            className="transition-colors hover:text-[var(--karsa-primary)]"
+                        >
                             Dampak
                         </a>
                     </div>
@@ -72,12 +81,22 @@ export default function Welcome() {
                         <button
                             type="button"
                             className="inline-flex size-11 items-center justify-center rounded-xl border border-[var(--karsa-border)] bg-white text-[var(--karsa-primary)] lg:hidden"
-                            aria-label={mobileMenuOpen ? 'Tutup menu navigasi' : 'Buka menu navigasi'}
+                            aria-label={
+                                mobileMenuOpen
+                                    ? 'Tutup menu navigasi'
+                                    : 'Buka menu navigasi'
+                            }
                             aria-expanded={mobileMenuOpen}
                             aria-controls="karsa-mobile-menu"
-                            onClick={() => setMobileMenuOpen((current) => !current)}
+                            onClick={() =>
+                                setMobileMenuOpen((current) => !current)
+                            }
                         >
-                            {mobileMenuOpen ? <X size={23} /> : <Menu size={23} />}
+                            {mobileMenuOpen ? (
+                                <X size={23} />
+                            ) : (
+                                <Menu size={23} />
+                            )}
                         </button>
                     </div>
 

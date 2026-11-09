@@ -99,8 +99,8 @@ class TaskController extends Controller
                 'requirements' => $task->requirements ?? '',
                 'instructions' => $task->instructions ?? '',
                 'location_address' => $task->location_address ?? '',
-                'latitude' => $task->latitude === null ? '' : (string) $task->latitude,
-                'longitude' => $task->longitude === null ? '' : (string) $task->longitude,
+                'latitude' => (string) $task->latitude,
+                'longitude' => (string) $task->longitude,
                 'attendance_radius_meters' => (string) ($task->attendance_radius_meters ?? 100),
                 'application_deadline' => $task->application_deadline?->format('Y-m-d\TH:i') ?? '',
                 'starts_at' => $task->starts_at?->format('Y-m-d\TH:i') ?? '',
@@ -169,6 +169,8 @@ class TaskController extends Controller
     /**
      * Draft tetap membutuhkan field yang NOT NULL pada tabel tasks.
      * Saat publish, tambah validasi kelengkapan deskripsi dan jadwal masa depan.
+     *
+     * @return array<string, list<string>>
      */
     private function taskRules(bool $publishing): array
     {
@@ -176,7 +178,8 @@ class TaskController extends Controller
             'title' => ['required', 'string', 'max:150'],
             'category' => ['required', 'string', 'max:50'],
             'description' => [
-                'required', 'string',
+                'required',
+                'string',
                 ...($publishing ? ['min:20'] : []),
             ],
             'requirements' => ['nullable', 'string', 'max:5000'],
@@ -186,7 +189,9 @@ class TaskController extends Controller
             'longitude' => ['required', 'numeric', 'between:-180,180'],
             'attendance_radius_meters' => ['nullable', 'integer', 'between:50,10000'],
             'application_deadline' => [
-                'required', 'date',
+                'required',
+                'date',
+                'before:starts_at',
                 ...($publishing ? ['after:now'] : []),
             ],
             'starts_at' => ['required', 'date', 'after:application_deadline'],

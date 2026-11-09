@@ -23,7 +23,7 @@ class TaskController extends Controller
             ->with('business')
             ->latest('published_at')
             ->get()
-            ->map(fn(Task $task): array => [
+            ->map(fn (Task $task): array => [
                 'id' => $task->id,
                 'title' => $task->title,
                 'category' => $task->category,
@@ -34,8 +34,7 @@ class TaskController extends Controller
                     ? null
                     : (int) $task->wage_amount,
                 'businessName' => $task->business->name,
-                'applicationDeadline' =>
-                $task->application_deadline?->format('d/m/Y H:i'),
+                'applicationDeadline' => $task->application_deadline?->format('d/m/Y H:i'),
             ])
             ->values()
             ->all();
@@ -44,7 +43,6 @@ class TaskController extends Controller
             'tasks' => $tasks,
         ]);
     }
-
 
     public function show(Request $request, Task $task): Response
     {
@@ -80,12 +78,9 @@ class TaskController extends Controller
                 'businessName' => $task->business->name,
                 'workerQuota' => $task->worker_quota,
                 'wageAmount' => (int) $task->wage_amount,
-                'applicationDeadline' =>
-                $task->application_deadline?->format('d/m/Y H:i'),
-                'startsAt' =>
-                $task->starts_at?->format('d/m/Y H:i'),
-                'endsAt' =>
-                $task->ends_at?->format('d/m/Y H:i'),
+                'applicationDeadline' => $task->application_deadline?->format('d/m/Y H:i'),
+                'startsAt' => $task->starts_at?->format('d/m/Y H:i'),
+                'endsAt' => $task->ends_at?->format('d/m/Y H:i'),
             ],
 
             'applicationStatus' => $applicationStatus,

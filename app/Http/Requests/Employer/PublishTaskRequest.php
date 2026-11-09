@@ -41,7 +41,7 @@ class PublishTaskRequest extends FormRequest
 
             if (
                 $task->status
-                !== TaskStatus::Draft
+                !== TaskStatus::Draft->value
             ) {
                 $validator->errors()->add(
                     'task',
@@ -50,8 +50,8 @@ class PublishTaskRequest extends FormRequest
             }
 
             if (
-                $task->application_deadline
-                    ->isPast()
+                $task->application_deadline === null
+                || $task->application_deadline->isPast()
             ) {
                 $validator->errors()->add(
                     'application_deadline',
@@ -59,7 +59,7 @@ class PublishTaskRequest extends FormRequest
                 );
             }
 
-            if ($task->starts_at->isPast()) {
+            if ($task->starts_at === null || $task->starts_at->isPast()) {
                 $validator->errors()->add(
                     'starts_at',
                     'Waktu mulai tugas sudah lewat. Ubah jadwal sebelum mempublikasikan tugas.',
@@ -67,9 +67,9 @@ class PublishTaskRequest extends FormRequest
             }
 
             if (
-                $task->ends_at->lessThanOrEqualTo(
-                    $task->starts_at,
-                )
+                $task->ends_at === null
+                || $task->starts_at === null
+                || $task->ends_at->lessThanOrEqualTo($task->starts_at)
             ) {
                 $validator->errors()->add(
                     'ends_at',

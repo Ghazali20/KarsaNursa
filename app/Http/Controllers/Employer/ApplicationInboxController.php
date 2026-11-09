@@ -62,11 +62,9 @@ class ApplicationInboxController extends Controller
                 'taskTitle' => $application->task->title,
                 'taskStatus' => $application->task->status,
 
-                'taskQuota' =>
-                    (int) $application->task->worker_quota,
+                'taskQuota' => (int) $application->task->worker_quota,
 
-                'taskAcceptedCount' =>
-                    (int) ($acceptedByTask[$application->task_id] ?? 0),
+                'taskAcceptedCount' => (int) ($acceptedByTask[$application->task_id] ?? 0),
 
                 'workerName' => $application->worker->name,
                 'workerEmail' => $application->worker->email,

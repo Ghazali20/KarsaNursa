@@ -118,7 +118,8 @@ export default function EditTask({ task }: EditTaskProps) {
                                     Edit Draft Tugas
                                 </h1>
                                 <p className="mt-1 text-sm text-white/70">
-                                    Perbarui informasi dan jadwal draft sebelum dipublikasikan.
+                                    Perbarui informasi dan jadwal draft sebelum
+                                    dipublikasikan.
                                 </p>
                             </div>
                         </div>
@@ -538,8 +539,6 @@ export default function EditTask({ task }: EditTaskProps) {
                             >
                                 Batal
                             </Link>
-
-
 
                             <button
                                 type="submit"

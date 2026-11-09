@@ -38,13 +38,9 @@ class TaskApplicationController extends Controller
             ->map(fn (TaskApplication $application): array => [
                 'id' => $application->id,
 
-                'taskTitle' =>
-                    $application->task?->title
-                    ?? 'Tugas tidak tersedia',
+                'taskTitle' => $application->task->title,
 
-                'businessName' =>
-                    $application->task?->business?->name
-                    ?? 'UMKM tidak tersedia',
+                'businessName' => $application->task->business->name,
 
                 'status' => $application->status,
 
@@ -53,8 +49,7 @@ class TaskApplicationController extends Controller
                 'appliedAt' => $application->created_at
                     ?->format('d/m/Y H:i'),
 
-                'reviewNotes' =>
-                    $application->review_notes ?? null,
+                'reviewNotes' => $application->review_notes ?? null,
 
                 'reviewedAt' => $application->reviewed_at
                     ? Carbon::parse(
@@ -114,8 +109,7 @@ class TaskApplicationController extends Controller
 
             if ($alreadyApplied) {
                 throw ValidationException::withMessages([
-                    'application' =>
-                        'Kamu sudah pernah melamar tugas ini.',
+                    'application' => 'Kamu sudah pernah melamar tugas ini.',
                 ]);
             }
 

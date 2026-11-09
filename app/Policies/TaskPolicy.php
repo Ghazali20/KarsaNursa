@@ -39,7 +39,7 @@ class TaskPolicy
     ): bool {
         return $user->business?->is(
             $task->business,
-        ) && $task->status === TaskStatus::Draft;
+        ) && $task->status === TaskStatus::Draft->value;
     }
 
     public function delete(
@@ -48,6 +48,6 @@ class TaskPolicy
     ): bool {
         return $user->business?->is(
             $task->business,
-        ) && $task->status === TaskStatus::Draft;
+        ) && $task->status === TaskStatus::Draft->value;
     }
 }

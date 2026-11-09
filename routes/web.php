@@ -2,13 +2,13 @@
 
 use App\Http\Controllers\Admin\VerificationController;
 use App\Http\Controllers\DashboardRedirectController;
-use App\Http\Controllers\Employer\DashboardController as EmployerDashboardController;
-use App\Http\Controllers\Worker\DashboardController as WorkerDashboardController;
-use App\Http\Controllers\Employer\TaskController as EmployerTaskController;
-use App\Http\Controllers\Worker\TaskController as WorkerTaskController;
-use App\Http\Controllers\Worker\TaskApplicationController as WorkerTaskApplicationController;
-use App\Http\Controllers\Employer\TaskApplicationController as EmployerTaskApplicationController;
 use App\Http\Controllers\Employer\ApplicationInboxController;
+use App\Http\Controllers\Employer\DashboardController as EmployerDashboardController;
+use App\Http\Controllers\Employer\TaskApplicationController as EmployerTaskApplicationController;
+use App\Http\Controllers\Employer\TaskController as EmployerTaskController;
+use App\Http\Controllers\Worker\DashboardController as WorkerDashboardController;
+use App\Http\Controllers\Worker\TaskApplicationController as WorkerTaskApplicationController;
+use App\Http\Controllers\Worker\TaskController as WorkerTaskController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -206,4 +206,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // SETTINGS
 // ========================================
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

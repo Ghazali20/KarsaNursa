@@ -37,14 +37,22 @@ function rupiah(value: number): string {
 
 export default function EmployerTasksIndex({ tasks }: Props) {
     function publishTask(task: Task): void {
-        if (!window.confirm(`Publikasikan tugas \"${task.title}\" sekarang?`)) return;
+        if (!window.confirm(`Publikasikan tugas "${task.title}" sekarang?`))
+            return;
 
-        router.patch(`/employer/tasks/${task.id}/publish`, {}, {
-            preserveScroll: true,
-            onError: (errors) => {
-                window.alert(Object.values(errors).join('\n') || 'Draft belum siap dipublikasikan.');
+        router.patch(
+            `/employer/tasks/${task.id}/publish`,
+            {},
+            {
+                preserveScroll: true,
+                onError: (errors) => {
+                    window.alert(
+                        Object.values(errors).join('\n') ||
+                            'Draft belum siap dipublikasikan.',
+                    );
+                },
             },
-        });
+        );
     }
 
     return (
@@ -163,7 +171,9 @@ export default function EmployerTasksIndex({ tasks }: Props) {
                                                 <button
                                                     type="button"
                                                     disabled={!task.canPublish}
-                                                    onClick={() => publishTask(task)}
+                                                    onClick={() =>
+                                                        publishTask(task)
+                                                    }
                                                     className="inline-flex items-center gap-2 rounded-xl bg-[var(--karsa-deep-navy)] px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
                                                 >
                                                     <Send className="size-4" />
@@ -172,7 +182,10 @@ export default function EmployerTasksIndex({ tasks }: Props) {
                                             </div>
                                             {!task.canPublish && (
                                                 <p className="text-xs text-amber-700">
-                                                    Draft belum dapat dipublikasikan. Edit dan periksa kembali data serta jadwal.
+                                                    Draft belum dapat
+                                                    dipublikasikan. Edit dan
+                                                    periksa kembali data serta
+                                                    jadwal.
                                                 </p>
                                             )}
                                         </div>

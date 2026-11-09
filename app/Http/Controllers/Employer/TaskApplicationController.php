@@ -51,11 +51,9 @@ class TaskApplicationController extends Controller
 
                 'status' => $application->status,
 
-                'workerName' =>
-                    $application->worker?->name ?? 'Pekerja tidak tersedia',
+                'workerName' => $application->worker->name,
 
-                'workerEmail' =>
-                    $application->worker?->email ?? '-',
+                'workerEmail' => $application->worker->email,
 
                 // Menggunakan created_at, bukan applied_at.
                 'appliedAt' => $application->created_at
@@ -159,11 +157,10 @@ class TaskApplicationController extends Controller
         // Jangan diam-diam menghilangkan catatan.
         if (
             $validated['decision'] === 'rejected'
-            && !$hasReviewNotes
+            && ! $hasReviewNotes
         ) {
             throw ValidationException::withMessages([
-                'application' =>
-                    'Kolom review_notes belum tersedia pada database. ' .
+                'application' => 'Kolom review_notes belum tersedia pada database. '.
                     'Jalankan migration penambahan kolom terlebih dahulu.',
             ]);
         }
@@ -209,8 +206,7 @@ class TaskApplicationController extends Controller
             // Lamaran hanya dapat diproses sekali.
             if ($lockedApplication->status !== 'pending') {
                 throw ValidationException::withMessages([
-                    'application' =>
-                        'Lamaran ini sudah diproses sebelumnya.',
+                    'application' => 'Lamaran ini sudah diproses sebelumnya.',
                 ]);
             }
 
@@ -222,8 +218,7 @@ class TaskApplicationController extends Controller
 
                 if ($lockedTask->status !== 'published') {
                     throw ValidationException::withMessages([
-                        'application' =>
-                            'Tugas ini belum dipublikasikan.',
+                        'application' => 'Tugas ini belum dipublikasikan.',
                     ]);
                 }
 
@@ -232,8 +227,7 @@ class TaskApplicationController extends Controller
                     && Carbon::parse($lockedTask->ends_at)->isPast()
                 ) {
                     throw ValidationException::withMessages([
-                        'application' =>
-                            'Pekerjaan ini sudah berakhir.',
+                        'application' => 'Pekerjaan ini sudah berakhir.',
                     ]);
                 }
 
@@ -253,8 +247,7 @@ class TaskApplicationController extends Controller
                     || $acceptedCount >= $quota
                 ) {
                     throw ValidationException::withMessages([
-                        'application' =>
-                            'Kuota pekerja untuk tugas ini sudah penuh.',
+                        'application' => 'Kuota pekerja untuk tugas ini sudah penuh.',
                     ]);
                 }
             }

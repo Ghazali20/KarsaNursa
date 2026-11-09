@@ -83,9 +83,7 @@ export default function EmployerApplicationsIndex({
             <main className="min-h-screen bg-slate-50 px-4 py-8">
                 <div className="mx-auto max-w-6xl space-y-6">
                     <header className="rounded-3xl bg-[var(--karsa-deep-navy)] p-7 text-white">
-                        <h1 className="text-2xl font-bold">
-                            Menerima Pelamar
-                        </h1>
+                        <h1 className="text-2xl font-bold">Menerima Pelamar</h1>
                         <p className="mt-2 text-sm text-white/70">
                             Daftar lamaran dari semua tugas UMKM Anda.
                         </p>
@@ -147,9 +145,11 @@ export default function EmployerApplicationsIndex({
                                                 </p>
                                             </div>
                                             <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-slate-700">
-                                                {application.status === 'pending'
+                                                {application.status ===
+                                                'pending'
                                                     ? 'Menunggu Seleksi'
-                                                    : application.status === 'accepted'
+                                                    : application.status ===
+                                                        'accepted'
                                                       ? 'Diterima'
                                                       : 'Ditolak'}
                                             </span>
@@ -159,11 +159,13 @@ export default function EmployerApplicationsIndex({
                                             Tugas: {application.taskTitle}
                                         </p>
                                         <p className="mt-1 text-sm text-slate-500">
-                                            Melamar: {application.appliedAt ?? '-'}
+                                            Melamar:{' '}
+                                            {application.appliedAt ?? '-'}
                                         </p>
                                         <p className="mt-1 text-sm text-slate-500">
-                                            Kuota diterima: {application.taskAcceptedCount}
-                                            /{application.taskQuota}
+                                            Kuota diterima:{' '}
+                                            {application.taskAcceptedCount}/
+                                            {application.taskQuota}
                                         </p>
 
                                         <Link
@@ -184,12 +186,16 @@ export default function EmployerApplicationsIndex({
 
                                                 <textarea
                                                     id={`reason-${application.id}`}
-                                                    value={notes[application.id] ?? ''}
+                                                    value={
+                                                        notes[application.id] ??
+                                                        ''
+                                                    }
                                                     onChange={(event) =>
                                                         setNotes((current) => ({
                                                             ...current,
                                                             [application.id]:
-                                                                event.target.value,
+                                                                event.target
+                                                                    .value,
                                                         }))
                                                     }
                                                     placeholder="Wajib diisi jika menolak."
@@ -208,10 +214,14 @@ export default function EmployerApplicationsIndex({
                                                         type="button"
                                                         disabled={
                                                             !canAccept ||
-                                                            processingId !== null
+                                                            processingId !==
+                                                                null
                                                         }
                                                         onClick={() =>
-                                                            decide(application, 'accepted')
+                                                            decide(
+                                                                application,
+                                                                'accepted',
+                                                            )
                                                         }
                                                         className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
                                                     >
@@ -221,9 +231,15 @@ export default function EmployerApplicationsIndex({
 
                                                     <button
                                                         type="button"
-                                                        disabled={processingId !== null}
+                                                        disabled={
+                                                            processingId !==
+                                                            null
+                                                        }
                                                         onClick={() =>
-                                                            decide(application, 'rejected')
+                                                            decide(
+                                                                application,
+                                                                'rejected',
+                                                            )
                                                         }
                                                         className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
                                                     >
@@ -235,11 +251,16 @@ export default function EmployerApplicationsIndex({
                                         ) : (
                                             <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm">
                                                 <p>
-                                                    Diperiksa: {application.reviewedAt ?? '-'}
+                                                    Diperiksa:{' '}
+                                                    {application.reviewedAt ??
+                                                        '-'}
                                                 </p>
                                                 {application.reviewNotes && (
                                                     <p className="mt-2">
-                                                        Catatan: {application.reviewNotes}
+                                                        Catatan:{' '}
+                                                        {
+                                                            application.reviewNotes
+                                                        }
                                                     </p>
                                                 )}
                                             </div>
