@@ -68,7 +68,7 @@ export default function CreateTask() {
         }));
     }
 
-    function submitTask(action: 'draft' | 'publish') {
+    function submitTask(action: 'draft' | 'submit') {
         if (processing) return;
 
         setErrors({});
@@ -94,7 +94,7 @@ export default function CreateTask() {
 
     function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        submitTask('publish');
+        submitTask('submit');
     }
 
     return (
@@ -119,8 +119,8 @@ export default function CreateTask() {
                                     Buat Tugas Baru
                                 </h1>
                                 <p className="mt-1 text-sm text-white/70">
-                                    Publikasikan kebutuhan tenaga kerja harian
-                                    untuk usaha Anda.
+                                    Buat kebutuhan tenaga kerja harian dan
+                                    ajukan kepada admin untuk ditinjau.
                                 </p>
                             </div>
                         </div>
@@ -557,7 +557,7 @@ export default function CreateTask() {
                             >
                                 {processing
                                     ? 'Memproses...'
-                                    : 'Publikasikan Sekarang'}
+                                    : 'Ajukan ke Admin'}
                             </button>
                         </div>
                     </form>

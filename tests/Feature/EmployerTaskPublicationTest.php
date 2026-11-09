@@ -68,7 +68,7 @@ class EmployerTaskPublicationTest extends TestCase
         ]);
     }
 
-    public function test_employer_can_publish_task(): void
+    public function test_employer_can_submit_task_for_admin_review(): void
     {
         $employer = $this->createEmployer();
 
@@ -77,7 +77,7 @@ class EmployerTaskPublicationTest extends TestCase
             ->post(
                 route('employer.tasks.store'),
                 $this->validTaskData([
-                    'action' => 'publish',
+                    'action' => 'submit',
                 ]),
             );
 
@@ -86,17 +86,21 @@ class EmployerTaskPublicationTest extends TestCase
             ->tasks()
             ->firstOrFail();
 
-        // Setelah publikasi, diarahkan ke detail tugas.
+        // Setelah pengajuan, diarahkan ke daftar tugas.
         $response->assertRedirect(
             route('employer.tasks.index'),
         );
 
         $this->assertSame(
-            'published',
+            'pending_review',
             $task->status,
         );
 
         $this->assertNotNull(
+            $task->submitted_at,
+        );
+
+        $this->assertNull(
             $task->published_at,
         );
     }
@@ -174,7 +178,7 @@ class EmployerTaskPublicationTest extends TestCase
 
             'worker_quota' => 3,
             'wage_amount' => 100000,
-            'action' => 'publish',
+            'action' => 'submit',
 
             ...$overrides,
         ];

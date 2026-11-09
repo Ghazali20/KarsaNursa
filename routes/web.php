@@ -144,11 +144,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 [EmployerTaskController::class, 'update']
             )->name('employer.tasks.update');
 
-            // Publikasikan Draft
+            // Ajukan Draft untuk ditinjau Admin
             Route::patch(
-                '/employer/tasks/{task}/publish',
-                [EmployerTaskController::class, 'publish']
-            )->name('employer.tasks.publish');
+                '/employer/tasks/{task}/submit',
+                [EmployerTaskController::class, 'submit']
+            )->name('employer.tasks.submit');
 
             // Halaman pusat penerimaan pelamar UMKM.
             Route::get(

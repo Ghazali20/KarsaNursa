@@ -10,17 +10,30 @@ import {
     WalletCards,
 } from 'lucide-react';
 
+type TaskStatus =
+    | 'draft'
+    | 'pending_review'
+    | 'published'
+    | 'rejected'
+    | 'closed'
+    | 'in_progress'
+    | 'completed'
+    | 'cancelled';
+
 type Task = {
     id: number;
     title: string;
     category: string | null;
-    status: 'draft' | 'published';
+    status: TaskStatus;
+    statusLabel: string;
     locationAddress: string | null;
     workerQuota: number | null;
     wageAmount: number | null;
     createdAt: string | null;
     applicationDeadline: string | null;
-    canPublish: boolean;
+    adminNote: string | null;
+    canEdit: boolean;
+    canSubmit: boolean;
 };
 
 type Props = {
@@ -35,20 +48,40 @@ function rupiah(value: number): string {
     }).format(value);
 }
 
+function statusClass(status: TaskStatus): string {
+    switch (status) {
+        case 'published':
+            return 'bg-emerald-100 text-emerald-700';
+        case 'pending_review':
+            return 'bg-sky-100 text-sky-700';
+        case 'rejected':
+            return 'bg-red-100 text-red-700';
+        case 'completed':
+            return 'bg-violet-100 text-violet-700';
+        case 'cancelled':
+            return 'bg-slate-200 text-slate-700';
+        default:
+            return 'bg-amber-100 text-amber-700';
+    }
+}
+
 export default function EmployerTasksIndex({ tasks }: Props) {
-    function publishTask(task: Task): void {
-        if (!window.confirm(`Publikasikan tugas "${task.title}" sekarang?`))
-            return;
+    function submitTask(task: Task): void {
+        const confirmed = window.confirm(
+            `Ajukan tugas "${task.title}" untuk ditinjau admin?`,
+        );
+
+        if (!confirmed) return;
 
         router.patch(
-            `/employer/tasks/${task.id}/publish`,
+            `/employer/tasks/${task.id}/submit`,
             {},
             {
                 preserveScroll: true,
                 onError: (errors) => {
                     window.alert(
                         Object.values(errors).join('\n') ||
-                            'Draft belum siap dipublikasikan.',
+                            'Tugas belum siap diajukan. Periksa kembali data dan jadwal.',
                     );
                 },
             },
@@ -75,7 +108,8 @@ export default function EmployerTasksIndex({ tasks }: Props) {
                                 Kelola Tugas
                             </h1>
                             <p className="mt-2 text-sm text-white/70">
-                                Semua tugas yang dibuat oleh usaha Anda.
+                                Buat tugas, ajukan kepada admin, dan pantau
+                                status peninjauannya.
                             </p>
                         </div>
 
@@ -121,15 +155,9 @@ export default function EmployerTasksIndex({ tasks }: Props) {
                                         </span>
 
                                         <span
-                                            className={
-                                                task.status === 'published'
-                                                    ? 'rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700'
-                                                    : 'rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700'
-                                            }
+                                            className={`rounded-full px-3 py-1 text-xs font-bold ${statusClass(task.status)}`}
                                         >
-                                            {task.status === 'published'
-                                                ? 'Dipublikasikan'
-                                                : 'Draft'}
+                                            {task.statusLabel}
                                         </span>
                                     </div>
 
@@ -157,35 +185,55 @@ export default function EmployerTasksIndex({ tasks }: Props) {
                                         </div>
                                     </div>
 
-                                    {task.status === 'draft' && (
-                                        <div className="mt-4 space-y-2">
+                                    {task.status === 'pending_review' && (
+                                        <div className="mt-5 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-800">
+                                            Tugas sedang ditinjau admin.
+                                            Informasi tugas belum tampil kepada
+                                            pencari kerja.
+                                        </div>
+                                    )}
+
+                                    {task.status === 'rejected' && (
+                                        <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4">
+                                            <p className="text-sm font-bold text-red-800">
+                                                Tugas ditolak admin
+                                            </p>
+                                            <p className="mt-1 text-sm leading-6 text-red-700">
+                                                {task.adminNote ||
+                                                    'Admin tidak memberikan catatan tambahan.'}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {task.canEdit && (
+                                        <div className="mt-5 space-y-2">
                                             <div className="flex flex-wrap gap-2">
                                                 <Link
                                                     href={`/employer/tasks/${task.id}/edit`}
                                                     className="inline-flex items-center gap-2 rounded-xl border border-blue-700 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
                                                 >
                                                     <Pencil className="size-4" />
-                                                    Edit Draft
+                                                    Edit Tugas
                                                 </Link>
 
                                                 <button
                                                     type="button"
-                                                    disabled={!task.canPublish}
+                                                    disabled={!task.canSubmit}
                                                     onClick={() =>
-                                                        publishTask(task)
+                                                        submitTask(task)
                                                     }
                                                     className="inline-flex items-center gap-2 rounded-xl bg-[var(--karsa-deep-navy)] px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
                                                 >
                                                     <Send className="size-4" />
-                                                    Publikasikan
+                                                    Ajukan ke Admin
                                                 </button>
                                             </div>
-                                            {!task.canPublish && (
+
+                                            {!task.canSubmit && (
                                                 <p className="text-xs text-amber-700">
-                                                    Draft belum dapat
-                                                    dipublikasikan. Edit dan
-                                                    periksa kembali data serta
-                                                    jadwal.
+                                                    Tugas belum dapat diajukan.
+                                                    Edit dan periksa kembali
+                                                    data serta jadwalnya.
                                                 </p>
                                             )}
                                         </div>

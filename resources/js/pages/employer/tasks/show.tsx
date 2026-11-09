@@ -57,9 +57,9 @@ function formatDate(value: string): string {
 }
 
 export default function ShowTask({ task }: ShowTaskProps) {
-    const handlePublish = () => {
-        if (confirm('Apakah Anda yakin ingin mempublikasikan tugas ini?')) {
-            router.patch(`/employer/tasks/${task.id}/publish`);
+    const handleSubmit = () => {
+        if (confirm('Ajukan tugas ini untuk ditinjau admin?')) {
+            router.patch(`/employer/tasks/${task.id}/submit`);
         }
     };
 
@@ -79,11 +79,11 @@ export default function ShowTask({ task }: ShowTaskProps) {
 
                         {task.status === 'draft' && (
                             <Button
-                                onClick={handlePublish}
+                                onClick={handleSubmit}
                                 className="bg-emerald-600 hover:bg-emerald-700"
                             >
                                 <Send className="mr-2 size-4" />
-                                Publikasikan Tugas
+                                Ajukan ke Admin
                             </Button>
                         )}
                     </div>
