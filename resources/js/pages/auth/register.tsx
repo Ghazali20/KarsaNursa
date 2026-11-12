@@ -53,7 +53,7 @@ export default function Register({ passwordRules }: Props) {
                                 aria-pressed={isWorker}
                             >
                                 <Users size={16} />
-                                Pekerja Harian
+                                Pencari Kerja
                             </button>
 
                             <button
@@ -70,7 +70,7 @@ export default function Register({ passwordRules }: Props) {
                                 aria-pressed={!isWorker}
                             >
                                 <BriefcaseBusiness size={16} />
-                                Pelaku UMKM
+                                Pemilik Usaha (UMKM)
                             </button>
                         </div>
 
@@ -91,7 +91,7 @@ export default function Register({ passwordRules }: Props) {
                                     name="name"
                                     placeholder={
                                         isWorker
-                                            ? 'Nama sesuai identitas'
+                                            ? 'Sesuai KTP atau KTM'
                                             : 'Nama pemilik usaha'
                                     }
                                 />

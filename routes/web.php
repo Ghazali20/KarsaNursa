@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\TaskReviewController;
 use App\Http\Controllers\Admin\VerificationController;
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\Employer\ApplicationInboxController;
 use App\Http\Controllers\Employer\DashboardController as EmployerDashboardController;
@@ -22,40 +23,93 @@ use Inertia\Inertia;
 Route::inertia('/', 'welcome')->name('home');
 
 // ========================================
+// GOOGLE OAUTH - LOGIN & REGISTRASI
+// ========================================
+
+// Pengguna yang belum login dapat
+// melakukan autentikasi menggunakan Google.
+//
+// Jika akun Google belum terdaftar,
+// pengguna diarahkan untuk memilih role
+// Worker atau Employer dan melengkapi profil.
+
+Route::middleware('guest')->group(function () {
+
+    // Mengarahkan pengguna ke halaman login Google.
+    Route::get(
+        '/auth/google/redirect',
+        [GoogleAuthController::class, 'redirect']
+    )->name('google.redirect');
+
+    // Menerima callback autentikasi dari Google.
+    Route::get(
+        '/auth/google/callback',
+        [GoogleAuthController::class, 'callback']
+    )->name('google.callback');
+
+    // Menampilkan halaman pemilihan role
+    // dan kelengkapan profil pengguna baru.
+    Route::get(
+        '/auth/google/complete',
+        [GoogleAuthController::class, 'showComplete']
+    )->name('google.complete');
+
+    // Menyimpan akun Google baru
+    // beserta profil Worker atau Employer.
+    Route::post(
+        '/auth/google/complete',
+        [GoogleAuthController::class, 'storeComplete']
+    )->name('google.complete.store');
+});
+
+// ========================================
 // AUTHENTICATION
 // ========================================
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
 
-    // Halaman pengguna yang menunggu verifikasi.
+    // ========================================
+    // HALAMAN STATUS VERIFIKASI AKUN
+    // ========================================
+
     Route::get('/verification/pending', function (Request $request) {
 
+        $user = $request->user();
+
+        // Admin atau pengguna aktif
+        // diarahkan ke dashboard sesuai role.
         if (
-            $request->user()->role === 'admin'
-            || $request->user()->verification_status === 'approved'
+            $user->role === 'admin'
+            || $user->verification_status === 'approved'
         ) {
             return redirect()->route('dashboard');
         }
 
+        // Tetap dipertahankan untuk akun lama
+        // yang masih memiliki status pending/rejected.
         return Inertia::render('auth/verification-pending');
+
     })->name('verification.pending');
 
-    // Hanya pengguna approved yang dapat mengakses fitur.
+    // ========================================
+    // HANYA AKUN APPROVED
+    // ========================================
+
     Route::middleware('approved')->group(function () {
 
-        // Redirect dashboard sesuai role.
+        // Redirect ke dashboard sesuai role.
         Route::get(
             '/dashboard',
             DashboardRedirectController::class
         )->name('dashboard');
 
         // ========================================
-        // PEN​​CARI KERJA (WORKER)
+        // PENCARI KERJA (WORKER)
         // ========================================
 
         Route::middleware('role:worker')->group(function () {
 
-            // Dashboard Worker dengan data tugas terbaru.
+            // Dashboard Worker.
             Route::get(
                 '/worker/dashboard',
                 WorkerDashboardController::class
@@ -67,19 +121,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 [WorkerTaskController::class, 'index']
             )->name('worker.tasks.index');
 
-            // Halaman Daftar Lamaran.
+            // Halaman Lamaran Saya.
             Route::get(
                 '/worker/applications',
                 [WorkerTaskApplicationController::class, 'index']
             )->name('worker.applications.index');
 
-            // Mengajukan lamaran untuk tugas tertentu.
+            // Worker mengajukan lamaran.
             Route::post(
                 '/worker/tasks/{task}/applications',
                 [WorkerTaskApplicationController::class, 'store']
             )->name('worker.tasks.applications.store');
 
-            // Halaman Detail Tugas.
+            // Detail tugas yang tersedia.
             Route::get(
                 '/worker/tasks/{task}',
                 [WorkerTaskController::class, 'show']
@@ -92,73 +146,60 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::middleware('role:employer')->group(function () {
 
-            // Dashboard UMKM dengan data dari database.
+            // Dashboard UMKM.
             Route::get(
                 '/employer/dashboard',
                 EmployerDashboardController::class
             )->name('employer.dashboard');
 
-            // Daftar semua tugas milik UMKM.
+            // Daftar semua tugas UMKM.
             Route::get(
                 '/employer/tasks',
                 [EmployerTaskController::class, 'index']
             )->name('employer.tasks.index');
 
-            // Halaman form membuat tugas baru.
+            // Form membuat tugas baru.
             Route::get(
                 '/employer/tasks/create',
                 [EmployerTaskController::class, 'create']
             )->name('employer.tasks.create');
 
-            // Menyimpan draft atau publikasi tugas.
+            // Menyimpan tugas sebagai Draft
+            // atau sesuai alur publikasi aplikasi.
             Route::post(
                 '/employer/tasks',
                 [EmployerTaskController::class, 'store']
             )->name('employer.tasks.store');
 
-            // Daftar tugas UMKM
-            Route::get(
-                '/employer/tasks',
-                [EmployerTaskController::class, 'index']
-            )->name('employer.tasks.index');
-
-            // Form tugas baru
-            Route::get(
-                '/employer/tasks/create',
-                [EmployerTaskController::class, 'create']
-            )->name('employer.tasks.create');
-
-            // Simpan Draft atau Published
-            Route::post(
-                '/employer/tasks',
-                [EmployerTaskController::class, 'store']
-            )->name('employer.tasks.store');
-
-            // Form Edit Draft
+            // Halaman Edit Draft.
             Route::get(
                 '/employer/tasks/{task}/edit',
                 [EmployerTaskController::class, 'edit']
             )->name('employer.tasks.edit');
 
-            // Simpan hasil Edit Draft
+            // Simpan hasil perubahan Draft.
             Route::patch(
                 '/employer/tasks/{task}',
                 [EmployerTaskController::class, 'update']
             )->name('employer.tasks.update');
 
-            // Ajukan Draft untuk ditinjau Admin
+            // Ajukan Draft untuk ditinjau Admin.
             Route::patch(
                 '/employer/tasks/{task}/submit',
                 [EmployerTaskController::class, 'submit']
             )->name('employer.tasks.submit');
 
-            // Halaman pusat penerimaan pelamar UMKM.
+            // ========================================
+            // MANAJEMEN LAMARAN UMKM
+            // ========================================
+
+            // Pusat seluruh lamaran.
             Route::get(
                 '/employer/applications',
                 ApplicationInboxController::class
             )->name('employer.applications.index');
 
-            // Melihat pelamar pada tugas milik UMKM.
+            // Daftar pelamar untuk satu tugas.
             Route::get(
                 '/employer/tasks/{task}/applications',
                 [EmployerTaskApplicationController::class, 'index']
@@ -170,7 +211,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 [EmployerTaskApplicationController::class, 'decide']
             )->name('employer.tasks.applications.decide');
 
-            // Mencatat pembayaran upah pekerja yang diterima.
+            // Mencatat pembayaran upah pekerja.
             Route::patch(
                 '/employer/applications/{application}/mark-paid',
                 [EmployerTaskPaymentController::class, 'markPaid']
@@ -189,43 +230,56 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 [VerificationController::class, 'index']
             )->name('admin.dashboard');
 
-            // Daftar tugas yang diajukan UMKM.
+            // ========================================
+            // PENINJAUAN TUGAS
+            // ========================================
+
+            // Daftar tugas untuk ditinjau.
             Route::get(
                 '/admin/tasks',
                 [TaskReviewController::class, 'index']
             )->name('admin.tasks.index');
 
-            // Detail tugas untuk ditinjau.
+            // Detail tugas.
             Route::get(
                 '/admin/tasks/{task}',
                 [TaskReviewController::class, 'show']
             )->name('admin.tasks.show');
 
-            // Menyetujui dan memublikasikan tugas.
+            // Admin menyetujui tugas.
             Route::patch(
                 '/admin/tasks/{task}/approve',
                 [TaskReviewController::class, 'approve']
             )->name('admin.tasks.approve');
 
-            // Menolak tugas beserta alasannya.
+            // Admin menolak tugas.
             Route::patch(
                 '/admin/tasks/{task}/reject',
                 [TaskReviewController::class, 'reject']
             )->name('admin.tasks.reject');
 
-            // Menyetujui akun pengguna.
+            // ========================================
+            // PERSETUJUAN AKUN PENGGUNA (LAMA)
+            // ========================================
+
+            // Masih dipertahankan agar fitur lama
+            // tidak langsung rusak saat integrasi Google.
+            // Nantinya dapat dihapus setelah alur
+            // registrasi tanpa approval selesai diuji.
+
+            // Admin menyetujui akun.
             Route::post(
                 '/admin/verifications/{user}/approve',
                 [VerificationController::class, 'approve']
             )->name('admin.verifications.approve');
 
-            // Menolak akun pengguna.
+            // Admin menolak akun.
             Route::post(
                 '/admin/verifications/{user}/reject',
                 [VerificationController::class, 'reject']
             )->name('admin.verifications.reject');
 
-            // Mengunduh dokumen verifikasi pengguna.
+            // Unduh dokumen verifikasi.
             Route::get(
                 '/admin/verifications/documents/{document}',
                 [VerificationController::class, 'download']

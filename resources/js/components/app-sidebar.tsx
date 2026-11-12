@@ -1,10 +1,8 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
-    BookOpen,
     ClipboardCheck,
     ClipboardList,
     ClipboardPlus,
-    FolderGit2,
     LayoutGrid,
     ListTodo,
     Search,
@@ -12,7 +10,6 @@ import {
 } from 'lucide-react';
 
 import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 
@@ -28,24 +25,6 @@ import {
 
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
-
-// ========================================
-// FOOTER NAVIGATION
-// Tetap mempertahankan menu bawaan.
-// ========================================
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
-];
 
 // ========================================
 // APP SIDEBAR
@@ -66,10 +45,7 @@ export function AppSidebar() {
     const mainNavItems: NavItem[] =
         role === 'employer'
             ? [
-                  // ========================================
                   // SIDEBAR PEMILIK UMKM
-                  // ========================================
-
                   {
                       title: 'Dashboard',
                       href: '/employer/dashboard',
@@ -93,10 +69,7 @@ export function AppSidebar() {
               ]
             : role === 'worker'
               ? [
-                    // ========================================
                     // SIDEBAR PENCARI KERJA
-                    // ========================================
-
                     {
                         title: 'Dashboard',
                         href: '/worker/dashboard',
@@ -115,10 +88,7 @@ export function AppSidebar() {
                 ]
               : role === 'admin'
                 ? [
-                      // ========================================
                       // SIDEBAR ADMIN
-                      // ========================================
-
                       {
                           title: 'Dashboard',
                           href: '/admin',
@@ -131,10 +101,7 @@ export function AppSidebar() {
                       },
                   ]
                 : [
-                      // ========================================
                       // FALLBACK NAVIGATION
-                      // ========================================
-
                       {
                           title: 'Dashboard',
                           href: dashboard(),
@@ -144,7 +111,6 @@ export function AppSidebar() {
 
     // ========================================
     // SIDEBAR LAYOUT
-    // Struktur asli tetap dipertahankan.
     // ========================================
 
     return (
@@ -169,7 +135,6 @@ export function AppSidebar() {
 
             {/* SIDEBAR FOOTER */}
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

@@ -152,7 +152,7 @@ export default function Welcome() {
                 <section className="mx-auto grid w-full max-w-[1440px] items-center gap-10 px-4 pt-10 pb-16 sm:px-7 sm:pt-14 lg:min-h-[780px] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-8 lg:px-6 lg:pt-16 lg:pb-20 xl:gap-12 xl:px-4">
                     <div className="min-w-0 lg:max-w-[750px]">
                         <KarsaBadge>
-                            Platform micro-task lokal #UntukNusantara
+                            Platform kerja harian & freelance lokal
                         </KarsaBadge>
 
                         <h1 className="mt-7 max-w-[780px] text-[clamp(2.55rem,5.15vw,5.25rem)] leading-[1.065] font-extrabold tracking-[-0.055em] text-[var(--karsa-deep-navy)]">
@@ -164,9 +164,9 @@ export default function Welcome() {
                         </h1>
 
                         <p className="mt-7 max-w-[690px] text-[15px] leading-[1.8] text-[var(--karsa-muted)] sm:text-[17px] lg:text-[18px]">
-                            KarsaNusa mempertemukan UMKM yang butuh bantuan
-                            operasional dengan tenaga kerja lokal
-                            tepercaya—cepat, adil, dan transparan.
+                            KarsaNusa mempertemukan UMKM yang butuh tenaga
+                            dengan pekerja lokal yang cari penghasilan tambahan.
+                            Cepat, adil, dan upahnya jelas.
                         </p>
 
                         <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -174,7 +174,7 @@ export default function Welcome() {
                                 href={login()}
                                 className="karsa-btn karsa-btn-primary min-h-[50px] px-5 sm:px-6"
                             >
-                                Cari Pekerjaan Harian
+                                Cari Kerja Harian
                                 <ArrowRight size={17} />
                             </Link>
 
@@ -182,7 +182,7 @@ export default function Welcome() {
                                 href={register()}
                                 className="karsa-btn karsa-btn-secondary min-h-[50px] px-5 sm:px-6"
                             >
-                                Buka Lowongan UMKM
+                                Pasang Lowongan Kerja
                             </Link>
                         </div>
 

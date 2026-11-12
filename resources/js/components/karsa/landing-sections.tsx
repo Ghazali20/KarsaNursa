@@ -17,41 +17,41 @@ import {
 import type { ReactNode } from 'react';
 
 const workerFeatures = [
-    'Lowongan berbasis radius lokasi',
+    'Lowongan di sekitar lokasimu',
     'Jadwal fleksibel dan upah pasti',
-    'Portofolio kerja terverifikasi',
+    'Riwayat kerja terverifikasi',
 ];
 
 const employerFeatures = [
-    'Seleksi pekerja terverifikasi',
+    'Pilih dari pekerja terverifikasi',
     'Kelola absensi dan bukti kerja',
-    'Pembukuan upah otomatis',
+    'Pencatatan upah otomatis',
 ];
 
 const workSteps = [
     {
         number: '01',
-        title: 'Buat atau pilih tugas',
+        title: 'Pasang atau pilih tugas',
         description:
-            'UMKM mempublikasikan kebutuhan, pekerja memilih tugas yang sesuai lokasi.',
+            'UMKM pasang tugas lengkap dengan lokasi, jam, dan upah, pekerja memilih tugas yang sesuai lokasi.',
     },
     {
         number: '02',
-        title: 'Mulai dengan aman',
+        title: 'Sepakati dan mulai	',
         description:
-            'Check-in tervalidasi lokasi dan kesepakatan upah tercatat secara digital.',
+            'Pencari kerja check-in di lokasi, dan upah yang disepakati langsung tercatat di platform.',
     },
     {
         number: '03',
-        title: 'Selesaikan dan laporkan',
+        title: 'Kerjakan dan laporkan',
         description:
-            'Unggah bukti kerja, catatan aktivitas, lalu selesaikan proses check-out.',
+            'Unggah foto bukti dan catatan kerja, lalu check-out saat tugas selesai.',
     },
     {
         number: '04',
-        title: 'Upah dan reputasi tercatat',
+        title: 'Upah tercatat, saling menilai',
         description:
-            'Hasil divalidasi, upah dicatat, dan kedua pihak saling memberikan ulasan.',
+            'Hasil kerja dikonfirmasi, upah dicatat, lalu pencari kerja dan UMKM bisa saling memberi ulasan.',
     },
 ];
 
@@ -63,17 +63,17 @@ export function LandingSections() {
                 className="mx-auto w-full max-w-[1440px] px-4 py-16 sm:px-7 sm:py-20 lg:px-6 lg:py-24 xl:px-4"
             >
                 <SectionHeading
-                    eyebrow="SATU PLATFORM, DUA PELUANG"
+                    eyebrow="SATU PLATFORM, DUA MANFAAT"
                     title="Saling bantu, sama-sama bertumbuh"
-                    description="Dibangun khusus untuk kebutuhan kerja operasional harian, bukan proyek panjang yang rumit."
+                    description="Dibuat untuk kerja harian dan tugas singkat, bukan proyek panjang yang rumit."
                 />
 
                 <div className="mt-10 grid gap-5 lg:mt-12 lg:grid-cols-2">
                     <RoleCard
                         icon={<Users size={28} />}
-                        badge="Untuk Pekerja Lokal"
-                        title="Temukan penghasilan di sekitar Anda"
-                        description="Pilih tugas yang cocok dengan waktu dan lokasi Anda. Semua upah tercatat jelas sejak awal."
+                        badge="Untuk Pencari Kerja"
+                        title="Cari penghasilan tambahan di sekitar anda"
+                        description="Pilih tugas yang pas dengan jadwal dan lokasimu. Upah sudah jelas sejak awal."
                         features={workerFeatures}
                         href={login()}
                         action="Jelajahi tugas"
@@ -82,12 +82,12 @@ export function LandingSections() {
 
                     <RoleCard
                         icon={<BriefcaseBusiness size={28} />}
-                        badge="Untuk Pelaku UMKM"
-                        title="Dapatkan bantuan, tepat saat dibutuhkan"
-                        description="Publikasikan tugas mendadak dan temukan pekerja lokal tepercaya hanya dalam hitungan jam."
+                        badge="Untuk Pemilik Usaha (UMKM)"
+                        title="Cari tenaga saat usahamu butuh bantuan"
+                        description="Pasang tugas dadakan dan temukan pekerja lokal dalam hitungan jam."
                         features={employerFeatures}
                         href={register()}
-                        action="Buka lowongan UMKM"
+                        action="Pasang Lowongan"
                         tone="employer"
                     />
                 </div>
@@ -98,16 +98,16 @@ export function LandingSections() {
                 className="bg-[var(--karsa-deep-navy)] px-5 py-24 text-white lg:px-8"
             >
                 <div className="mx-auto w-full max-w-[1440px]">
-                    <div className="mx-auto max-w-[650px] text-center">
+                    <div className="mx-auto max-w-[900px] text-center">
                         <span className="text-[16px] font-extrabold tracking-[0.18em] text-[var(--karsa-sky)]">
-                            MUDAH & TERSTRUKTUR
+                            CARA KERJA
                         </span>
-                        <h2 className="mt-4 text-[clamp(1.85rem,3.1vw,2.9rem)] leading-tight font-extrabold tracking-[-0.035em]">
-                            Dari kebutuhan hingga tuntas
+                        <h2 className="mt-4 text-center text-[clamp(1.6rem,2.8vw,2.6rem)] leading-tight font-extrabold tracking-[-0.02em] text-balance">
+                            Dari pasang tugas hingga upah tercatat
                         </h2>
-                        <p className="mt-4 text-[14px] leading-[1.8] text-[#b8cad8]">
-                            Setiap tahap tercatat untuk menjaga keamanan dan
-                            keadilan kedua pihak.
+                        <p className="mx-auto mt-4 max-w-[650px] text-[14px] leading-[1.8] text-[#b8cad8]">
+                            Setiap langkah tercatat, supaya aman dan adil untuk
+                            pencari kerja maupun pemilik usaha.
                         </p>
                     </div>
 
@@ -163,16 +163,17 @@ export function LandingSections() {
                         </h2>
 
                         <p className="mt-5 max-w-[600px] text-[15px] leading-[1.8] text-[var(--karsa-muted)]">
-                            KarsaNusa membantu menciptakan pertumbuhan ekonomi
-                            yang inklusif melalui pekerjaan produktif, upah yang
-                            adil, dan kesempatan yang setara.
+                            KarsaNusa mendukung pertumbuhan ekonomi lokal lewat
+                            pekerjaan harian yang layak, upah yang jelas, dan
+                            kesempatan yang setara bagi pencari kerja maupun
+                            UMKM.
                         </p>
                     </div>
 
                     <div className="grid grid-cols-3 gap-3">
                         <ImpactStat
-                            value="80%"
-                            label="lebih cepat menemukan pekerja"
+                            value="8 dari 10"
+                            label="responden uji coba menilai pencarian lebih cepat"
                         />
                         <ImpactStat value="0%" label="potongan upah pekerja" />
                         <ImpactStat value="100%" label="kesepakatan tercatat" />
@@ -197,7 +198,8 @@ export function LandingSections() {
                     <div className="text-[14px] leading-relaxed text-[#8da9bd] md:text-right">
                         <span className="block">© 2026 KarsaNusa</span>
                         <span>
-                            Platform Pemberdayaan UMKM & Tenaga Kerja Lokal
+                            Platform Kerja Harian untuk UMKM & Pencari Kerja
+                            Lokal
                         </span>
                     </div>
                 </div>

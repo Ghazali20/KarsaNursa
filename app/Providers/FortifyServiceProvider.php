@@ -2,11 +2,9 @@
 
 namespace App\Providers;
 
-/* @chisel-registration */
-
 use App\Actions\Fortify\CreateNewUser;
-/* @end-chisel-registration */
 use App\Actions\Fortify\ResetUserPassword;
+use App\Actions\Fortify\UpdateUserPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -42,10 +40,14 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureActions(): void
     {
-        Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
-        /* @chisel-registration */
+        // Registrasi pengguna baru.
         Fortify::createUsersUsing(CreateNewUser::class);
-        /* @end-chisel-registration */
+
+        // Reset password melalui fitur lupa password.
+        Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
+
+        // Mengubah password melalui halaman Security.
+        Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
     }
 
     /**
@@ -53,40 +55,31 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
+        // Halaman login manual.
         Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
             'canResetPassword' => Features::enabled(Features::resetPasswords()),
             'status' => $request->session()->get('status'),
         ]));
 
+        // Halaman reset password.
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
             'email' => $request->email,
             'token' => $request->route('token'),
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
         ]));
 
+        // Halaman lupa password.
         Fortify::requestPasswordResetLinkView(fn (Request $request) => Inertia::render('auth/forgot-password', [
             'status' => $request->session()->get('status'),
         ]));
 
-        /* @chisel-email-verification */
-        Fortify::verifyEmailView(fn (Request $request) => Inertia::render('auth/verify-email', [
-            'status' => $request->session()->get('status'),
-        ]));
-        /* @end-chisel-email-verification */
-
-        /* @chisel-registration */
+        // Halaman registrasi manual.
         Fortify::registerView(fn () => Inertia::render('auth/register', [
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
         ]));
-        /* @end-chisel-registration */
 
-        /* @chisel-2fa */
-        Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
-        /* @end-chisel-2fa */
-
-        /* @chisel-password-confirmation */
+        // Konfirmasi password untuk tindakan sensitif.
         Fortify::confirmPasswordView(fn () => Inertia::render('auth/confirm-password'));
-        /* @end-chisel-password-confirmation */
     }
 
     /**
@@ -94,24 +87,13 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureRateLimiting(): void
     {
-        /* @chisel-2fa */
-        RateLimiter::for('two-factor', function (Request $request) {
-            return Limit::perMinute(5)->by($request->session()->get('login.id'));
-        });
-        /* @end-chisel-2fa */
-
+        // Membatasi percobaan login untuk keamanan akun.
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+            $throttleKey = Str::transliterate(
+                Str::lower($request->input(Fortify::username())).'|'.$request->ip()
+            );
 
             return Limit::perMinute(5)->by($throttleKey);
         });
-
-        /* @chisel-passkeys */
-        RateLimiter::for('passkeys', function (Request $request) {
-            return Limit::perMinute(10)->by(
-                ($request->input('credential.id') ?: $request->session()->getId()).'|'.$request->ip(),
-            );
-        });
-        /* @end-chisel-passkeys */
     }
 }
