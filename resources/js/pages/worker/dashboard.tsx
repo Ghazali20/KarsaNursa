@@ -360,8 +360,8 @@ export default function WorkerDashboard({
                                 Tugas di sekitar Anda
                             </h2>
                             <p className="mt-0.5 text-xs text-slate-500">
-                                Temukan pekerjaan harian yang sesuai dengan waktu
-                                dan keahlianmu.
+                                Temukan pekerjaan harian yang sesuai dengan
+                                waktu dan keahlianmu.
                             </p>
                         </div>
 
@@ -440,8 +440,9 @@ export default function WorkerDashboard({
                             {filteredTasks.map((task) => {
                                 const isSaved = savedTaskIds.includes(task.id);
                                 const initialLetter =
-                                    task.businessName.trim()[0]?.toUpperCase() ??
-                                    'U';
+                                    task.businessName
+                                        .trim()[0]
+                                        ?.toUpperCase() ?? 'U';
 
                                 return (
                                     <article

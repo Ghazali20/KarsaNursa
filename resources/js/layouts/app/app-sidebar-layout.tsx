@@ -5,12 +5,7 @@ import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { AppLayoutProps } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import {
-    Bell,
-    ChevronDown,
-    LogOut,
-    UserRound,
-} from 'lucide-react';
+import { Bell, ChevronDown, LogOut, UserRound } from 'lucide-react';
 
 import {
     DropdownMenu,
@@ -105,7 +100,6 @@ export default function AppSidebarLayout({
 
                                 <div className="h-9 w-px bg-slate-200" />
 
-
                                 {/* =====================================
     DROPDOWN AKUN ADMIN
 ===================================== */}
@@ -174,7 +168,6 @@ export default function AppSidebarLayout({
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-
                             </div>
                         </header>
 
@@ -193,9 +186,7 @@ export default function AppSidebarLayout({
                             TIDAK DIUBAH
                         ========================= */}
 
-                        <AppSidebarHeader
-                            breadcrumbs={breadcrumbs}
-                        />
+                        <AppSidebarHeader breadcrumbs={breadcrumbs} />
 
                         {children}
                     </>
