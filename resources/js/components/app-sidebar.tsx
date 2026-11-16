@@ -1,11 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     BriefcaseBusiness,
-    ClipboardCheck,
     ClipboardList,
     ClipboardPlus,
     FileText,
-    Heart,
     History,
     House,
     LayoutGrid,
@@ -156,14 +154,12 @@ export function AppSidebar() {
             >
                 {/* LOGO ADMIN */}
 
-                <SidebarHeader className="bg-white px-4 pb-3 pt-6">
+                <SidebarHeader className="bg-white px-4 pt-6 pb-3">
                     <Link
                         href={home()}
                         className="mb-4 inline-flex w-fit items-center"
                     >
-                        <KarsaLogo
-                            imageClassName="w-[100px]"
-                        />
+                        <KarsaLogo imageClassName="w-[100px]" />
                     </Link>
 
                     <p className="px-3 text-[10px] font-extrabold tracking-[0.12em] text-slate-950">
@@ -182,13 +178,11 @@ export function AppSidebar() {
                                 item.href === '/admin'
                                     ? currentPath === '/admin'
                                     : currentPath === item.href ||
-                                    currentPath.startsWith(
-                                        `${item.href}/`,
-                                    ) ||
-                                    (item.href === '/admin/users' &&
-                                        currentPath.startsWith(
-                                            '/admin/documents',
-                                        ));
+                                      currentPath.startsWith(`${item.href}/`) ||
+                                      (item.href === '/admin/users' &&
+                                          currentPath.startsWith(
+                                              '/admin/documents',
+                                          ));
 
                             return (
                                 <SidebarMenuItem key={item.href}>
@@ -215,9 +209,7 @@ export function AppSidebar() {
                                                 className="shrink-0"
                                             />
 
-                                            <span>
-                                                {item.title}
-                                            </span>
+                                            <span>{item.title}</span>
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
@@ -229,7 +221,6 @@ export function AppSidebar() {
                 {/* FOOTER SIDEBAR */}
 
                 <SidebarFooter className="gap-3 bg-white px-3 pb-5">
-
                     {/* KEMBALI KE BERANDA */}
 
                     <Link

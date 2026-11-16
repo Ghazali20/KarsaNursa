@@ -1,9 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
-    ArrowRight,
     BriefcaseBusiness,
     ChevronRight,
-    ClipboardCheck,
     FileCheck2,
     FileText,
     ShieldCheck,
@@ -60,9 +58,7 @@ function statusLabel(status: string): string {
     if (status === 'rejected') return 'Ditolak';
     if (status === 'draft') return 'Draft';
 
-    if (
-        ['submitted', 'pending_review', 'pending'].includes(status)
-    ) {
+    if (['submitted', 'pending_review', 'pending'].includes(status)) {
         return 'Perlu ditinjau';
     }
 
@@ -78,26 +74,21 @@ function statusClass(status: string): string {
         return 'bg-rose-100 text-rose-700';
     }
 
-    if (
-        ['submitted', 'pending_review', 'pending'].includes(status)
-    ) {
+    if (['submitted', 'pending_review', 'pending'].includes(status)) {
         return 'bg-amber-100 text-amber-800';
     }
 
     return 'bg-slate-100 text-slate-600';
 }
 
-
 export default function AdminDashboard({
     stats,
     documentQueue = [],
     recentTasks = [],
 }: Props) {
-
     const { auth } = usePage().props;
 
-    const firstName =
-        auth?.user?.name?.trim().split(/\s+/)[0] || 'Admin';
+    const firstName = auth?.user?.name?.trim().split(/\s+/)[0] || 'Admin';
 
     const totalUsers = stats.workers + stats.employers;
 
@@ -138,7 +129,6 @@ export default function AdminDashboard({
 
             <main className="min-h-[calc(100svh-70px)] w-full bg-[#21477F] px-4 py-8 text-slate-950 sm:px-6 lg:px-8 lg:py-10">
                 <div className="mx-auto max-w-[1440px] space-y-5">
-
                     {/* HEADER DASHBOARD */}
 
                     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -148,7 +138,8 @@ export default function AdminDashboard({
                             </h1>
 
                             <p className="mt-2 text-sm leading-relaxed text-white">
-                                Pantau keamanan platform, pemeriksaan dokumen, dan aktivitas KarsaNursa.
+                                Pantau keamanan platform, pemeriksaan dokumen,
+                                dan aktivitas KarsaNursa.
                             </p>
                         </div>
                     </div>
@@ -191,7 +182,6 @@ export default function AdminDashboard({
                     {/* ANTRIAN DOKUMEN + TUGAS TERBARU */}
 
                     <div className="grid grid-cols-1 items-stretch gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,0.9fr)]">
-
                         {/* ANTRIAN PEMERIKSAAN */}
 
                         <section className="min-w-0 rounded-2xl border border-[#dce5ed] bg-white p-5 shadow-sm sm:p-6">
@@ -202,7 +192,8 @@ export default function AdminDashboard({
                                     </h2>
 
                                     <p className="mt-1 text-xs text-slate-600">
-                                        Periksa dokumen identitas sebelum menyetujui akun.
+                                        Periksa dokumen identitas sebelum
+                                        menyetujui akun.
                                     </p>
                                 </div>
 
@@ -232,9 +223,7 @@ export default function AdminDashboard({
                                             .trim()
                                             .split(/\s+/)
                                             .slice(0, 2)
-                                            .map((part) =>
-                                                part.charAt(0),
-                                            )
+                                            .map((part) => part.charAt(0))
                                             .join('')
                                             .toUpperCase();
 
@@ -257,7 +246,8 @@ export default function AdminDashboard({
                                                     </p>
 
                                                     <span className="mt-1 inline-block rounded-full bg-[#d6f1f7] px-2 py-0.5 text-[10px] font-semibold">
-                                                        {document.userRole === 'employer'
+                                                        {document.userRole ===
+                                                        'employer'
                                                             ? 'UMKM'
                                                             : 'Pekerja'}
                                                     </span>
@@ -317,9 +307,7 @@ export default function AdminDashboard({
                             </div>
 
                             <div className="mb-2 flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-[11px] text-slate-500">
-                                <span>
-                                    {stats.pendingTasks} perlu ditinjau
-                                </span>
+                                <span>{stats.pendingTasks} perlu ditinjau</span>
 
                                 <span>Terbaru</span>
                             </div>
@@ -337,9 +325,7 @@ export default function AdminDashboard({
                                             className="flex items-center gap-3 py-4 hover:bg-slate-50"
                                         >
                                             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-[#244B83]">
-                                                <BriefcaseBusiness
-                                                    size={19}
-                                                />
+                                                <BriefcaseBusiness size={19} />
                                             </span>
 
                                             <div className="min-w-0 flex-1">
@@ -350,15 +336,11 @@ export default function AdminDashboard({
                                                 <span
                                                     className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClass(task.status)}`}
                                                 >
-                                                    {statusLabel(
-                                                        task.status,
-                                                    )}
+                                                    {statusLabel(task.status)}
                                                 </span>
 
                                                 <p className="mt-1 text-[10px] text-slate-400">
-                                                    {formatDate(
-                                                        task.createdAt,
-                                                    )}
+                                                    {formatDate(task.createdAt)}
                                                 </p>
                                             </div>
 

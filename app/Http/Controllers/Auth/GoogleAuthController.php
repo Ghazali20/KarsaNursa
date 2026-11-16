@@ -264,29 +264,21 @@ class GoogleAuthController extends Controller
                 'max:1000',
             ],
         ], [
-            'worker_identity_document.required' =>
-                'Dokumen KTP atau KTM wajib diunggah.',
+            'worker_identity_document.required' => 'Dokumen KTP atau KTM wajib diunggah.',
 
-            'business_document.required' =>
-                'Dokumen NIB atau Surat Usaha wajib diunggah.',
+            'business_document.required' => 'Dokumen NIB atau Surat Usaha wajib diunggah.',
 
-            'worker_identity_document.mimes' =>
-                'Dokumen harus berupa PDF, JPG, atau PNG.',
+            'worker_identity_document.mimes' => 'Dokumen harus berupa PDF, JPG, atau PNG.',
 
-            'business_document.mimes' =>
-                'Dokumen harus berupa PDF, JPG, atau PNG.',
+            'business_document.mimes' => 'Dokumen harus berupa PDF, JPG, atau PNG.',
 
-            'worker_identity_document.extensions' =>
-                'Ekstensi dokumen harus PDF, JPG, atau PNG.',
+            'worker_identity_document.extensions' => 'Ekstensi dokumen harus PDF, JPG, atau PNG.',
 
-            'business_document.extensions' =>
-                'Ekstensi dokumen harus PDF, JPG, atau PNG.',
+            'business_document.extensions' => 'Ekstensi dokumen harus PDF, JPG, atau PNG.',
 
-            'worker_identity_document.max' =>
-                'Ukuran dokumen maksimal 5 MB.',
+            'worker_identity_document.max' => 'Ukuran dokumen maksimal 5 MB.',
 
-            'business_document.max' =>
-                'Ukuran dokumen maksimal 5 MB.',
+            'business_document.max' => 'Ukuran dokumen maksimal 5 MB.',
         ]);
 
         // ========================================
@@ -397,14 +389,11 @@ class GoogleAuthController extends Controller
                     );
 
                     $user->workerProfile()->create([
-                        'identity_type' =>
-                            $validated['worker_identity_type'],
+                        'identity_type' => $validated['worker_identity_type'],
 
-                        'date_of_birth' =>
-                            $validated['worker_date_of_birth'],
+                        'date_of_birth' => $validated['worker_date_of_birth'],
 
-                        'address' =>
-                            $validated['worker_address'],
+                        'address' => $validated['worker_address'],
 
                         'skills' => $skills,
                     ]);
@@ -416,17 +405,13 @@ class GoogleAuthController extends Controller
 
                 if (! $isWorker) {
                     $user->business()->create([
-                        'name' =>
-                            $validated['business_name'],
+                        'name' => $validated['business_name'],
 
-                        'document_type' =>
-                            $validated['business_document_type'],
+                        'document_type' => $validated['business_document_type'],
 
-                        'category' =>
-                            $validated['business_category'],
+                        'category' => $validated['business_category'],
 
-                        'address' =>
-                            $validated['business_address'],
+                        'address' => $validated['business_address'],
                     ]);
                 }
 
@@ -456,11 +441,9 @@ class GoogleAuthController extends Controller
 
                     'storage_path' => $storedDocumentPath,
 
-                    'original_name' =>
-                        $file->getClientOriginalName(),
+                    'original_name' => $file->getClientOriginalName(),
 
-                    'mime_type' =>
-                        $file->getMimeType()
+                    'mime_type' => $file->getMimeType()
                             ?? 'application/octet-stream',
 
                     'file_size' => $file->getSize(),

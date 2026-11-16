@@ -1,11 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import {
-    Check,
-    Clock3,
-    FileText,
-    UsersRound,
-    X,
-} from 'lucide-react';
+import { Check, Clock3, FileText, UsersRound, X } from 'lucide-react';
 import { useState } from 'react';
 
 // ========================================
@@ -50,13 +44,11 @@ type Props = {
 // ========================================
 
 export default function AdminUsers({ stats, queue }: Props) {
-    const [rejecting, setRejecting] =
-        useState<PendingUser | null>(null);
+    const [rejecting, setRejecting] = useState<PendingUser | null>(null);
 
     const [reviewNotes, setReviewNotes] = useState('');
 
-    const [processingId, setProcessingId] =
-        useState<number | null>(null);
+    const [processingId, setProcessingId] = useState<number | null>(null);
 
     const [error, setError] = useState<string | null>(null);
     const [notice, setNotice] = useState<string | null>(null);
@@ -66,10 +58,7 @@ export default function AdminUsers({ stats, queue }: Props) {
     // ========================================
 
     function approveDocument(user: PendingUser) {
-        if (
-            processingId !== null ||
-            user.documentId === null
-        ) {
+        if (processingId !== null || user.documentId === null) {
             return;
         }
 
@@ -84,9 +73,7 @@ export default function AdminUsers({ stats, queue }: Props) {
                 preserveScroll: true,
 
                 onSuccess: () => {
-                    setNotice(
-                        `Dokumen ${user.name} berhasil diverifikasi.`,
-                    );
+                    setNotice(`Dokumen ${user.name} berhasil diverifikasi.`);
                 },
 
                 onError: (errors) => {
@@ -119,9 +106,7 @@ export default function AdminUsers({ stats, queue }: Props) {
         const reason = reviewNotes.trim();
 
         if (reason.length < 5) {
-            setError(
-                'Alasan penolakan minimal 5 karakter.',
-            );
+            setError('Alasan penolakan minimal 5 karakter.');
             return;
         }
 
@@ -143,9 +128,7 @@ export default function AdminUsers({ stats, queue }: Props) {
                 onSuccess: () => {
                     setRejecting(null);
                     setReviewNotes('');
-                    setNotice(
-                        `Dokumen ${userName} berhasil ditolak.`,
-                    );
+                    setNotice(`Dokumen ${userName} berhasil ditolak.`);
                 },
 
                 onError: (errors) => {
@@ -182,8 +165,7 @@ export default function AdminUsers({ stats, queue }: Props) {
         },
         {
             label: 'Dokumen Terverifikasi',
-            value:
-                `${stats.verifiedDocuments.toLocaleString('id-ID')} Dokumen`,
+            value: `${stats.verifiedDocuments.toLocaleString('id-ID')} Dokumen`,
             description: 'Dokumen yang dinyatakan valid',
             icon: Check,
             iconClass: 'bg-sky-50 text-[#21477F]',
@@ -196,7 +178,6 @@ export default function AdminUsers({ stats, queue }: Props) {
 
             <main className="min-h-[calc(100svh-70px)] w-full bg-[#21477F] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
                 <div className="mx-auto max-w-[1440px] space-y-5">
-
                     {/* ====================================
                         HEADER HALAMAN
                     ==================================== */}
@@ -208,14 +189,13 @@ export default function AdminUsers({ stats, queue }: Props) {
                             </h1>
 
                             <p className="mt-2 text-xs leading-relaxed text-white/80">
-                                Validasi dokumen identitas
-                                pekerja dan legalitas usaha.
+                                Validasi dokumen identitas pekerja dan legalitas
+                                usaha.
                             </p>
                         </div>
 
                         <span className="rounded-full bg-[#fff0c2] px-3 py-1.5 text-xs font-bold text-amber-700">
-                            {stats.totalQueue.toLocaleString('id-ID')}{' '}
-                            Menunggu
+                            {stats.totalQueue.toLocaleString('id-ID')} Menunggu
                         </span>
                     </header>
 
@@ -288,23 +268,19 @@ export default function AdminUsers({ stats, queue }: Props) {
                     ==================================== */}
 
                     <section className="min-w-0 rounded-2xl border border-slate-200 bg-white px-4 py-7 shadow-sm sm:px-5 lg:px-6">
-
                         {/* KONDISI DATA KOSONG */}
 
                         {queue.data.length === 0 ? (
                             <div className="flex min-h-[230px] flex-col items-center justify-center text-center">
-                                <Check
-                                    size={32}
-                                    className="text-emerald-500"
-                                />
+                                <Check size={32} className="text-emerald-500" />
 
                                 <h2 className="mt-3 text-base font-semibold text-slate-900">
                                     Tidak ada antrean pemeriksaan
                                 </h2>
 
                                 <p className="mt-2 text-sm text-slate-500">
-                                    Belum ada dokumen pengguna
-                                    yang menunggu verifikasi.
+                                    Belum ada dokumen pengguna yang menunggu
+                                    verifikasi.
                                 </p>
                             </div>
                         ) : (
@@ -349,8 +325,7 @@ export default function AdminUsers({ stats, queue }: Props) {
                                                                 : 'bg-[#dce9ff] text-slate-900',
                                                         ].join(' ')}
                                                     >
-                                                        {user.role ===
-                                                        'worker'
+                                                        {user.role === 'worker'
                                                             ? 'Pekerja'
                                                             : 'UMKM'}
                                                     </span>
@@ -382,14 +357,10 @@ export default function AdminUsers({ stats, queue }: Props) {
 
                                                 {user.downloadUrl ? (
                                                     <a
-                                                        href={
-                                                            user.downloadUrl
-                                                        }
+                                                        href={user.downloadUrl}
                                                         className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-800 transition hover:bg-slate-50"
                                                     >
-                                                        <FileText
-                                                            size={16}
-                                                        />
+                                                        <FileText size={16} />
                                                         Lihat Dokumen
                                                     </a>
                                                 ) : (
@@ -403,10 +374,8 @@ export default function AdminUsers({ stats, queue }: Props) {
                                                 <button
                                                     type="button"
                                                     disabled={
-                                                        processingId !==
-                                                            null ||
-                                                        user.documentId ===
-                                                            null
+                                                        processingId !== null ||
+                                                        user.documentId === null
                                                     }
                                                     onClick={() => {
                                                         setRejecting(user);
@@ -423,15 +392,11 @@ export default function AdminUsers({ stats, queue }: Props) {
                                                 <button
                                                     type="button"
                                                     disabled={
-                                                        processingId !==
-                                                            null ||
-                                                        user.documentId ===
-                                                            null
+                                                        processingId !== null ||
+                                                        user.documentId === null
                                                     }
                                                     onClick={() =>
-                                                        approveDocument(
-                                                            user,
-                                                        )
+                                                        approveDocument(user)
                                                     }
                                                     className="min-h-10 rounded-xl bg-[#39C900] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#32B300] disabled:cursor-not-allowed disabled:opacity-50"
                                                 >
@@ -514,12 +479,8 @@ export default function AdminUsers({ stats, queue }: Props) {
                                 </h2>
 
                                 <p className="mt-2 text-sm text-slate-500">
-                                    Berikan alasan penolakan
-                                    untuk dokumen milik{' '}
-                                    <strong>
-                                        {rejecting.name}
-                                    </strong>
-                                    .
+                                    Berikan alasan penolakan untuk dokumen milik{' '}
+                                    <strong>{rejecting.name}</strong>.
                                 </p>
                             </div>
 

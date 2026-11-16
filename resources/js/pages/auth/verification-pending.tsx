@@ -27,7 +27,6 @@ export default function VerificationPending() {
     // PEMERIKSAAN STATUS OTOMATIS
     // ========================================
 
-
     useEffect(() => {
         if (approved) {
             router.visit('/dashboard', {
@@ -46,7 +45,6 @@ export default function VerificationPending() {
         };
     }, [approved]);
 
-
     // ========================================
     // PEMERIKSAAN STATUS MANUAL
     // ========================================
@@ -62,8 +60,8 @@ export default function VerificationPending() {
                     approved
                         ? 'Verifikasi Berhasil'
                         : rejected
-                            ? 'Verifikasi Ditolak'
-                            : 'Menunggu Verifikasi'
+                          ? 'Verifikasi Ditolak'
+                          : 'Menunggu Verifikasi'
                 }
             />
 
@@ -77,8 +75,8 @@ export default function VerificationPending() {
                         rejected
                             ? 'mx-auto grid h-16 w-16 place-items-center rounded-[18px] bg-[#fef2f2] text-[#b91c1c]'
                             : approved
-                                ? 'mx-auto grid h-16 w-16 place-items-center rounded-[18px] bg-[#ecfdf5] text-[#047857]'
-                                : 'mx-auto grid h-16 w-16 place-items-center rounded-[18px] bg-[var(--karsa-sky-pale)] text-[var(--karsa-primary)]'
+                              ? 'mx-auto grid h-16 w-16 place-items-center rounded-[18px] bg-[#ecfdf5] text-[#047857]'
+                              : 'mx-auto grid h-16 w-16 place-items-center rounded-[18px] bg-[var(--karsa-sky-pale)] text-[var(--karsa-primary)]'
                     }
                 >
                     {rejected ? (
@@ -91,36 +89,30 @@ export default function VerificationPending() {
                 </span>
 
                 <KarsaBadge
-                    tone={
-                        rejected
-                            ? 'danger'
-                            : approved
-                                ? 'primary'
-                                : 'amber'
-                    }
+                    tone={rejected ? 'danger' : approved ? 'primary' : 'amber'}
                     className="mt-5"
                 >
                     {rejected
                         ? 'PERLU PERBAIKAN'
                         : approved
-                            ? 'AKUN DISETUJUI'
-                            : 'SEDANG DITINJAU'}
+                          ? 'AKUN DISETUJUI'
+                          : 'SEDANG DITINJAU'}
                 </KarsaBadge>
 
                 <h3 className="mt-4 text-[22px] font-extrabold tracking-[-0.03em] text-[var(--karsa-deep-navy)]">
                     {rejected
                         ? 'Dokumen belum dapat disetujui'
                         : approved
-                            ? 'Verifikasi akun berhasil!'
-                            : 'Dokumen Anda sedang diverifikasi'}
+                          ? 'Verifikasi akun berhasil!'
+                          : 'Dokumen Anda sedang diverifikasi'}
                 </h3>
 
                 <p className="mx-auto mt-3 max-w-[370px] text-[9px] leading-[1.8] text-[var(--karsa-muted)]">
                     {rejected
                         ? 'Silakan hubungi tim KarsaNursa untuk mengetahui dokumen yang perlu diperbaiki.'
                         : approved
-                            ? 'Akun Anda sudah disetujui. Anda akan diarahkan ke Dashboard sesuai role yang didaftarkan.'
-                            : 'Tim KarsaNursa sedang memeriksa dokumen Anda. Setelah seluruh dokumen disetujui, akun akan aktif dan dapat mengakses Dashboard.'}
+                          ? 'Akun Anda sudah disetujui. Anda akan diarahkan ke Dashboard sesuai role yang didaftarkan.'
+                          : 'Tim KarsaNursa sedang memeriksa dokumen Anda. Setelah seluruh dokumen disetujui, akun akan aktif dan dapat mengakses Dashboard.'}
                 </p>
             </div>
 
@@ -143,8 +135,8 @@ export default function VerificationPending() {
                         rejected
                             ? 'Dokumen memerlukan perbaikan.'
                             : approved
-                                ? 'Dokumen telah disetujui.'
-                                : 'Sedang menunggu keputusan administrator.'
+                              ? 'Dokumen telah disetujui.'
+                              : 'Sedang menunggu keputusan administrator.'
                     }
                     done={approved}
                     warning={rejected}
@@ -171,10 +163,7 @@ export default function VerificationPending() {
             ==================================== */}
 
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                <Link
-                    href={home()}
-                    className="karsa-btn karsa-btn-secondary"
-                >
+                <Link href={home()} className="karsa-btn karsa-btn-secondary">
                     <Home size={15} />
                     Kembali ke Beranda
                 </Link>
@@ -227,8 +216,8 @@ function StatusItem({
                     warning
                         ? 'grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-[#fef2f2] text-[#b91c1c]'
                         : done
-                            ? 'grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-[#ecfdf5] text-[#047857]'
-                            : 'grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-[var(--karsa-background)] text-[var(--karsa-subtle)]'
+                          ? 'grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-[#ecfdf5] text-[#047857]'
+                          : 'grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-[var(--karsa-background)] text-[var(--karsa-subtle)]'
                 }
             >
                 {icon}
