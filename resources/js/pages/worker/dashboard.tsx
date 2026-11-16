@@ -1,16 +1,18 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
-    BriefcaseBusiness,
-    CircleCheckBig,
-    ClipboardList,
-    Clock3,
+    ArrowRight,
+    Briefcase,
+    Calendar,
+    ChevronRight,
+    Clock,
+    Heart,
     MapPin,
     Search,
-    WalletCards,
+    ShieldCheck,
+    Star,
+    Wallet,
 } from 'lucide-react';
-
-import { DashboardStatCard } from '@/components/dashboard/dashboard-stat-card';
-import { KarsaBadge } from '@/components/karsa/karsa-ui';
+import { useMemo, useState } from 'react';
 
 type RecommendedTask = {
     id: number;
@@ -22,13 +24,46 @@ type RecommendedTask = {
     workerQuota: number | null;
 };
 
+type ActiveTaskItem = {
+    id: number;
+    title: string;
+    businessName: string;
+    locationAddress: string;
+    startedAgo: string;
+    checkInTime: string;
+    distanceText: string;
+};
+
+type WorkHistoryItem = {
+    id: number;
+    title: string;
+    businessName: string;
+    date: string;
+    duration: string;
+    wageAmount: number;
+    rating: number;
+};
+
 type WorkerDashboardProps = {
     recommendedTasks?: RecommendedTask[];
     pendingApplications?: number;
     activeAssignments?: number;
     pendingWages?: number;
     monthlyWages?: number;
+    monthlyHours?: number;
+    ratingScore?: number;
+    ratingCount?: number;
+    activeTask?: ActiveTaskItem | null;
+    recentHistory?: WorkHistoryItem[];
 };
+
+const CATEGORIES = [
+    'Semua',
+    'Katering',
+    'Laundry',
+    'Toko Kelontong',
+    'Bengkel',
+];
 
 function formatFirstName(name: string): string {
     return name.trim().split(/\s+/)[0] ?? name;
@@ -42,268 +77,576 @@ function formatRupiah(value: number): string {
     }).format(value);
 }
 
+function getGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 11) return 'Selamat pagi';
+    if (hour < 15) return 'Selamat siang';
+    if (hour < 18) return 'Selamat sore';
+    return 'Selamat malam';
+}
+
+function getCategoryHeaderColor(category: string | null): string {
+    const normalized = (category ?? '').toLowerCase();
+    if (normalized.includes('katering')) return 'bg-[#FEF6DC]';
+    if (normalized.includes('laundry')) return 'bg-[#E5F0FF]';
+    if (normalized.includes('toko') || normalized.includes('kelontong')) {
+        return 'bg-[#ECEBFE]';
+    }
+    if (normalized.includes('bengkel')) return 'bg-[#E6F7F1]';
+    return 'bg-[#EEF3FA]';
+}
+
 export default function WorkerDashboard({
     recommendedTasks = [],
-    pendingApplications = 0,
     activeAssignments = 0,
-    pendingWages = 0,
     monthlyWages = 0,
+    monthlyHours = 0,
+    ratingScore = 0,
+    ratingCount = 0,
+    activeTask = null,
+    recentHistory = [],
 }: WorkerDashboardProps) {
-    const { auth } = usePage().props;
+    const { auth } = usePage().props as {
+        auth: { user: { name: string } };
+    };
     const user = auth.user;
+
+    const [isAvailable, setIsAvailable] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('Semua');
+    const [savedTaskIds, setSavedTaskIds] = useState<number[]>([]);
+
+    const toggleSaveTask = (id: number) => {
+        setSavedTaskIds((prev) =>
+            prev.includes(id)
+                ? prev.filter((item) => item !== id)
+                : [...prev, id],
+        );
+    };
+
+    const filteredTasks = useMemo(() => {
+        return recommendedTasks.filter((task) => {
+            const matchesCategory =
+                selectedCategory === 'Semua' ||
+                (task.category ?? '').toLowerCase() ===
+                    selectedCategory.toLowerCase();
+
+            const q = searchQuery.trim().toLowerCase();
+            const matchesSearch =
+                q === '' ||
+                task.title.toLowerCase().includes(q) ||
+                task.businessName.toLowerCase().includes(q) ||
+                (task.category ?? '').toLowerCase().includes(q);
+
+            return matchesCategory && matchesSearch;
+        });
+    }, [recommendedTasks, selectedCategory, searchQuery]);
 
     return (
         <>
-            <Head title="Dashboard Pencari Kerja" />
+            <Head title="Dashboard Pekerja" />
 
-            <main className="flex flex-1 flex-col bg-slate-50/70">
-                <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-                    {/* HEADER */}
-                    <header className="overflow-hidden rounded-3xl bg-[var(--karsa-deep-navy)] px-6 py-7 text-white shadow-sm sm:px-8 sm:py-8">
-                        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <main className="mx-auto w-full max-w-7xl space-y-7 px-4 py-6 sm:px-8 sm:py-8">
+                {/* 1. GREETING HEADER & AVAILABILITY TOGGLE */}
+                <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                    <div>
+                        <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#E1F3F2] px-3.5 py-1 text-xs font-semibold text-[#186A66]">
+                            <ShieldCheck className="size-3.5" />
+                            <span>Pekerja Terverifikasi</span>
+                        </div>
+
+                        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                            {getGreeting()}, {formatFirstName(user.name)}!
+                        </h1>
+
+                        <p className="mt-1.5 text-sm text-slate-500">
+                            Ada{' '}
+                            <span className="font-bold text-slate-900">
+                                {recommendedTasks.length} tugas baru
+                            </span>{' '}
+                            di sekitar Anda hari ini.
+                        </p>
+                    </div>
+
+                    {/* SWITCH SIAP MENERIMA TUGAS */}
+                    <div className="flex items-center justify-between gap-4 self-start rounded-2xl border border-slate-200/90 bg-white px-4 py-3 shadow-2xs sm:self-center">
+                        <div className="flex items-center gap-3">
+                            <span
+                                className={`size-2.5 rounded-full ${
+                                    isAvailable
+                                        ? 'bg-emerald-500 ring-4 ring-emerald-500/15'
+                                        : 'bg-slate-300'
+                                }`}
+                            />
                             <div>
-                                <div className="mb-4 flex flex-wrap items-center gap-2">
-                                    <KarsaBadge tone="primary">
-                                        Pencari Kerja
-                                    </KarsaBadge>
-
-                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white">
-                                        <CircleCheckBig className="size-3.5" />
-                                        Akun terverifikasi
-                                    </span>
-                                </div>
-
-                                <p className="text-sm font-medium text-white/70">
-                                    Selamat datang di Website KarsaNusa
+                                <p className="text-xs font-bold text-slate-900">
+                                    Siap menerima tugas
                                 </p>
-
-                                <h1 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">
-                                    Halo, {formatFirstName(user.name)}
-                                </h1>
-
-                                <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">
-                                    Temukan tugas harian yang tersedia dan
-                                    pantau seluruh aktivitas pekerjaan dalam
-                                    satu tempat.
+                                <p className="text-[11px] text-slate-400">
+                                    {isAvailable
+                                        ? 'Profilmu terlihat oleh UMKM'
+                                        : 'Profilmu sedang disembunyikan'}
                                 </p>
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            role="switch"
+                            aria-checked={isAvailable}
+                            onClick={() => setIsAvailable((prev) => !prev)}
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+                                isAvailable ? 'bg-[#1E4479]' : 'bg-slate-200'
+                            }`}
+                        >
+                            <span
+                                className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow-xs transition duration-200 ${
+                                    isAvailable
+                                        ? 'translate-x-5'
+                                        : 'translate-x-0'
+                                }`}
+                            />
+                        </button>
+                    </div>
+                </section>
+
+                {/* 2. TIGA KARTU STATISTIK UTAMA */}
+                <section className="grid gap-4 md:grid-cols-3">
+                    {/* KARTU 1: JAM KERJA */}
+                    <div className="flex items-center gap-4 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs">
+                        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#EAF1FA] text-[#1E4479]">
+                            <Clock className="size-6" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-slate-500">
+                                Jam kerja bulan ini
+                            </p>
+                            <p className="mt-1 text-2xl font-extrabold text-slate-900">
+                                {monthlyHours.toLocaleString('id-ID')} Jam
+                            </p>
+                            <p className="mt-1 text-[11px] text-slate-400">
+                                {activeAssignments > 0
+                                    ? `${activeAssignments} tugas sedang berjalan`
+                                    : 'Akumulasi jam kerja terverifikasi'}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* KARTU 2: TOTAL PENDAPATAN (HIGHLIGHT NAVY) */}
+                    <div className="flex items-center gap-4 rounded-2xl bg-[#0D254C] p-6 text-white shadow-sm">
+                        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-teal-300">
+                            <Wallet className="size-6" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-slate-300">
+                                Total pendapatan
+                            </p>
+                            <p className="mt-1 text-2xl font-extrabold tracking-tight text-white">
+                                {formatRupiah(monthlyWages)}
+                            </p>
+                            <p className="mt-1 text-[11px] text-slate-300/80">
+                                100% milik Anda
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* KARTU 3: RATING PERFORMA */}
+                    <div className="flex items-center gap-4 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs">
+                        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#EAF1FA] text-[#1E4479]">
+                            <Star className="size-6" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-slate-500">
+                                Rating performa
+                            </p>
+                            <p className="mt-1 text-2xl font-extrabold text-slate-900">
+                                {ratingScore.toLocaleString('id-ID', {
+                                    minimumFractionDigits: 1,
+                                    maximumFractionDigits: 1,
+                                })}{' '}
+                                / 5
+                            </p>
+                            <p className="mt-1 text-[11px] text-slate-400">
+                                {ratingCount > 0
+                                    ? `dari ${ratingCount} ulasan UMKM`
+                                    : 'Performa mitra lokal KarsaNusa'}
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* 3. BANNER TUGAS AKTIF (MUNCUL JIKA ADA TUGAS AKTIF) */}
+                {activeTask && (
+                    <section className="overflow-hidden rounded-2xl border border-[#BBD4F5] bg-[#F4F8FE] shadow-2xs">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#DCE8F8] px-6 py-3">
+                            <div className="flex items-center gap-3">
+                                <span className="rounded-full bg-[#DCE9FA] px-3 py-0.5 text-xs font-bold text-[#1E4479]">
+                                    Sedang Berlangsung
+                                </span>
+                                <span className="text-xs text-slate-500">
+                                    {activeTask.startedAgo}
+                                </span>
                             </div>
 
                             <Link
-                                href="/worker/tasks"
-                                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-[var(--karsa-deep-navy)] transition hover:bg-slate-100"
+                                href={`/worker/tasks/${activeTask.id}`}
+                                className="inline-flex items-center gap-1 text-xs font-bold text-[#1E4479] hover:underline"
                             >
-                                <Search className="size-4" />
-                                Cari tugas
+                                <span>Detail tugas</span>
+                                <ChevronRight className="size-3.5" />
                             </Link>
                         </div>
-                    </header>
 
-                    {/* RINGKASAN AKTIVITAS */}
-                    <section aria-labelledby="worker-summary-heading">
-                        <div className="mb-4">
-                            <h2
-                                id="worker-summary-heading"
-                                className="text-lg font-bold text-slate-950"
-                            >
-                                Ringkasan aktivitas
-                            </h2>
-
-                            <Link
-                                href="/worker/applications"
-                                className="mt-3 inline-flex text-sm font-bold text-blue-700 hover:underline"
-                            >
-                                Lihat riwayat lamaran
-                            </Link>
-
-                            <p className="mt-1 text-sm text-slate-500">
-                                Pantau perkembangan lamaran dan aktivitas
-                                pekerjaan Anda.
-                            </p>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                            <DashboardStatCard
-                                label="Lamaran aktif"
-                                value={pendingApplications}
-                                description="Lamaran yang sedang menunggu proses seleksi."
-                                icon={ClipboardList}
-                                tone="blue"
-                            />
-
-                            <DashboardStatCard
-                                label="Tugas diterima"
-                                value={activeAssignments}
-                                description="Tugas diterima dengan upah yang masih menunggu pembayaran."
-                                icon={BriefcaseBusiness}
-                                tone="green"
-                            />
-
-                            <DashboardStatCard
-                                label="Upah menunggu"
-                                value={formatRupiah(pendingWages)}
-                                description="Upah pekerjaan diterima yang belum dibayar UMKM."
-                                icon={Clock3}
-                                tone="amber"
-                            />
-
-                            <DashboardStatCard
-                                label="Upah bulan ini"
-                                value={formatRupiah(monthlyWages)}
-                                description="Total upah yang dibayar pada bulan berjalan."
-                                icon={WalletCards}
-                                tone="violet"
-                            />
-                        </div>
-                    </section>
-
-                    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.75fr)]">
-                        {/* TUGAS TERSEDIA */}
-                        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                            <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="flex flex-col justify-between gap-4 px-6 py-5 md:flex-row md:items-center">
+                            <div className="flex items-start gap-4">
+                                <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#DCE9FA] text-[#1E4479]">
+                                    <Briefcase className="size-6" />
+                                </div>
                                 <div>
-                                    <h2 className="text-lg font-bold text-slate-950">
-                                        Tugas terbaru tersedia
+                                    <p className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+                                        TUGAS AKTIF
+                                    </p>
+                                    <h2 className="mt-0.5 text-base font-extrabold text-slate-900">
+                                        {activeTask.title}
                                     </h2>
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        <span className="font-semibold text-slate-700">
+                                            {activeTask.businessName}
+                                        </span>{' '}
+                                        • {activeTask.locationAddress}
+                                    </p>
+                                </div>
+                            </div>
 
-                                    <p className="mt-1 text-sm text-slate-500">
-                                        Pekerjaan terbaru yang dipublikasikan
-                                        oleh UMKM.
+                            <div className="flex items-center justify-between gap-5 border-t border-[#DCE8F8] pt-4 md:justify-end md:border-t-0 md:pt-0">
+                                <div>
+                                    <div className="mb-1.5 h-1.5 w-20 overflow-hidden rounded-full bg-slate-200">
+                                        <div className="h-full w-2/3 rounded-full bg-[#1E4479]" />
+                                    </div>
+                                    <p className="text-[11px] text-slate-400">
+                                        Check-in
+                                    </p>
+                                    <p className="text-sm font-extrabold text-slate-900">
+                                        {activeTask.checkInTime}
                                     </p>
                                 </div>
 
                                 <Link
-                                    href="/worker/tasks"
-                                    className="text-sm font-bold text-blue-700 hover:underline"
+                                    href={`/worker/tasks/${activeTask.id}`}
+                                    className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-800 shadow-2xs transition hover:bg-slate-50"
                                 >
-                                    Lihat semua tugas
+                                    Check-out
                                 </Link>
                             </div>
+                        </div>
 
-                            {recommendedTasks.length === 0 ? (
-                                <div className="mt-8 flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
-                                    <div className="flex size-14 items-center justify-center rounded-2xl bg-white text-slate-500 shadow-sm">
-                                        <Search className="size-6" />
-                                    </div>
+                        <div className="flex items-center gap-2 border-t border-[#DCE8F8] bg-white/60 px-6 py-2.5 text-xs">
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#1E4479]">
+                                <MapPin className="size-3.5" />
+                                Lokasi terverifikasi
+                            </span>
+                            <span className="text-slate-400">
+                                {activeTask.distanceText}
+                            </span>
+                        </div>
+                    </section>
+                )}
 
-                                    <h3 className="mt-5 font-bold text-slate-950">
-                                        Belum ada tugas tersedia
-                                    </h3>
+                {/* 4. TUGAS DI SEKITAR ANDA */}
+                <section className="space-y-4 pt-1">
+                    <div className="flex flex-wrap items-end justify-between gap-3">
+                        <div>
+                            <h2 className="text-lg font-extrabold text-slate-900">
+                                Tugas di sekitar Anda
+                            </h2>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                                Temukan pekerjaan harian yang sesuai dengan waktu
+                                dan keahlianmu.
+                            </p>
+                        </div>
 
-                                    <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-                                        Tugas yang telah dipublikasikan UMKM dan
-                                        masih menerima lamaran akan muncul di
-                                        sini.
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="mt-6 space-y-4">
-                                    {recommendedTasks.map((task) => (
-                                        <article
-                                            key={task.id}
-                                            className="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:border-blue-300 hover:bg-white"
+                        <Link
+                            href="/worker/tasks"
+                            className="inline-flex items-center gap-1.5 text-sm font-bold text-[#1E4479] hover:underline"
+                        >
+                            <span>Lihat semua tugas</span>
+                            <ArrowRight className="size-4" />
+                        </Link>
+                    </div>
+
+                    {/* SEARCH & FILTER PILLS */}
+                    <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+                        <div className="relative flex-1">
+                            <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Cari tugas atau nama UMKM..."
+                                className="h-11 w-full rounded-xl border border-slate-200 bg-white pr-4 pl-10 text-sm text-slate-800 placeholder:text-slate-400 focus:border-[#1E4479] focus:ring-2 focus:ring-[#1E4479]/15 focus:outline-none"
+                            />
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            {CATEGORIES.map((category) => {
+                                const active = selectedCategory === category;
+                                return (
+                                    <button
+                                        key={category}
+                                        type="button"
+                                        onClick={() =>
+                                            setSelectedCategory(category)
+                                        }
+                                        className={`rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+                                            active
+                                                ? 'bg-[#0D254C] text-white shadow-2xs'
+                                                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        {category}
+                                    </button>
+                                );
+                            })}
+
+                            <div className="ml-1 inline-flex items-center gap-1.5 px-2 text-xs text-slate-500">
+                                <MapPin className="size-3.5 text-slate-400" />
+                                <span>
+                                    Radius{' '}
+                                    <strong className="text-slate-800">
+                                        5 km
+                                    </strong>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* GRID KARTU LOWONGAN */}
+                    {filteredTasks.length === 0 ? (
+                        <div className="flex min-h-56 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+                            <div className="flex size-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+                                <Search className="size-5" />
+                            </div>
+                            <h3 className="mt-4 text-sm font-bold text-slate-900">
+                                Tidak ada tugas yang cocok
+                            </h3>
+                            <p className="mt-1 max-w-md text-xs leading-5 text-slate-500">
+                                Coba ubah kata kunci pencarian atau pilih
+                                kategori lain untuk melihat tugas harian dari
+                                UMKM.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                            {filteredTasks.map((task) => {
+                                const isSaved = savedTaskIds.includes(task.id);
+                                const initialLetter =
+                                    task.businessName.trim()[0]?.toUpperCase() ??
+                                    'U';
+
+                                return (
+                                    <article
+                                        key={task.id}
+                                        className="flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xs transition hover:border-[#1E4479]/40 hover:shadow-md"
+                                    >
+                                        {/* HEADER WARNA KATEGORI */}
+                                        <div
+                                            className={`flex items-center justify-between px-5 pt-4 pb-6 ${getCategoryHeaderColor(
+                                                task.category,
+                                            )}`}
                                         >
-                                            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
-                                                {task.category || 'Lainnya'}
+                                            <span className="rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs">
+                                                {task.category || 'Umum'}
                                             </span>
 
-                                            <h3 className="mt-3 text-lg font-bold text-slate-950">
-                                                {task.title}
-                                            </h3>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    toggleSaveTask(task.id)
+                                                }
+                                                aria-label="Simpan tugas"
+                                                className="flex size-8 items-center justify-center rounded-full bg-white/95 text-slate-500 shadow-2xs transition hover:text-rose-500"
+                                            >
+                                                <Heart
+                                                    className={`size-4 ${
+                                                        isSaved
+                                                            ? 'fill-rose-500 text-rose-500'
+                                                            : ''
+                                                    }`}
+                                                />
+                                            </button>
+                                        </div>
 
-                                            <p className="mt-1 text-sm font-semibold text-blue-700">
-                                                {task.businessName}
-                                            </p>
-
-                                            <div className="mt-4 space-y-2 text-sm text-slate-600">
-                                                <div className="flex items-start gap-2">
-                                                    <MapPin className="mt-0.5 size-4 shrink-0" />
-                                                    <span>
-                                                        {task.locationAddress ||
-                                                            'Lokasi belum tersedia'}
-                                                    </span>
+                                        {/* BODY KARTU */}
+                                        <div className="flex flex-1 flex-col px-5 pt-4 pb-5">
+                                            {/* IDENTITAS UMKM */}
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#0D254C] text-xs font-bold text-white">
+                                                    {initialLetter}
                                                 </div>
-
                                                 <div>
-                                                    Kuota:{' '}
-                                                    {task.workerQuota ?? '-'}{' '}
-                                                    pekerja
-                                                </div>
-
-                                                <div className="font-bold text-emerald-700">
-                                                    {task.wageAmount === null
-                                                        ? 'Upah belum tersedia'
-                                                        : formatRupiah(
-                                                              task.wageAmount,
-                                                          )}
+                                                    <p className="text-xs font-bold text-slate-900">
+                                                        {task.businessName}
+                                                    </p>
+                                                    <p className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#1E4479]">
+                                                        <ShieldCheck className="size-3" />
+                                                        Terverifikasi
+                                                    </p>
                                                 </div>
                                             </div>
 
-                                            <Link
-                                                href={`/worker/tasks/${task.id}`}
-                                                className="mt-4 inline-flex rounded-xl bg-[var(--karsa-deep-navy)] px-4 py-2.5 text-sm font-bold text-white hover:opacity-90"
-                                            >
-                                                Lihat Detail Tugas
-                                            </Link>
-                                        </article>
-                                    ))}
-                                </div>
-                            )}
-                        </section>
+                                            {/* JUDUL TUGAS */}
+                                            <h3 className="mt-3.5 line-clamp-2 text-base font-extrabold text-slate-900">
+                                                {task.title}
+                                            </h3>
 
-                        {/* LANGKAH BERIKUTNYA */}
-                        <aside className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                            <h2 className="text-lg font-bold text-slate-950">
-                                Langkah berikutnya
+                                            {/* META LOKASI & KUOTA */}
+                                            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-500">
+                                                <span className="inline-flex items-center gap-1">
+                                                    <MapPin className="size-3.5 text-slate-400" />
+                                                    <span className="line-clamp-1 max-w-[140px]">
+                                                        {task.locationAddress ||
+                                                            'Lokasi dekat Anda'}
+                                                    </span>
+                                                </span>
+                                                <span className="inline-flex items-center gap-1">
+                                                    <Calendar className="size-3.5 text-slate-400" />
+                                                    Jadwal fleksibel
+                                                </span>
+                                            </div>
+
+                                            {/* UPAH & TOMBOL LAMAR */}
+                                            <div className="mt-5 border-t border-slate-100 pt-4">
+                                                <div className="flex items-baseline justify-between">
+                                                    <div>
+                                                        <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                                                            UPAH BERSIH
+                                                        </p>
+                                                        <p className="mt-0.5 text-base font-extrabold text-slate-900">
+                                                            {task.wageAmount ===
+                                                            null
+                                                                ? 'Kesepakatan'
+                                                                : formatRupiah(
+                                                                      task.wageAmount,
+                                                                  )}{' '}
+                                                            <span className="text-xs font-normal text-slate-400">
+                                                                / tugas
+                                                            </span>
+                                                        </p>
+                                                    </div>
+
+                                                    <span className="text-xs font-medium text-slate-400">
+                                                        {task.workerQuota ?? 1}{' '}
+                                                        slot
+                                                    </span>
+                                                </div>
+
+                                                <Link
+                                                    href={`/worker/tasks/${task.id}`}
+                                                    className="mt-3.5 flex w-full items-center justify-center rounded-xl bg-[#1E4479] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#163561]"
+                                                >
+                                                    Lamar Tugas
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </article>
+                                );
+                            })}
+                        </div>
+                    )}
+                </section>
+
+                {/* 5. RIWAYAT KERJA TERBARU */}
+                <section className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h2 className="text-base font-extrabold text-slate-900">
+                                Riwayat kerja terbaru
                             </h2>
+                            <p className="mt-0.5 text-xs text-slate-400">
+                                Rekam jejak yang telah disetujui UMKM.
+                            </p>
+                        </div>
 
-                            <div className="mt-5 space-y-4">
-                                <div className="flex gap-3">
-                                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
-                                        1
-                                    </span>
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-900">
-                                            Lengkapi profil
-                                        </p>
-                                        <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            Pastikan informasi kemampuan dan
-                                            lokasi Anda sesuai.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-3">
-                                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
-                                        2
-                                    </span>
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-900">
-                                            Temukan tugas
-                                        </p>
-                                        <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            Cari pekerjaan yang sesuai dengan
-                                            kebutuhan Anda.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-3">
-                                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-bold text-amber-700">
-                                        3
-                                    </span>
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-900">
-                                            Ajukan lamaran
-                                        </p>
-                                        <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            Lamar tugas dan pantau proses
-                                            seleksi UMKM.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </aside>
+                        <Link
+                            href="/worker/applications"
+                            className="text-xs font-bold text-[#1E4479] hover:underline"
+                        >
+                            Lihat riwayat lengkap
+                        </Link>
                     </div>
+
+                    {recentHistory.length === 0 ? (
+                        <div className="mt-5 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-8 text-center">
+                            <p className="text-sm font-semibold text-slate-700">
+                                Belum ada riwayat pekerjaan selesai
+                            </p>
+                            <p className="mt-1 text-xs text-slate-400">
+                                Tugas harian yang telah kamu selesaikan dan
+                                disetujui UMKM akan tercatat di sini.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="mt-5 overflow-x-auto">
+                            <table className="w-full min-w-[600px] text-left text-sm">
+                                <thead>
+                                    <tr className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+                                        <th className="rounded-l-lg px-4 py-3">
+                                            TUGAS & UMKM
+                                        </th>
+                                        <th className="px-4 py-3">TANGGAL</th>
+                                        <th className="px-4 py-3">DURASI</th>
+                                        <th className="px-4 py-3">UPAH</th>
+                                        <th className="rounded-r-lg px-4 py-3">
+                                            PENILAIAN
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {recentHistory.map((item) => (
+                                        <tr
+                                            key={item.id}
+                                            className="transition hover:bg-slate-50/60"
+                                        >
+                                            <td className="px-4 py-3.5">
+                                                <p className="font-bold text-slate-900">
+                                                    {item.title}
+                                                </p>
+                                                <p className="mt-0.5 text-xs text-slate-400">
+                                                    {item.businessName}
+                                                </p>
+                                            </td>
+                                            <td className="px-4 py-3.5 text-xs text-slate-600">
+                                                {item.date}
+                                            </td>
+                                            <td className="px-4 py-3.5 text-xs text-slate-600">
+                                                {item.duration}
+                                            </td>
+                                            <td className="px-4 py-3.5 text-xs font-bold text-slate-900">
+                                                {formatRupiah(item.wageAmount)}
+                                            </td>
+                                            <td className="px-4 py-3.5">
+                                                <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-500">
+                                                    <Star className="size-3.5 fill-amber-400 text-amber-400" />
+                                                    {item.rating.toFixed(1)}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </section>
+
+                {/* TOMBOL FLOATING KANAN BAWAH */}
+                <div className="flex justify-end pb-2">
+                    <Link
+                        href="/worker/applications"
+                        className="inline-flex items-center gap-2 rounded-xl border border-[#BBD4F5] bg-[#E8F1FD] px-4 py-2.5 text-xs font-bold text-[#1E4479] shadow-2xs transition hover:bg-[#DCE9FA]"
+                    >
+                        <Star className="size-4" />
+                        <span>Beri ulasan tugas terakhir</span>
+                    </Link>
                 </div>
             </main>
         </>
