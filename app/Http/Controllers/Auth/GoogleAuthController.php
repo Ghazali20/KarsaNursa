@@ -6,23 +6,27 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Socialite\Facades\Socialite;
+use RuntimeException;
+use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 use Throwable;
 
 class GoogleAuthController extends Controller
 {
     /**
-     * Redirect pengguna ke Google.
+     * Mengarahkan pengguna ke halaman Google OAuth.
      */
-    public function redirect(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse
+    public function redirect(Request $request): SymfonyRedirectResponse
     {
         $request->session()->forget('google_registration');
 
@@ -30,7 +34,7 @@ class GoogleAuthController extends Controller
     }
 
     /**
-     * Menangani callback setelah login Google.
+     * Menangani callback dari Google OAuth.
      */
     public function callback(Request $request): RedirectResponse
     {
@@ -49,6 +53,7 @@ class GoogleAuthController extends Controller
         $googleId = (string) $googleUser->getId();
         $email = $googleUser->getEmail();
 
+        // Pastikan Google ID dan email valid.
         if (
             $googleId === '' ||
             ! is_string($email) ||
@@ -62,20 +67,33 @@ class GoogleAuthController extends Controller
                 ]);
         }
 
-        // Pengguna yang sebelumnya mendaftar dengan Google.
+        // ========================================
+        // AKUN GOOGLE SUDAH TERDAFTAR
+        // ========================================
+
         $user = User::query()
             ->where('google_id', $googleId)
             ->first();
 
         if ($user !== null) {
             Auth::login($user);
+
             $request->session()->regenerate();
 
             return redirect('/dashboard');
         }
 
-        // Akun manual tidak otomatis dihubungkan ke Google.
-        if (User::query()->where('email', $email)->exists()) {
+        // ========================================
+        // CEGAH EMAIL GANDA
+        // ========================================
+
+        // Akun manual tidak otomatis dihubungkan
+        // ke akun Google hanya berdasarkan email.
+        if (
+            User::query()
+                ->where('email', $email)
+                ->exists()
+        ) {
             return redirect()
                 ->route('login')
                 ->withErrors([
@@ -83,7 +101,10 @@ class GoogleAuthController extends Controller
                 ]);
         }
 
-        // Simpan identitas sementara di session server.
+        // ========================================
+        // SIMPAN DATA GOOGLE DI SESSION
+        // ========================================
+
         $request->session()->put('google_registration', [
             'id' => $googleId,
             'name' => $googleUser->getName() ?: 'Pengguna Google',
@@ -94,13 +115,18 @@ class GoogleAuthController extends Controller
     }
 
     /**
-     * Menampilkan formulir pemilihan role.
+     * Menampilkan halaman Lengkapi Pendaftaran Google.
      */
-    public function showComplete(Request $request): Response|RedirectResponse
-    {
+    public function showComplete(
+        Request $request
+    ): Response|RedirectResponse {
         $pending = $request->session()->get('google_registration');
 
-        if (! is_array($pending)) {
+        if (
+            ! is_array($pending) ||
+            empty($pending['id']) ||
+            empty($pending['email'])
+        ) {
             return redirect()->route('login');
         }
 
@@ -111,10 +137,19 @@ class GoogleAuthController extends Controller
     }
 
     /**
-     * Menyelesaikan pendaftaran melalui Google.
+     * Menyelesaikan pendaftaran pengguna Google.
+     *
+     * Mendukung:
+     * - Worker: KTP atau KTM
+     * - Employer: NIB atau Surat Usaha
+     * - Upload PDF, JPG, JPEG, PNG maksimal 5 MB
      */
     public function storeComplete(Request $request): RedirectResponse
     {
+        // ========================================
+        // 1. VALIDASI SESSION GOOGLE
+        // ========================================
+
         $pending = $request->session()->get('google_registration');
 
         if (
@@ -129,127 +164,349 @@ class GoogleAuthController extends Controller
                 ]);
         }
 
+        // ========================================
+        // 2. VALIDASI FORM PENDAFTARAN
+        // ========================================
+
         $validated = $request->validate([
+            // ------------------------------------
+            // DATA UMUM
+            // ------------------------------------
+
             'role' => [
                 'required',
                 Rule::in(['worker', 'employer']),
             ],
+
             'phone' => [
                 'required',
                 'string',
                 'max:20',
             ],
 
-            // Profil pencari kerja.
+            // ------------------------------------
+            // PROFIL PEN CARI KERJA
+            // ------------------------------------
+
             'worker_identity_type' => [
-                'nullable',
-                'required_if:role,worker',
-                Rule::in(['ktp']),
+                'exclude_unless:role,worker',
+                'required',
+                Rule::in(['ktp', 'ktm']),
             ],
+
+            'worker_identity_document' => [
+                'exclude_unless:role,worker',
+                'required',
+                'file',
+                'mimes:pdf,jpg,jpeg,png',
+                'extensions:pdf,jpg,jpeg,png',
+                'max:5120',
+            ],
+
             'worker_date_of_birth' => [
-                'nullable',
-                'required_if:role,worker',
+                'exclude_unless:role,worker',
+                'required',
                 'date',
                 'before:today',
             ],
+
             'worker_address' => [
-                'nullable',
-                'required_if:role,worker',
+                'exclude_unless:role,worker',
+                'required',
                 'string',
                 'max:1000',
             ],
+
             'worker_skills' => [
+                'exclude_unless:role,worker',
                 'nullable',
                 'string',
                 'max:1000',
             ],
 
-            // Profil pemilik UMKM.
+            // ------------------------------------
+            // PROFIL PEMILIK UMKM
+            // ------------------------------------
+
             'business_name' => [
-                'nullable',
-                'required_if:role,employer',
+                'exclude_unless:role,employer',
+                'required',
                 'string',
                 'max:255',
             ],
+
             'business_document_type' => [
-                'nullable',
-                'required_if:role,employer',
-                Rule::in(['nib']),
+                'exclude_unless:role,employer',
+                'required',
+                Rule::in(['nib', 'surat_usaha']),
             ],
+
+            'business_document' => [
+                'exclude_unless:role,employer',
+                'required',
+                'file',
+                'mimes:pdf,jpg,jpeg,png',
+                'extensions:pdf,jpg,jpeg,png',
+                'max:5120',
+            ],
+
             'business_category' => [
-                'nullable',
-                'required_if:role,employer',
+                'exclude_unless:role,employer',
+                'required',
                 'string',
                 'max:255',
             ],
+
             'business_address' => [
-                'nullable',
-                'required_if:role,employer',
+                'exclude_unless:role,employer',
+                'required',
                 'string',
                 'max:1000',
             ],
+        ], [
+            'worker_identity_document.required' =>
+                'Dokumen KTP atau KTM wajib diunggah.',
+
+            'business_document.required' =>
+                'Dokumen NIB atau Surat Usaha wajib diunggah.',
+
+            'worker_identity_document.mimes' =>
+                'Dokumen harus berupa PDF, JPG, atau PNG.',
+
+            'business_document.mimes' =>
+                'Dokumen harus berupa PDF, JPG, atau PNG.',
+
+            'worker_identity_document.extensions' =>
+                'Ekstensi dokumen harus PDF, JPG, atau PNG.',
+
+            'business_document.extensions' =>
+                'Ekstensi dokumen harus PDF, JPG, atau PNG.',
+
+            'worker_identity_document.max' =>
+                'Ukuran dokumen maksimal 5 MB.',
+
+            'business_document.max' =>
+                'Ukuran dokumen maksimal 5 MB.',
         ]);
 
-        $user = DB::transaction(function () use ($pending, $validated) {
-            // Mencegah akun Google dan email ganda.
-            if (
-                User::query()->where('google_id', $pending['id'])->exists() ||
-                User::query()->where('email', $pending['email'])->exists()
-            ) {
-                throw ValidationException::withMessages([
-                    'google' => 'Akun sudah terdaftar. Silakan login kembali.',
-                ]);
-            }
+        // ========================================
+        // 3. TENTUKAN DOKUMEN SESUAI ROLE
+        // ========================================
 
-            $user = User::query()->create([
-                'name' => Str::limit($pending['name'], 255, ''),
-                'email' => $pending['email'],
-                'google_id' => $pending['id'],
-                'role' => $validated['role'],
-                'phone' => $validated['phone'],
-                'verification_status' => 'approved',
+        $isWorker = $validated['role'] === 'worker';
 
-                // Tidak menjadi password login manual.
-                'password' => Hash::make(Str::random(64)),
+        $documentField = $isWorker
+            ? 'worker_identity_document'
+            : 'business_document';
+
+        $documentType = $isWorker
+            ? $validated['worker_identity_type']
+            : $validated['business_document_type'];
+
+        $file = $validated[$documentField];
+
+        if (! $file instanceof UploadedFile) {
+            throw ValidationException::withMessages([
+                $documentField => 'Dokumen yang diunggah tidak valid.',
             ]);
+        }
 
-            // Email telah diverifikasi oleh penyedia Google.
-            // verified_at untuk persetujuan Admin tidak diisi.
-            $user->email_verified_at = now();
-            $user->save();
+        // Menghitung checksum dari file asli.
+        $checksum = hash_file('sha256', $file->getRealPath());
 
-            if ($validated['role'] === 'worker') {
-                $skills = array_values(array_filter(
-                    array_map(
-                        'trim',
-                        explode(',', $validated['worker_skills'] ?? '')
-                    )
-                ));
+        if ($checksum === false) {
+            throw ValidationException::withMessages([
+                $documentField => 'Dokumen tidak dapat diproses. Silakan unggah ulang.',
+            ]);
+        }
 
-                $user->workerProfile()->create([
-                    'identity_type' => $validated['worker_identity_type'],
-                    'date_of_birth' => $validated['worker_date_of_birth'],
-                    'address' => $validated['worker_address'],
-                    'skills' => $skills,
+        // Menyimpan path untuk membersihkan file
+        // apabila transaksi database gagal.
+        $storedDocumentPath = null;
+
+        // ========================================
+        // 4. SIMPAN USER DAN DOKUMEN
+        // ========================================
+
+        try {
+            $user = DB::transaction(function () use (
+                $pending,
+                $validated,
+                $isWorker,
+                $file,
+                $documentType,
+                $checksum,
+                &$storedDocumentPath
+            ): User {
+                // --------------------------------
+                // CEGAH AKUN GOOGLE GANDA
+                // --------------------------------
+
+                if (
+                    User::query()
+                        ->where('google_id', $pending['id'])
+                        ->exists() ||
+                    User::query()
+                        ->where('email', $pending['email'])
+                        ->exists()
+                ) {
+                    throw ValidationException::withMessages([
+                        'google' => 'Akun sudah terdaftar. Silakan login kembali.',
+                    ]);
+                }
+
+                // --------------------------------
+                // BUAT AKUN PENGGUNA
+                // --------------------------------
+
+                $user = User::query()->create([
+                    'name' => Str::limit($pending['name'], 255, ''),
+                    'email' => $pending['email'],
+                    'google_id' => $pending['id'],
+                    'role' => $validated['role'],
+                    'phone' => $validated['phone'],
+
+                    // Akun langsung aktif.
+                    'verification_status' => 'approved',
+
+                    // Password acak untuk akun Google.
+                    'password' => Hash::make(
+                        Str::random(64)
+                    ),
                 ]);
+
+                // Email sudah diverifikasi oleh Google.
+                $user->email_verified_at = now();
+                $user->save();
+
+                // --------------------------------
+                // BUAT PROFIL PEN CARI KERJA
+                // --------------------------------
+
+                if ($isWorker) {
+                    $skills = array_values(
+                        array_filter(
+                            array_map(
+                                'trim',
+                                explode(
+                                    ',',
+                                    $validated['worker_skills'] ?? ''
+                                )
+                            )
+                        )
+                    );
+
+                    $user->workerProfile()->create([
+                        'identity_type' =>
+                            $validated['worker_identity_type'],
+
+                        'date_of_birth' =>
+                            $validated['worker_date_of_birth'],
+
+                        'address' =>
+                            $validated['worker_address'],
+
+                        'skills' => $skills,
+                    ]);
+                }
+
+                // --------------------------------
+                // BUAT PROFIL PEMILIK UMKM
+                // --------------------------------
+
+                if (! $isWorker) {
+                    $user->business()->create([
+                        'name' =>
+                            $validated['business_name'],
+
+                        'document_type' =>
+                            $validated['business_document_type'],
+
+                        'category' =>
+                            $validated['business_category'],
+
+                        'address' =>
+                            $validated['business_address'],
+                    ]);
+                }
+
+                // --------------------------------
+                // UPLOAD DOKUMEN KE STORAGE PRIVAT
+                // --------------------------------
+
+                $storedDocumentPath = $file->store(
+                    "verifications/{$user->id}",
+                    'local'
+                );
+
+                if ($storedDocumentPath === false) {
+                    throw new RuntimeException(
+                        'Dokumen verifikasi gagal disimpan.'
+                    );
+                }
+
+                // --------------------------------
+                // SIMPAN METADATA DOKUMEN
+                // --------------------------------
+
+                $user->verificationDocuments()->create([
+                    'document_type' => $documentType,
+
+                    'disk' => 'local',
+
+                    'storage_path' => $storedDocumentPath,
+
+                    'original_name' =>
+                        $file->getClientOriginalName(),
+
+                    'mime_type' =>
+                        $file->getMimeType()
+                            ?? 'application/octet-stream',
+
+                    'file_size' => $file->getSize(),
+
+                    'sha256' => $checksum,
+
+                    // Status peninjauan dokumen.
+                    // Tidak menghalangi login akun.
+                    'status' => 'pending',
+                ]);
+
+                return $user;
+            });
+        } catch (Throwable $exception) {
+            // --------------------------------
+            // BERSIHKAN FILE JIKA DATABASE GAGAL
+            // --------------------------------
+
+            if (
+                is_string($storedDocumentPath) &&
+                $storedDocumentPath !== ''
+            ) {
+                Storage::disk('local')
+                    ->delete($storedDocumentPath);
             }
 
-            if ($validated['role'] === 'employer') {
-                $user->business()->create([
-                    'name' => $validated['business_name'],
-                    'document_type' => $validated['business_document_type'],
-                    'category' => $validated['business_category'],
-                    'address' => $validated['business_address'],
-                ]);
-            }
+            throw $exception;
+        }
 
-            return $user;
-        });
+        // ========================================
+        // 5. HAPUS SESSION PENDAFTARAN
+        // ========================================
 
         $request->session()->forget('google_registration');
 
+        // ========================================
+        // 6. LOGIN PENGGUNA
+        // ========================================
+
         Auth::login($user);
+
         $request->session()->regenerate();
+
+        // ========================================
+        // 7. REDIRECT SESUAI ROLE
+        // ========================================
 
         return redirect('/dashboard');
     }

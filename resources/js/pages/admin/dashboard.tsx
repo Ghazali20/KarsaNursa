@@ -1,393 +1,376 @@
-import { Head, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import {
+    ArrowRight,
+    BriefcaseBusiness,
+    ChevronRight,
+    ClipboardCheck,
+    FileCheck2,
+    FileText,
+    ShieldCheck,
+    Users,
+} from 'lucide-react';
 
-// ========================================
-// DEFINISI TIPE DATA
-// ========================================
-
-type VerificationStatus = 'pending' | 'approved' | 'rejected';
-
-type Filter = VerificationStatus | 'all';
-
-type VerificationDocument = {
-    id: number;
-    name: string;
-    type: string;
-    status: string;
-    reviewNotes: string | null;
-    url: string;
+type Stats = {
+    workers: number;
+    employers: number;
+    tasks: number;
+    pendingTasks: number;
+    publishedTasks: number;
+    pendingDocuments: number;
 };
 
-type VerificationUser = {
+type DocumentItem = {
     id: number;
-    name: string;
-    email: string;
-    role: 'worker' | 'employer';
-    verificationStatus: VerificationStatus;
-    profileLabel: string | null;
-    documents: VerificationDocument[];
+    userName: string;
+    userRole: string;
+    documentType: string;
+    createdAt: string | null;
+    downloadUrl: string;
+};
+
+type TaskItem = {
+    id: number;
+    title: string;
+    status: string;
+    createdAt: string | null;
 };
 
 type Props = {
-    stats: Record<VerificationStatus, number>;
-    users: VerificationUser[];
+    stats: Stats;
+    documentQueue?: DocumentItem[];
+    recentTasks?: TaskItem[];
 };
 
-const labels: Record<VerificationStatus, string> = {
-    pending: 'Menunggu',
-    approved: 'Disetujui',
-    rejected: 'Ditolak',
-};
+function formatDate(value: string | null): string {
+    if (!value) return '-';
 
-// ========================================
-// KOMPONEN DASHBOARD ADMIN
-// ========================================
+    const date = new Date(value);
 
-export default function AdminDashboard({ stats, users }: Props) {
-    const [filter, setFilter] = useState<Filter>('pending');
+    if (Number.isNaN(date.getTime())) return '-';
 
-    const [notes, setNotes] = useState<Record<number, string>>({});
+    return date.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });
+}
 
-    const [processingId, setProcessingId] = useState<number | null>(null);
+function statusLabel(status: string): string {
+    if (status === 'published') return 'Dipublikasikan';
+    if (status === 'rejected') return 'Ditolak';
+    if (status === 'draft') return 'Draft';
 
-    const [error, setError] = useState<string | null>(null);
-
-    const [success, setSuccess] = useState<string | null>(null);
-
-    // Filter daftar pengguna berdasarkan status.
-    const filteredUsers = users.filter(
-        (user) => filter === 'all' || user.verificationStatus === filter,
-    );
-
-    // ========================================
-    // PROSES APPROVE DAN REJECT
-    // ========================================
-
-    function decide(user: VerificationUser, action: 'approve' | 'reject') {
-        if (processingId !== null) {
-            return;
-        }
-
-        if (action === 'reject' && (notes[user.id] ?? '').trim().length < 5) {
-            setError('Alasan penolakan minimal 5 karakter.');
-            return;
-        }
-
-        setError(null);
-        setSuccess(null);
-        setProcessingId(user.id);
-
-        const data =
-            action === 'reject' ? { review_notes: notes[user.id] ?? '' } : {};
-
-        router.post(`/admin/verifications/${user.id}/${action}`, data, {
-            preserveScroll: true,
-
-            onSuccess: () => {
-                setSuccess(
-                    action === 'approve'
-                        ? `Akun ${user.name} berhasil disetujui.`
-                        : `Akun ${user.name} berhasil ditolak.`,
-                );
-            },
-
-            onError: (errors) => {
-                setError(
-                    Object.values(errors)[0] ?? 'Gagal memproses verifikasi.',
-                );
-            },
-
-            onFinish: () => {
-                setProcessingId(null);
-            },
-        });
+    if (
+        ['submitted', 'pending_review', 'pending'].includes(status)
+    ) {
+        return 'Perlu ditinjau';
     }
 
-    // ========================================
-    // TAMPILAN HALAMAN
-    // ========================================
+    return status.replaceAll('_', ' ');
+}
+
+function statusClass(status: string): string {
+    if (status === 'published') {
+        return 'bg-emerald-100 text-emerald-700';
+    }
+
+    if (status === 'rejected') {
+        return 'bg-rose-100 text-rose-700';
+    }
+
+    if (
+        ['submitted', 'pending_review', 'pending'].includes(status)
+    ) {
+        return 'bg-amber-100 text-amber-800';
+    }
+
+    return 'bg-slate-100 text-slate-600';
+}
+
+
+export default function AdminDashboard({
+    stats,
+    documentQueue = [],
+    recentTasks = [],
+}: Props) {
+
+    const { auth } = usePage().props;
+
+    const firstName =
+        auth?.user?.name?.trim().split(/\s+/)[0] || 'Admin';
+
+    const totalUsers = stats.workers + stats.employers;
+
+    const cards = [
+        {
+            title: 'Total pengguna',
+            value: totalUsers.toLocaleString('id-ID'),
+            subtitle: `${stats.workers} pekerja · ${stats.employers} UMKM`,
+            icon: Users,
+            color: 'bg-sky-50 text-[#244B83]',
+        },
+        {
+            title: 'Menunggu pemeriksaan',
+            value: stats.pendingDocuments.toLocaleString('id-ID'),
+            subtitle: 'Dokumen identitas dan usaha',
+            icon: ShieldCheck,
+            color: 'bg-orange-50 text-orange-500',
+        },
+        {
+            title: 'Tugas aktif',
+            value: stats.publishedTasks.toLocaleString('id-ID'),
+            subtitle: 'Tugas berstatus dipublikasikan',
+            icon: BriefcaseBusiness,
+            color: 'bg-sky-50 text-[#244B83]',
+        },
+        {
+            title: 'Laporan terbuka',
+            value: '—',
+            subtitle: 'Modul laporan belum terintegrasi',
+            icon: FileText,
+            color: 'bg-red-50 text-red-500',
+        },
+    ];
 
     return (
         <>
-            <Head title="Verifikasi Akun - Admin KarsaNursa" />
+            <Head title="Dashboard Admin - KarsaNursa" />
 
-            <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900 sm:px-8">
-                <div className="mx-auto max-w-6xl space-y-6">
+            <main className="min-h-[calc(100svh-70px)] w-full bg-[#21477F] px-4 py-8 text-slate-950 sm:px-6 lg:px-8 lg:py-10">
+                <div className="mx-auto max-w-[1440px] space-y-5">
+
                     {/* HEADER DASHBOARD */}
-                    <div>
-                        <p className="text-sm font-semibold text-blue-700">
-                            KarsaNursa · Admin
-                        </p>
 
-                        <h1 className="mt-1 text-3xl font-bold">
-                            Verifikasi Akun
-                        </h1>
+                    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 className="text-[27px] font-medium tracking-tight text-white sm:text-[31px]">
+                                Halo, {firstName}!
+                            </h1>
 
-                        <p className="mt-2 text-sm text-slate-600">
-                            Tinjau pendaftaran Pencari Kerja dan Pemilik UMKM
-                            beserta dokumennya.
-                        </p>
+                            <p className="mt-2 text-sm leading-relaxed text-white">
+                                Pantau keamanan platform, pemeriksaan dokumen, dan aktivitas KarsaNursa.
+                            </p>
+                        </div>
                     </div>
 
-                    {/* KARTU STATISTIK */}
-                    <div className="grid gap-4 sm:grid-cols-3">
-                        {(['pending', 'approved', 'rejected'] as const).map(
-                            (status) => (
-                                <div
-                                    key={status}
-                                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-                                >
-                                    <p className="text-sm text-slate-500">
-                                        {labels[status]}
-                                    </p>
+                    {/* EMPAT KARTU STATISTIK */}
 
-                                    <p className="mt-2 text-3xl font-bold">
-                                        {stats[status]}
+                    <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        {cards.map((card) => {
+                            const Icon = card.icon;
+
+                            return (
+                                <article
+                                    key={card.title}
+                                    className="flex min-h-[106px] items-start gap-3 rounded-xl border border-[#dce5ed] bg-white p-4 shadow-sm"
+                                >
+                                    <div
+                                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${card.color}`}
+                                    >
+                                        <Icon size={21} />
+                                    </div>
+
+                                    <div className="min-w-0">
+                                        <p className="text-xs text-slate-600">
+                                            {card.title}
+                                        </p>
+
+                                        <p className="mt-1 text-2xl font-bold tabular-nums">
+                                            {card.value}
+                                        </p>
+
+                                        <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                                            {card.subtitle}
+                                        </p>
+                                    </div>
+                                </article>
+                            );
+                        })}
+                    </section>
+
+                    {/* ANTRIAN DOKUMEN + TUGAS TERBARU */}
+
+                    <div className="grid grid-cols-1 items-stretch gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,0.9fr)]">
+
+                        {/* ANTRIAN PEMERIKSAAN */}
+
+                        <section className="min-w-0 rounded-2xl border border-[#dce5ed] bg-white p-5 shadow-sm sm:p-6">
+                            <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <h2 className="text-lg font-semibold">
+                                        Antrian pemeriksaan identitas
+                                    </h2>
+
+                                    <p className="mt-1 text-xs text-slate-600">
+                                        Periksa dokumen identitas sebelum menyetujui akun.
                                     </p>
                                 </div>
-                            ),
-                        )}
-                    </div>
 
-                    {/* DAFTAR PENGGUNA */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        {/* HEADER DAFTAR */}
-                        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                            <h2 className="text-xl font-bold">
-                                Daftar Pendaftaran
-                            </h2>
-
-                            <label className="flex items-center gap-2 text-sm">
-                                <span className="text-slate-600">Status</span>
-
-                                <select
-                                    value={filter}
-                                    onChange={(event) =>
-                                        setFilter(event.target.value as Filter)
-                                    }
-                                    className="rounded-lg border border-slate-300 bg-white px-3 py-2"
+                                <Link
+                                    href="/admin/users"
+                                    className="text-sm font-semibold hover:text-blue-700"
                                 >
-                                    <option value="pending">Menunggu</option>
-                                    <option value="approved">Disetujui</option>
-                                    <option value="rejected">Ditolak</option>
-                                    <option value="all">Semua</option>
-                                </select>
-                            </label>
-                        </div>
-
-                        {/* PESAN ERROR */}
-                        {error && (
-                            <p
-                                role="alert"
-                                className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700"
-                            >
-                                {error}
-                            </p>
-                        )}
-
-                        {/* PESAN BERHASIL */}
-                        {success && (
-                            <p
-                                role="status"
-                                className="mb-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700"
-                            >
-                                {success}
-                            </p>
-                        )}
-
-                        {/* KONDISI DATA KOSONG */}
-                        {filteredUsers.length === 0 ? (
-                            <p className="rounded-xl bg-slate-50 p-8 text-center text-sm text-slate-500">
-                                Belum ada akun dengan status ini.
-                            </p>
-                        ) : (
-                            <div className="space-y-4">
-                                {filteredUsers.map((user) => (
-                                    <article
-                                        key={user.id}
-                                        className="rounded-xl border border-slate-200 p-5"
-                                    >
-                                        {/* INFORMASI PENGGUNA */}
-                                        <div className="flex flex-wrap items-start justify-between gap-3">
-                                            <div>
-                                                <h3 className="text-lg font-bold">
-                                                    {user.name}
-                                                </h3>
-
-                                                <p className="text-sm text-slate-600">
-                                                    {user.email}
-                                                </p>
-
-                                                <p className="mt-2 text-sm">
-                                                    {user.role === 'employer'
-                                                        ? 'Pemilik UMKM'
-                                                        : 'Pencari Kerja'}
-
-                                                    {user.profileLabel
-                                                        ? ` · ${user.profileLabel}`
-                                                        : ''}
-                                                </p>
-                                            </div>
-
-                                            {/* STATUS AKUN */}
-                                            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold">
-                                                {
-                                                    labels[
-                                                        user.verificationStatus
-                                                    ]
-                                                }
-                                            </span>
-                                        </div>
-
-                                        {/* DOKUMEN VERIFIKASI */}
-                                        <div className="mt-4 border-t border-slate-100 pt-3">
-                                            <p className="text-sm font-semibold">
-                                                Dokumen verifikasi
-                                            </p>
-
-                                            {user.documents.length === 0 ? (
-                                                <p className="mt-1 text-sm text-slate-500">
-                                                    Dokumen belum tersedia.
-                                                </p>
-                                            ) : (
-                                                <div className="mt-2 space-y-2">
-                                                    {user.documents.map(
-                                                        (document) => (
-                                                            <div
-                                                                key={
-                                                                    document.id
-                                                                }
-                                                                className="flex flex-wrap items-center gap-3 text-sm"
-                                                            >
-                                                                <a
-                                                                    href={
-                                                                        document.url
-                                                                    }
-                                                                    className="font-medium text-blue-700 underline"
-                                                                >
-                                                                    Unduh:{' '}
-                                                                    {
-                                                                        document.name
-                                                                    }
-                                                                </a>
-
-                                                                <span className="text-slate-500">
-                                                                    (
-                                                                    {
-                                                                        document.type
-                                                                    }
-                                                                    {' · '}
-                                                                    {
-                                                                        document.status
-                                                                    }
-                                                                    )
-                                                                </span>
-
-                                                                {document.reviewNotes && (
-                                                                    <span className="text-slate-600">
-                                                                        Catatan:{' '}
-                                                                        {
-                                                                            document.reviewNotes
-                                                                        }
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        ),
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* AKSI VERIFIKASI */}
-                                        {user.verificationStatus ===
-                                            'pending' && (
-                                            <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
-                                                {/* ALASAN PENOLAKAN */}
-                                                <label
-                                                    className="block text-sm font-semibold"
-                                                    htmlFor={`notes-${user.id}`}
-                                                >
-                                                    Alasan penolakan (wajib jika
-                                                    Reject)
-                                                </label>
-
-                                                <textarea
-                                                    id={`notes-${user.id}`}
-                                                    value={notes[user.id] ?? ''}
-                                                    onChange={(event) =>
-                                                        setNotes(
-                                                            (previous) => ({
-                                                                ...previous,
-                                                                [user.id]:
-                                                                    event.target
-                                                                        .value,
-                                                            }),
-                                                        )
-                                                    }
-                                                    maxLength={1000}
-                                                    rows={2}
-                                                    className="w-full rounded-lg border border-slate-300 p-3 text-sm"
-                                                    placeholder="Contoh: Dokumen identitas tidak terbaca."
-                                                />
-
-                                                {/* TOMBOL AKSI */}
-                                                <div className="flex flex-wrap gap-3">
-                                                    <button
-                                                        type="button"
-                                                        disabled={
-                                                            processingId !==
-                                                                null ||
-                                                            user.documents
-                                                                .length === 0
-                                                        }
-                                                        onClick={() =>
-                                                            decide(
-                                                                user,
-                                                                'approve',
-                                                            )
-                                                        }
-                                                        className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
-                                                    >
-                                                        {processingId ===
-                                                        user.id
-                                                            ? 'Memproses...'
-                                                            : 'Approve Akun'}
-                                                    </button>
-
-                                                    <button
-                                                        type="button"
-                                                        disabled={
-                                                            processingId !==
-                                                                null ||
-                                                            (
-                                                                notes[
-                                                                    user.id
-                                                                ] ?? ''
-                                                            ).trim().length <
-                                                                5 ||
-                                                            user.documents
-                                                                .length === 0
-                                                        }
-                                                        onClick={() =>
-                                                            decide(
-                                                                user,
-                                                                'reject',
-                                                            )
-                                                        }
-                                                        className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
-                                                    >
-                                                        {processingId ===
-                                                        user.id
-                                                            ? 'Memproses...'
-                                                            : 'Reject Akun'}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </article>
-                                ))}
+                                    Lihat semua
+                                </Link>
                             </div>
-                        )}
+
+                            {documentQueue.length === 0 ? (
+                                <div className="flex min-h-[250px] flex-col items-center justify-center text-center">
+                                    <FileCheck2
+                                        size={32}
+                                        className="text-slate-300"
+                                    />
+
+                                    <p className="mt-3 text-sm font-medium text-slate-600">
+                                        Tidak ada dokumen dalam antrian.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-slate-200">
+                                    {documentQueue.map((document) => {
+                                        const initials = document.userName
+                                            .trim()
+                                            .split(/\s+/)
+                                            .slice(0, 2)
+                                            .map((part) =>
+                                                part.charAt(0),
+                                            )
+                                            .join('')
+                                            .toUpperCase();
+
+                                        return (
+                                            <article
+                                                key={document.id}
+                                                className="flex flex-wrap items-center gap-3 py-4 first:pt-1"
+                                            >
+                                                {/* AVATAR */}
+
+                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#d6f1f7] text-xs font-bold">
+                                                    {initials}
+                                                </div>
+
+                                                {/* PROFIL */}
+
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="truncate text-sm font-bold">
+                                                        {document.userName}
+                                                    </p>
+
+                                                    <span className="mt-1 inline-block rounded-full bg-[#d6f1f7] px-2 py-0.5 text-[10px] font-semibold">
+                                                        {document.userRole === 'employer'
+                                                            ? 'UMKM'
+                                                            : 'Pekerja'}
+                                                    </span>
+
+                                                    <p className="mt-1 text-xs text-slate-600">
+                                                        {document.documentType.toUpperCase()}
+                                                    </p>
+                                                </div>
+
+                                                {/* AKSI */}
+
+                                                <div className="flex items-center gap-2">
+                                                    <a
+                                                        href={
+                                                            document.downloadUrl
+                                                        }
+                                                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold hover:bg-slate-50"
+                                                    >
+                                                        <FileText size={15} />
+                                                        Tinjau
+                                                    </a>
+
+                                                    <Link
+                                                        href="/admin/users"
+                                                        className="rounded-lg bg-[#39C900] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#32B400]"
+                                                    >
+                                                        Pemeriksaan
+                                                    </Link>
+                                                </div>
+                                            </article>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </section>
+
+                        {/* TUGAS TERBARU */}
+
+                        <section className="min-w-0 rounded-2xl border border-[#dce5ed] bg-white p-5 shadow-sm sm:p-6">
+                            <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <h2 className="text-lg font-semibold">
+                                        Tugas Terbaru
+                                    </h2>
+
+                                    <p className="mt-1 text-xs text-slate-600">
+                                        Tugas yang dibuat oleh UMKM.
+                                    </p>
+                                </div>
+
+                                <Link
+                                    href="/admin/tasks"
+                                    className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold hover:bg-slate-50"
+                                >
+                                    Lihat semua
+                                </Link>
+                            </div>
+
+                            <div className="mb-2 flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-[11px] text-slate-500">
+                                <span>
+                                    {stats.pendingTasks} perlu ditinjau
+                                </span>
+
+                                <span>Terbaru</span>
+                            </div>
+
+                            {recentTasks.length === 0 ? (
+                                <div className="py-12 text-center text-sm text-slate-500">
+                                    Belum ada tugas.
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-slate-100">
+                                    {recentTasks.map((task) => (
+                                        <Link
+                                            href="/admin/tasks"
+                                            key={task.id}
+                                            className="flex items-center gap-3 py-4 hover:bg-slate-50"
+                                        >
+                                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-[#244B83]">
+                                                <BriefcaseBusiness
+                                                    size={19}
+                                                />
+                                            </span>
+
+                                            <div className="min-w-0 flex-1">
+                                                <p className="truncate text-xs font-semibold">
+                                                    {task.title}
+                                                </p>
+
+                                                <span
+                                                    className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClass(task.status)}`}
+                                                >
+                                                    {statusLabel(
+                                                        task.status,
+                                                    )}
+                                                </span>
+
+                                                <p className="mt-1 text-[10px] text-slate-400">
+                                                    {formatDate(
+                                                        task.createdAt,
+                                                    )}
+                                                </p>
+                                            </div>
+
+                                            <ChevronRight
+                                                size={17}
+                                                className="shrink-0 text-slate-600"
+                                            />
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
                     </div>
                 </div>
             </main>

@@ -260,73 +260,80 @@ function RoleCard({
         <article
             className={
                 employer
-                    ? 'rounded-[20px] border border-[var(--karsa-border)] bg-[var(--karsa-deep-navy)] p-7 text-white shadow-[var(--karsa-shadow)] sm:p-9'
+                    ? 'rounded-[20px] border border-[var(--karsa-border)] bg-white p-7 shadow-[var(--karsa-shadow)] sm:p-9'
                     : 'rounded-[20px] border border-[var(--karsa-border)] bg-white p-7 shadow-[var(--karsa-shadow)] sm:p-9'
             }
         >
+            {/* ICON */}
             <span
                 className={
                     employer
-                        ? 'grid h-14 w-14 place-items-center rounded-[15px] bg-white/10 text-[var(--karsa-sky)]'
+                        ? 'grid h-14 w-14 place-items-center rounded-[15px] bg-[var(--karsa-primary)] text-white'
                         : 'grid h-14 w-14 place-items-center rounded-[15px] bg-[var(--karsa-sky-pale)] text-[var(--karsa-primary)]'
                 }
             >
                 {icon}
             </span>
 
+            {/* BADGE */}
             <KarsaBadge tone={employer ? 'blue' : 'primary'} className="mt-6">
                 {badge}
             </KarsaBadge>
 
+            {/* JUDUL */}
             <h3
                 className={
                     employer
-                        ? 'mt-5 text-[23px] leading-tight font-extrabold tracking-[-0.025em] text-white'
+                        ? 'mt-5 text-[23px] leading-tight font-extrabold tracking-[-0.025em] text-[var(--karsa-deep-navy)]'
                         : 'mt-5 text-[23px] leading-tight font-extrabold tracking-[-0.025em] text-[var(--karsa-deep-navy)]'
                 }
             >
                 {title}
             </h3>
 
+            {/* DESKRIPSI */}
             <p
                 className={
                     employer
-                        ? 'mt-4 text-[16px] leading-[1.8] text-[#b8cad8]'
+                        ? 'mt-4 text-[16px] leading-[1.8] text-[var(--karsa-muted)]'
                         : 'mt-4 text-[16px] leading-[1.8] text-[var(--karsa-muted)]'
                 }
             >
                 {description}
             </p>
 
+            {/* DAFTAR KEUNGGULAN */}
             <ul className="mt-6 grid gap-3">
                 {features.map((feature) => (
                     <li
                         key={feature}
                         className={
                             employer
-                                ? 'flex items-center gap-3 text-[16px] font-semibold text-[#d9e5ee]'
+                                ? 'flex items-center gap-3 text-[16px] font-semibold text-[var(--karsa-slate)]'
                                 : 'flex items-center gap-3 text-[16px] font-semibold text-[var(--karsa-slate)]'
                         }
                     >
                         <span
                             className={
                                 employer
-                                    ? 'grid h-6 w-6 place-items-center rounded-full bg-white/10 text-[var(--karsa-sky)]'
+                                    ? 'grid h-6 w-6 place-items-center rounded-full bg-[var(--karsa-sky-pale)] text-[var(--karsa-primary)]'
                                     : 'grid h-6 w-6 place-items-center rounded-full bg-[var(--karsa-sky-pale)] text-[var(--karsa-primary)]'
                             }
                         >
                             <Check size={14} />
                         </span>
+
                         {feature}
                     </li>
                 ))}
             </ul>
 
+            {/* TOMBOL */}
             <Link
                 href={href}
                 className={
                     employer
-                        ? 'karsa-btn mt-8 border-white/15 bg-white text-[var(--karsa-deep-navy)] hover:bg-[var(--karsa-sky-pale)]'
+                        ? 'karsa-btn karsa-btn-secondary mt-8'
                         : 'karsa-btn karsa-btn-secondary mt-8'
                 }
             >
