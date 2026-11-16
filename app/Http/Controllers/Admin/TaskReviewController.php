@@ -16,6 +16,9 @@ class TaskReviewController extends Controller
 {
     /**
      * Menampilkan daftar tugas yang pernah diajukan kepada admin.
+     *
+     * Data lama tetap dikirim. Properti tambahan mendukung
+     * tampilan Manajemen Tugas dan popup Tinjau Detail.
      */
     public function index(): Response
     {
@@ -37,20 +40,67 @@ class TaskReviewController extends Controller
             ->latest('submitted_at')
             ->get()
             ->map(fn (Task $task): array => [
+                // ====================================
+                // PROPERTI LAMA
+                // ====================================
+
                 'id' => $task->id,
                 'title' => $task->title,
                 'category' => $task->category,
                 'status' => $task->status,
                 'statusLabel' => TaskStatus::tryFrom($task->status)?->label()
                     ?? ucfirst($task->status),
+
                 'businessName' => $task->business->name,
                 'employerName' => $task->business->user->name,
+
                 'wageAmount' => (int) $task->wage_amount,
                 'workerQuota' => (int) $task->worker_quota,
+
                 'submittedAt' => $task->submitted_at?->format('d/m/Y H:i'),
                 'reviewedAt' => $task->reviewed_at?->format('d/m/Y H:i'),
+
                 'reviewerName' => $task->reviewer?->name,
                 'adminNote' => $task->admin_note,
+
+                // ====================================
+                // DATA TAMBAHAN UNTUK FIGMA
+                // ====================================
+
+                'description' => $task->description,
+                'requirements' => $task->requirements,
+                'instructions' => $task->instructions,
+
+                'businessEmail' => $task->business->user->email,
+                'employerEmail' => $task->business->user->email,
+
+                'location' => $task->location_address,
+                'locationAddress' => $task->location_address,
+
+                'wage' => (int) $task->wage_amount,
+
+                'latitude' => (string) $task->latitude,
+                'longitude' => (string) $task->longitude,
+
+                'attendanceRadiusMeters' =>
+                    (int) $task->attendance_radius_meters,
+
+                'applicationDeadline' =>
+                    $task->application_deadline?->toIso8601String(),
+
+                'startsAt' => $task->starts_at?->toIso8601String(),
+                'endsAt' => $task->ends_at?->toIso8601String(),
+
+                'createdAt' => $task->created_at?->toIso8601String(),
+                'updatedAt' => $task->updated_at?->toIso8601String(),
+
+                'submittedAtIso' =>
+                    $task->submitted_at?->toIso8601String(),
+
+                'reviewedAtIso' =>
+                    $task->reviewed_at?->toIso8601String(),
+
+                'reviewNotes' => $task->admin_note,
             ])
             ->values()
             ->all();
@@ -58,24 +108,54 @@ class TaskReviewController extends Controller
         $base = fn () => Task::query()
             ->whereIn('status', $reviewableStatuses);
 
+        $pendingReview = $base()
+            ->where('status', TaskStatus::PendingReview->value)
+            ->count();
+
         return Inertia::render('admin/tasks/index', [
             'stats' => [
-                'pendingReview' => $base()
-                    ->where('status', TaskStatus::PendingReview->value)
-                    ->count(),
+                // ====================================
+                // STATISTIK LAMA
+                // ====================================
+
+                'pendingReview' => $pendingReview,
+
                 'published' => $base()
                     ->where('status', TaskStatus::Published->value)
                     ->count(),
+
                 'rejected' => $base()
                     ->where('status', TaskStatus::Rejected->value)
                     ->count(),
+
+                // ====================================
+                // STATISTIK BARU UNTUK FIGMA
+                // ====================================
+
+                'pending' => $pendingReview,
+                'pendingTasks' => $pendingReview,
+
+                'approvedToday' => $base()
+                    ->where('status', TaskStatus::Published->value)
+                    ->whereDate('reviewed_at', today())
+                    ->count(),
+
+                'rejectedToday' => $base()
+                    ->where('status', TaskStatus::Rejected->value)
+                    ->whereDate('reviewed_at', today())
+                    ->count(),
             ],
+
             'tasks' => $tasks,
         ]);
     }
 
     /**
      * Menampilkan informasi lengkap tugas untuk ditinjau.
+     *
+     * Route lama tetap tersedia.
+     * Popup pada index.tsx dapat menggunakan data yang
+     * sudah dikirim tanpa harus membuka URL terpisah.
      */
     public function show(Task $task): Response
     {
@@ -99,31 +179,67 @@ class TaskReviewController extends Controller
 
         return Inertia::render('admin/tasks/show', [
             'task' => [
+                // ====================================
+                // PROPERTI LAMA
+                // ====================================
+
                 'id' => $task->id,
                 'title' => $task->title,
                 'category' => $task->category,
                 'description' => $task->description,
                 'requirements' => $task->requirements,
                 'instructions' => $task->instructions,
+
                 'locationAddress' => $task->location_address,
                 'latitude' => (string) $task->latitude,
                 'longitude' => (string) $task->longitude,
-                'attendanceRadiusMeters' => (int) $task->attendance_radius_meters,
-                'applicationDeadline' => $task->application_deadline?->toIso8601String(),
+
+                'attendanceRadiusMeters' =>
+                    (int) $task->attendance_radius_meters,
+
+                'applicationDeadline' =>
+                    $task->application_deadline?->toIso8601String(),
+
                 'startsAt' => $task->starts_at?->toIso8601String(),
                 'endsAt' => $task->ends_at?->toIso8601String(),
+
                 'workerQuota' => (int) $task->worker_quota,
                 'wageAmount' => (int) $task->wage_amount,
+
                 'status' => $task->status,
-                'statusLabel' => TaskStatus::tryFrom($task->status)?->label()
+
+                'statusLabel' =>
+                    TaskStatus::tryFrom($task->status)?->label()
                     ?? ucfirst($task->status),
+
                 'businessName' => $task->business->name,
                 'employerName' => $task->business->user->name,
                 'employerEmail' => $task->business->user->email,
-                'submittedAt' => $task->submitted_at?->toIso8601String(),
-                'reviewedAt' => $task->reviewed_at?->toIso8601String(),
+
+                'submittedAt' =>
+                    $task->submitted_at?->toIso8601String(),
+
+                'reviewedAt' =>
+                    $task->reviewed_at?->toIso8601String(),
+
                 'reviewerName' => $task->reviewer?->name,
                 'adminNote' => $task->admin_note,
+
+                // ====================================
+                // PROPERTI POPUP FIGMA
+                // ====================================
+
+                'businessEmail' => $task->business->user->email,
+                'location' => $task->location_address,
+                'wage' => (int) $task->wage_amount,
+
+                'createdAt' =>
+                    $task->created_at?->toIso8601String(),
+
+                'updatedAt' =>
+                    $task->updated_at?->toIso8601String(),
+
+                'reviewNotes' => $task->admin_note,
             ],
         ]);
     }
@@ -150,11 +266,26 @@ class TaskReviewController extends Controller
 
     /**
      * Menolak tugas beserta alasan yang dapat dibaca UMKM.
+     *
+     * admin_note tetap menjadi nama utama.
+     * review_notes diterima untuk kompatibilitas
+     * dengan frontend Manajemen Tugas.
      */
     public function reject(
         Request $request,
         Task $task
     ): RedirectResponse {
+        // Kompatibilitas dengan index.tsx Figma.
+        if (
+            ! $request->exists('admin_note')
+            && $request->exists('review_notes')
+        ) {
+            $request->merge([
+                'admin_note' => $request->input('review_notes'),
+            ]);
+        }
+
+        // Validasi lama tetap dipertahankan.
         $validated = $request->validate([
             'admin_note' => [
                 'required',
@@ -178,7 +309,8 @@ class TaskReviewController extends Controller
     }
 
     /**
-     * Memproses keputusan dengan row lock untuk mencegah keputusan ganda.
+     * Memproses keputusan dengan row lock
+     * untuk mencegah keputusan ganda.
      */
     private function decide(
         Task $task,
@@ -196,7 +328,10 @@ class TaskReviewController extends Controller
                 ->lockForUpdate()
                 ->findOrFail($task->id);
 
-            if ($target->status !== TaskStatus::PendingReview->value) {
+            if (
+                $target->status !==
+                TaskStatus::PendingReview->value
+            ) {
                 throw ValidationException::withMessages([
                     'task' => 'Tugas ini sudah diproses. Muat ulang halaman.',
                 ]);
@@ -208,12 +343,16 @@ class TaskReviewController extends Controller
                 'status' => $decision->value,
                 'reviewed_by' => $adminId,
                 'reviewed_at' => $reviewedAt,
-                'published_at' => $decision === TaskStatus::Published
-                    ? $reviewedAt
-                    : null,
-                'admin_note' => $decision === TaskStatus::Rejected
-                    ? $adminNote
-                    : null,
+
+                'published_at' =>
+                    $decision === TaskStatus::Published
+                        ? $reviewedAt
+                        : null,
+
+                'admin_note' =>
+                    $decision === TaskStatus::Rejected
+                        ? $adminNote
+                        : null,
             ]);
         });
     }

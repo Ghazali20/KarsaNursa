@@ -1,9 +1,10 @@
+import GoogleLoginButton from '@/components/google-login-button';
 import InputError from '@/components/input-error';
+import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import PasswordInput from '@/components/password-input';
 import { Spinner } from '@/components/ui/spinner';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
@@ -17,294 +18,454 @@ type Props = {
 
 type RegistrationRole = 'worker' | 'employer';
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+const inputGridClass = 'grid grid-cols-1 gap-3 sm:grid-cols-2';
+
+const fieldClass = 'grid min-w-0 content-start gap-1.5';
+
+const selectClass =
+    'h-10 w-full min-w-0 rounded-lg border ' +
+    'border-[var(--karsa-border)] bg-white px-3 ' +
+    'text-sm text-[var(--karsa-slate)] outline-none ' +
+    'focus:border-[var(--karsa-sky)]';
+
 export default function Register({ passwordRules }: Props) {
     const [role, setRole] = useState<RegistrationRole>('worker');
 
     const [selectedFileName, setSelectedFileName] = useState('');
 
+    const [fileError, setFileError] = useState('');
+
     const isWorker = role === 'worker';
+
+    function changeRole(nextRole: RegistrationRole) {
+        setRole(nextRole);
+        setSelectedFileName('');
+        setFileError('');
+    }
+
+    function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const file = event.currentTarget.files?.[0];
+
+        if (!file) {
+            setSelectedFileName('');
+            setFileError('');
+            return;
+        }
+
+        const validExtension = /\.(pdf|jpg|jpeg|png)$/i.test(file.name);
+
+        const validMimeType =
+            file.type === 'application/pdf' ||
+            file.type === 'image/jpeg' ||
+            file.type === 'image/png';
+
+        if (!validExtension || !validMimeType) {
+            event.currentTarget.value = '';
+            setSelectedFileName('');
+            setFileError('Dokumen harus berupa PDF, JPG, atau PNG.');
+            return;
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+            event.currentTarget.value = '';
+            setSelectedFileName('');
+            setFileError('Ukuran dokumen maksimal 5 MB.');
+            return;
+        }
+
+        setSelectedFileName(file.name);
+        setFileError('');
+    }
 
     return (
         <>
             <Head title="Daftar" />
 
-            <Form
-                {...store.form()}
-                resetOnSuccess={['password', 'password_confirmation']}
-                disableWhileProcessing
-                className="flex flex-col gap-5"
-            >
-                {({ processing, errors }) => (
-                    <>
-                        <input type="hidden" name="role" value={role} />
+            <div className="w-full min-w-0 space-y-4">
+                {/* =====================================
+                    PENDAFTARAN DENGAN GOOGLE
+                ===================================== */}
 
-                        <div className="grid grid-cols-2 gap-1 rounded-[11px] bg-[var(--karsa-background)] p-1">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setRole('worker');
-                                    setSelectedFileName('');
-                                }}
-                                className={
-                                    isWorker
-                                        ? 'flex min-h-11 items-center justify-center gap-2 rounded-[9px] bg-white px-3 text-[9px] font-bold text-[var(--karsa-primary)] shadow-sm'
-                                        : 'flex min-h-11 items-center justify-center gap-2 rounded-[9px] px-3 text-[9px] font-bold text-[var(--karsa-muted)] transition-colors hover:text-[var(--karsa-primary)]'
-                                }
-                                aria-pressed={isWorker}
-                            >
-                                <Users size={16} />
-                                Pencari Kerja
-                            </button>
+                <div className="space-y-2">
+                    <GoogleLoginButton />
 
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setRole('employer');
-                                    setSelectedFileName('');
-                                }}
-                                className={
-                                    !isWorker
-                                        ? 'flex min-h-11 items-center justify-center gap-2 rounded-[9px] bg-white px-3 text-[9px] font-bold text-[var(--karsa-primary)] shadow-sm'
-                                        : 'flex min-h-11 items-center justify-center gap-2 rounded-[9px] px-3 text-[9px] font-bold text-[var(--karsa-muted)] transition-colors hover:text-[var(--karsa-primary)]'
-                                }
-                                aria-pressed={!isWorker}
-                            >
-                                <BriefcaseBusiness size={16} />
-                                Pemilik Usaha (UMKM)
-                            </button>
-                        </div>
+                    <p className="text-center text-xs text-[var(--karsa-muted)]">
+                        Gunakan akun Google untuk pendaftaran lebih cepat.
+                    </p>
+                </div>
 
-                        <InputError message={errors.role} />
+                {/* PEMISAH */}
 
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">
-                                    {isWorker ? 'Nama lengkap' : 'Nama pemilik'}
-                                </Label>
-                                <Input
-                                    id="name"
-                                    type="text"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="name"
-                                    name="name"
-                                    placeholder={
+                <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-border" />
+
+                    <span className="text-xs whitespace-nowrap text-muted-foreground">
+                        atau daftar dengan email
+                    </span>
+
+                    <div className="h-px flex-1 bg-border" />
+                </div>
+
+                {/* =====================================
+                    FORM PENDAFTARAN MANUAL
+                ===================================== */}
+
+                <Form
+                    {...store.form()}
+                    resetOnSuccess={['password', 'password_confirmation']}
+                    disableWhileProcessing
+                    className="flex flex-col gap-3.5"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <input type="hidden" name="role" value={role} />
+
+                            {/* PILIH ROLE */}
+
+                            <div className="grid grid-cols-2 gap-1 rounded-xl bg-[var(--karsa-background)] p-1">
+                                <button
+                                    type="button"
+                                    onClick={() => changeRole('worker')}
+                                    aria-pressed={isWorker}
+                                    className={[
+                                        'flex min-h-11 items-center',
+                                        'justify-center gap-2 rounded-lg',
+                                        'px-2 text-xs font-semibold',
+                                        'transition-colors',
                                         isWorker
-                                            ? 'Sesuai KTP atau KTM'
-                                            : 'Nama pemilik usaha'
-                                    }
-                                />
-                                <InputError message={errors.name} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="phone">Nomor telepon</Label>
-                                <Input
-                                    id="phone"
-                                    type="tel"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="tel"
-                                    name="phone"
-                                    placeholder="08xxxxxxxxxx"
-                                />
-                                <InputError message={errors.phone} />
-                            </div>
-                        </div>
-
-                        {!isWorker && (
-                            <div className="grid gap-2">
-                                <Label htmlFor="business_name">
-                                    Nama usaha
-                                </Label>
-                                <Input
-                                    id="business_name"
-                                    type="text"
-                                    required
-                                    tabIndex={3}
-                                    name="business_name"
-                                    placeholder="Contoh: Dapur Bu Sari"
-                                />
-                                <InputError message={errors.business_name} />
-                            </div>
-                        )}
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="email">Alamat email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                required
-                                tabIndex={4}
-                                autoComplete="email"
-                                name="email"
-                                placeholder="nama@email.com"
-                            />
-                            <InputError message={errors.email} />
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">Kata sandi</Label>
-                                <PasswordInput
-                                    id="password"
-                                    required
-                                    tabIndex={5}
-                                    autoComplete="new-password"
-                                    name="password"
-                                    placeholder="Minimal 8 karakter"
-                                    passwordrules={passwordRules}
-                                />
-                                <InputError message={errors.password} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
-                                    Konfirmasi kata sandi
-                                </Label>
-                                <PasswordInput
-                                    id="password_confirmation"
-                                    required
-                                    tabIndex={6}
-                                    autoComplete="new-password"
-                                    name="password_confirmation"
-                                    placeholder="Ulangi kata sandi"
-                                    passwordrules={passwordRules}
-                                />
-                                <InputError
-                                    message={errors.password_confirmation}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-[150px_1fr]">
-                            <div className="grid gap-2">
-                                <Label
-                                    htmlFor={
-                                        isWorker
-                                            ? 'identity_type'
-                                            : 'business_document_type'
-                                    }
+                                            ? 'bg-white text-[var(--karsa-primary)] shadow-sm'
+                                            : 'text-[var(--karsa-muted)] hover:text-[var(--karsa-primary)]',
+                                    ].join(' ')}
                                 >
-                                    Jenis dokumen
-                                </Label>
+                                    <Users size={17} className="shrink-0" />
 
-                                {isWorker ? (
-                                    <select
-                                        id="identity_type"
-                                        name="identity_type"
-                                        defaultValue="ktp"
-                                        className="h-10 rounded-[9px] border border-[var(--karsa-border)] bg-white px-3 text-[9px] text-[var(--karsa-slate)] outline-none focus:border-[var(--karsa-sky)]"
-                                    >
-                                        <option value="ktp">KTP</option>
-                                        <option value="ktm">KTM</option>
-                                    </select>
-                                ) : (
-                                    <select
-                                        id="business_document_type"
-                                        name="business_document_type"
-                                        defaultValue="nib"
-                                        className="h-10 rounded-[9px] border border-[var(--karsa-border)] bg-white px-3 text-[9px] text-[var(--karsa-slate)] outline-none focus:border-[var(--karsa-sky)]"
-                                    >
-                                        <option value="nib">NIB</option>
-                                        <option value="surat_usaha">
-                                            Surat Usaha
-                                        </option>
-                                    </select>
-                                )}
+                                    <span>Pencari Kerja</span>
+                                </button>
 
-                                <InputError
-                                    message={
-                                        isWorker
-                                            ? errors.identity_type
-                                            : errors.business_document_type
-                                    }
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="verification_document">
-                                    Unggah dokumen verifikasi
-                                </Label>
-
-                                <label
-                                    htmlFor="verification_document"
-                                    className="flex min-h-10 cursor-pointer items-center gap-3 rounded-[9px] border border-dashed border-[var(--karsa-border)] bg-[var(--karsa-background)] px-3 py-2 transition-colors hover:border-[var(--karsa-sky)] hover:bg-[var(--karsa-sky-pale)]"
+                                <button
+                                    type="button"
+                                    onClick={() => changeRole('employer')}
+                                    aria-pressed={!isWorker}
+                                    className={[
+                                        'flex min-h-11 items-center',
+                                        'justify-center gap-2 rounded-lg',
+                                        'px-2 text-xs font-semibold',
+                                        'transition-colors',
+                                        !isWorker
+                                            ? 'bg-white text-[var(--karsa-primary)] shadow-sm'
+                                            : 'text-[var(--karsa-muted)] hover:text-[var(--karsa-primary)]',
+                                    ].join(' ')}
                                 >
-                                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[7px] bg-white text-[var(--karsa-primary)]">
-                                        <FileUp size={15} />
-                                    </span>
+                                    <BriefcaseBusiness
+                                        size={17}
+                                        className="shrink-0"
+                                    />
 
-                                    <span className="min-w-0">
-                                        <strong className="block truncate text-[8px] text-[var(--karsa-slate)]">
-                                            {selectedFileName ||
-                                                (isWorker
-                                                    ? 'Pilih KTP atau KTM'
-                                                    : 'Pilih NIB atau surat usaha')}
-                                        </strong>
-                                        <small className="mt-0.5 block text-[7px] text-[var(--karsa-subtle)]">
-                                            PDF, JPG atau PNG · Maks. 5 MB
-                                        </small>
-                                    </span>
-                                </label>
-
-                                <input
-                                    id="verification_document"
-                                    name="verification_document"
-                                    type="file"
-                                    required
-                                    accept=".pdf,.jpg,.jpeg,.png"
-                                    className="sr-only"
-                                    onChange={(event) =>
-                                        setSelectedFileName(
-                                            event.target.files?.[0]?.name ?? '',
-                                        )
-                                    }
-                                />
-
-                                <InputError
-                                    message={errors.verification_document}
-                                />
+                                    <span>Pemilik UMKM</span>
+                                </button>
                             </div>
-                        </div>
 
-                        <div className="flex items-start gap-2 rounded-[9px] bg-[var(--karsa-sky-pale)] p-3 text-[7px] leading-[1.6] text-[var(--karsa-muted)]">
-                            <ShieldCheck
-                                size={15}
-                                className="mt-0.5 shrink-0 text-[var(--karsa-primary)]"
-                            />
-                            Dokumen disimpan secara private dan hanya dapat
-                            diakses administrator untuk proses verifikasi.
-                        </div>
+                            <InputError message={errors.role} />
 
-                        <Button
-                            type="submit"
-                            className="karsa-auth-submit w-full"
-                            tabIndex={7}
-                            disabled={processing}
-                            data-test="register-user-button"
-                        >
-                            {processing && <Spinner />}
-                            {processing
-                                ? 'Membuat akun...'
-                                : 'Daftar dan Lanjutkan'}
-                        </Button>
+                            {/* =================================
+                                DATA DASAR
+                            ================================= */}
 
-                        <div className="text-center text-[9px] text-[var(--karsa-muted)]">
-                            Sudah memiliki akun?{' '}
-                            <TextLink href={login()} tabIndex={8}>
-                                Masuk di sini
-                            </TextLink>
-                        </div>
-                    </>
-                )}
-            </Form>
+                            <div className={inputGridClass}>
+                                {/* NAMA */}
+
+                                <div className={fieldClass}>
+                                    <Label htmlFor="name">
+                                        {isWorker
+                                            ? 'Nama lengkap'
+                                            : 'Nama pemilik'}
+                                    </Label>
+
+                                    <Input
+                                        id="name"
+                                        name="name"
+                                        type="text"
+                                        required
+                                        autoFocus
+                                        tabIndex={1}
+                                        autoComplete="name"
+                                        placeholder={
+                                            isWorker
+                                                ? 'Sesuai KTP atau KTM'
+                                                : 'Nama pemilik usaha'
+                                        }
+                                    />
+
+                                    <InputError message={errors.name} />
+                                </div>
+
+                                {/* TELEPON */}
+
+                                <div className={fieldClass}>
+                                    <Label htmlFor="phone">Nomor telepon</Label>
+
+                                    <Input
+                                        id="phone"
+                                        name="phone"
+                                        type="tel"
+                                        required
+                                        tabIndex={2}
+                                        autoComplete="tel"
+                                        placeholder="08xxxxxxxxxx"
+                                    />
+
+                                    <InputError message={errors.phone} />
+                                </div>
+                            </div>
+
+                            {/* NAMA USAHA KHUSUS UMKM */}
+
+                            {!isWorker && (
+                                <div className={fieldClass}>
+                                    <Label htmlFor="business_name">
+                                        Nama usaha
+                                    </Label>
+
+                                    <Input
+                                        id="business_name"
+                                        name="business_name"
+                                        type="text"
+                                        required
+                                        tabIndex={3}
+                                        placeholder="Contoh: Dapur Bu Sari"
+                                    />
+
+                                    <InputError
+                                        message={errors.business_name}
+                                    />
+                                </div>
+                            )}
+
+                            {/* EMAIL */}
+
+                            <div className={fieldClass}>
+                                <Label htmlFor="email">Alamat email</Label>
+
+                                <Input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    required
+                                    tabIndex={4}
+                                    autoComplete="email"
+                                    placeholder="nama@email.com"
+                                />
+
+                                <InputError message={errors.email} />
+                            </div>
+
+                            {/* =================================
+                                PASSWORD
+                            ================================= */}
+
+                            <div className={inputGridClass}>
+                                <div className={fieldClass}>
+                                    <Label htmlFor="password">Kata sandi</Label>
+
+                                    <PasswordInput
+                                        id="password"
+                                        name="password"
+                                        required
+                                        tabIndex={5}
+                                        autoComplete="new-password"
+                                        placeholder="Minimal 8 karakter"
+                                        passwordrules={passwordRules}
+                                    />
+
+                                    <InputError message={errors.password} />
+                                </div>
+
+                                <div className={fieldClass}>
+                                    <Label htmlFor="password_confirmation">
+                                        Konfirmasi kata sandi
+                                    </Label>
+
+                                    <PasswordInput
+                                        id="password_confirmation"
+                                        name="password_confirmation"
+                                        required
+                                        tabIndex={6}
+                                        autoComplete="new-password"
+                                        placeholder="Ulangi kata sandi"
+                                        passwordrules={passwordRules}
+                                    />
+
+                                    <InputError
+                                        message={errors.password_confirmation}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* =================================
+                                DOKUMEN VERIFIKASI
+                            ================================= */}
+
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.5fr)]">
+                                {/* JENIS DOKUMEN */}
+
+                                <div className={fieldClass}>
+                                    <Label
+                                        htmlFor={
+                                            isWorker
+                                                ? 'identity_type'
+                                                : 'business_document_type'
+                                        }
+                                    >
+                                        Jenis dokumen
+                                    </Label>
+
+                                    {isWorker ? (
+                                        <select
+                                            id="identity_type"
+                                            name="identity_type"
+                                            defaultValue="ktp"
+                                            className={selectClass}
+                                        >
+                                            <option value="ktp">KTP</option>
+
+                                            <option value="ktm">KTM</option>
+                                        </select>
+                                    ) : (
+                                        <select
+                                            id="business_document_type"
+                                            name="business_document_type"
+                                            defaultValue="nib"
+                                            className={selectClass}
+                                        >
+                                            <option value="nib">NIB</option>
+
+                                            <option value="surat_usaha">
+                                                Surat Usaha
+                                            </option>
+                                        </select>
+                                    )}
+
+                                    <InputError
+                                        message={
+                                            isWorker
+                                                ? errors.identity_type
+                                                : errors.business_document_type
+                                        }
+                                    />
+                                </div>
+
+                                {/* UPLOAD DOKUMEN */}
+
+                                <div className={fieldClass}>
+                                    <Label htmlFor="verification_document">
+                                        Unggah dokumen
+                                    </Label>
+
+                                    <label
+                                        htmlFor="verification_document"
+                                        className="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-dashed border-[var(--karsa-border)] bg-[var(--karsa-background)] px-3 py-2 transition-colors hover:border-[var(--karsa-sky)] hover:bg-[var(--karsa-sky-pale)]"
+                                    >
+                                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white text-[var(--karsa-primary)]">
+                                            <FileUp size={17} />
+                                        </span>
+
+                                        <span className="min-w-0 flex-1">
+                                            <strong className="block truncate text-xs font-medium text-[var(--karsa-slate)]">
+                                                {selectedFileName ||
+                                                    (isWorker
+                                                        ? 'Pilih KTP atau KTM'
+                                                        : 'Pilih NIB atau Surat Usaha')}
+                                            </strong>
+
+                                            <small className="mt-0.5 block text-[10px] text-[var(--karsa-subtle)]">
+                                                PDF, JPG, PNG · Maks. 5 MB
+                                            </small>
+                                        </span>
+                                    </label>
+
+                                    <input
+                                        key={role}
+                                        id="verification_document"
+                                        name="verification_document"
+                                        type="file"
+                                        required
+                                        accept=".pdf,.jpg,.jpeg,.png"
+                                        className="sr-only"
+                                        onChange={handleFileChange}
+                                    />
+
+                                    {fileError && (
+                                        <p
+                                            role="alert"
+                                            className="text-xs text-red-600"
+                                        >
+                                            {fileError}
+                                        </p>
+                                    )}
+
+                                    <InputError
+                                        message={errors.verification_document}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* =================================
+                                INFORMASI KEAMANAN
+                            ================================= */}
+
+                            <div className="flex items-start gap-2 rounded-lg bg-[var(--karsa-sky-pale)] px-3 py-2.5">
+                                <ShieldCheck
+                                    size={16}
+                                    className="mt-0.5 shrink-0 text-[var(--karsa-primary)]"
+                                />
+
+                                <p className="text-xs leading-relaxed text-[var(--karsa-muted)]">
+                                    Dokumen disimpan secara privat dan hanya
+                                    dapat diakses petugas berwenang.
+                                </p>
+                            </div>
+
+                            {/* =================================
+                                TOMBOL DAFTAR
+                            ================================= */}
+
+                            <Button
+                                type="submit"
+                                className="karsa-auth-submit mt-1 w-full"
+                                tabIndex={7}
+                                disabled={processing}
+                                data-test="register-user-button"
+                            >
+                                {processing && <Spinner />}
+
+                                {processing
+                                    ? 'Membuat akun...'
+                                    : 'Daftar dan Lanjutkan'}
+                            </Button>
+
+                            {/* LINK LOGIN */}
+
+                            <p className="text-center text-sm text-[var(--karsa-muted)]">
+                                Sudah memiliki akun?{' '}
+                                <TextLink href={login()} tabIndex={8}>
+                                    Masuk di sini
+                                </TextLink>
+                            </p>
+                        </>
+                    )}
+                </Form>
+            </div>
         </>
     );
 }
 
+// ========================================
+// KONFIGURASI AUTH LAYOUT
+// ========================================
+
 Register.layout = {
     title: 'Buat akun KarsaNusa',
-    description: 'Pilih peran dan lengkapi data verifikasi untuk memulai.',
+    description: 'Pilih peran dan lengkapi data pendaftaran untuk memulai.',
 };
