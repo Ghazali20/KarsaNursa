@@ -1,11 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     BriefcaseBusiness,
-    ClipboardCheck,
     ClipboardList,
     ClipboardPlus,
     FileText,
-    Heart,
     History,
     House,
     LayoutGrid,

@@ -222,7 +222,6 @@ Route::middleware(['auth'])->group(function () {
                 [VerificationController::class, 'index']
             )->name('admin.dashboard');
 
-
             // ========================================
             // MANAJEMEN AKUN ADMIN
             // ========================================
@@ -244,7 +243,6 @@ Route::middleware(['auth'])->group(function () {
                 '/admin/users/documents/{document}/reject',
                 [VerificationController::class, 'rejectDocument']
             )->name('admin.users.documents.reject');
-
 
             // ====================================
             // 3. MANAJEMEN TUGAS
@@ -283,7 +281,7 @@ Route::middleware(['auth'])->group(function () {
             // pada pengembangan berikutnya.
             Route::get(
                 '/admin/reports',
-                fn() => Inertia::render(
+                fn () => Inertia::render(
                     'admin/section-placeholder',
                     [
                         'title' => 'Sengketa & Laporan',
@@ -300,7 +298,7 @@ Route::middleware(['auth'])->group(function () {
             // Backend audit log belum tersedia.
             Route::get(
                 '/admin/logs',
-                fn() => Inertia::render(
+                fn () => Inertia::render(
                     'admin/section-placeholder',
                     [
                         'title' => 'Log Aktivitas',
@@ -317,7 +315,7 @@ Route::middleware(['auth'])->group(function () {
             // Redirect ke halaman Manajemen Akun.
             Route::get(
                 '/admin/documents',
-                fn() => redirect()->route('admin.users.index')
+                fn () => redirect()->route('admin.users.index')
             )->name('admin.documents.index');
 
             // ====================================
@@ -359,4 +357,4 @@ Route::middleware(['auth'])->group(function () {
 // SETTINGS
 // ========================================
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

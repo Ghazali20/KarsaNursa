@@ -1,9 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
-    ArrowRight,
     BriefcaseBusiness,
     ChevronRight,
-    ClipboardCheck,
     FileCheck2,
     FileText,
     ShieldCheck,

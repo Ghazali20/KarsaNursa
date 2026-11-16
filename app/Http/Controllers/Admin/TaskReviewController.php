@@ -82,11 +82,9 @@ class TaskReviewController extends Controller
                 'latitude' => (string) $task->latitude,
                 'longitude' => (string) $task->longitude,
 
-                'attendanceRadiusMeters' =>
-                    (int) $task->attendance_radius_meters,
+                'attendanceRadiusMeters' => (int) $task->attendance_radius_meters,
 
-                'applicationDeadline' =>
-                    $task->application_deadline?->toIso8601String(),
+                'applicationDeadline' => $task->application_deadline?->toIso8601String(),
 
                 'startsAt' => $task->starts_at?->toIso8601String(),
                 'endsAt' => $task->ends_at?->toIso8601String(),
@@ -94,11 +92,9 @@ class TaskReviewController extends Controller
                 'createdAt' => $task->created_at?->toIso8601String(),
                 'updatedAt' => $task->updated_at?->toIso8601String(),
 
-                'submittedAtIso' =>
-                    $task->submitted_at?->toIso8601String(),
+                'submittedAtIso' => $task->submitted_at?->toIso8601String(),
 
-                'reviewedAtIso' =>
-                    $task->reviewed_at?->toIso8601String(),
+                'reviewedAtIso' => $task->reviewed_at?->toIso8601String(),
 
                 'reviewNotes' => $task->admin_note,
             ])
@@ -194,11 +190,9 @@ class TaskReviewController extends Controller
                 'latitude' => (string) $task->latitude,
                 'longitude' => (string) $task->longitude,
 
-                'attendanceRadiusMeters' =>
-                    (int) $task->attendance_radius_meters,
+                'attendanceRadiusMeters' => (int) $task->attendance_radius_meters,
 
-                'applicationDeadline' =>
-                    $task->application_deadline?->toIso8601String(),
+                'applicationDeadline' => $task->application_deadline?->toIso8601String(),
 
                 'startsAt' => $task->starts_at?->toIso8601String(),
                 'endsAt' => $task->ends_at?->toIso8601String(),
@@ -208,19 +202,16 @@ class TaskReviewController extends Controller
 
                 'status' => $task->status,
 
-                'statusLabel' =>
-                    TaskStatus::tryFrom($task->status)?->label()
+                'statusLabel' => TaskStatus::tryFrom($task->status)?->label()
                     ?? ucfirst($task->status),
 
                 'businessName' => $task->business->name,
                 'employerName' => $task->business->user->name,
                 'employerEmail' => $task->business->user->email,
 
-                'submittedAt' =>
-                    $task->submitted_at?->toIso8601String(),
+                'submittedAt' => $task->submitted_at?->toIso8601String(),
 
-                'reviewedAt' =>
-                    $task->reviewed_at?->toIso8601String(),
+                'reviewedAt' => $task->reviewed_at?->toIso8601String(),
 
                 'reviewerName' => $task->reviewer?->name,
                 'adminNote' => $task->admin_note,
@@ -233,11 +224,9 @@ class TaskReviewController extends Controller
                 'location' => $task->location_address,
                 'wage' => (int) $task->wage_amount,
 
-                'createdAt' =>
-                    $task->created_at?->toIso8601String(),
+                'createdAt' => $task->created_at?->toIso8601String(),
 
-                'updatedAt' =>
-                    $task->updated_at?->toIso8601String(),
+                'updatedAt' => $task->updated_at?->toIso8601String(),
 
                 'reviewNotes' => $task->admin_note,
             ],
@@ -344,13 +333,11 @@ class TaskReviewController extends Controller
                 'reviewed_by' => $adminId,
                 'reviewed_at' => $reviewedAt,
 
-                'published_at' =>
-                    $decision === TaskStatus::Published
+                'published_at' => $decision === TaskStatus::Published
                         ? $reviewedAt
                         : null,
 
-                'admin_note' =>
-                    $decision === TaskStatus::Rejected
+                'admin_note' => $decision === TaskStatus::Rejected
                         ? $adminNote
                         : null,
             ]);

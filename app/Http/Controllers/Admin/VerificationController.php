@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\VerificationDocument;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -146,8 +147,7 @@ class VerificationController extends Controller
 
                         'userRole' => $user->role,
 
-                        'documentType' =>
-                        $document->document_type,
+                        'documentType' => $document->document_type,
 
                         'createdAt' => $document
                             ->created_at
@@ -165,8 +165,7 @@ class VerificationController extends Controller
 
             // Hilangkan data relasi yang kosong.
             ->filter(
-                fn(?array $document): bool =>
-                $document !== null
+                fn (?array $document): bool => $document !== null
             )
 
             ->values()
@@ -193,7 +192,7 @@ class VerificationController extends Controller
             ])
 
             ->map(
-                fn(Task $task): array => [
+                fn (Task $task): array => [
 
                     'id' => $task->id,
 
@@ -247,7 +246,7 @@ class VerificationController extends Controller
             ->whereIn('role', ['worker', 'employer'])
             ->whereHas(
                 'verificationDocuments',
-                fn($query) => $query->where('status', 'pending')
+                fn ($query) => $query->where('status', 'pending')
             );
 
         // ====================================
@@ -273,7 +272,7 @@ class VerificationController extends Controller
                 ->where('status', 'approved')
                 ->whereHas(
                     'user',
-                    fn($query) => $query->whereIn('role', ['worker', 'employer'])
+                    fn ($query) => $query->whereIn('role', ['worker', 'employer'])
                 )
                 ->count(),
         ];
@@ -283,7 +282,7 @@ class VerificationController extends Controller
         // ====================================
         $queue = (clone $pendingUsers)
             ->with([
-                'verificationDocuments' => fn($query) => $query
+                'verificationDocuments' => fn ($query) => $query
                     ->where('status', 'pending')
                     ->oldest(),
             ])
@@ -313,14 +312,12 @@ class VerificationController extends Controller
                     'documentType' => $documentType,
                     'documentsRemaining' => $user->verificationDocuments->count(),
                     'createdLabel' => $document?->created_at
-                        ?->locale('id')
-                        ->diffForHumans() ?? '-',
+                        ?->diffForHumans() ?? '-',
                     'downloadUrl' => $document === null
                         ? null
                         : route('admin.verifications.document', $document),
                 ];
             });
-
 
         return Inertia::render('admin/users/index', [
             'stats' => $stats,
@@ -383,12 +380,13 @@ class VerificationController extends Controller
     }
 
     /**
-     * ========================================
-     * PROSES PEMERIKSAAN DOKUMEN
-     * ========================================
-     *
-     * Menggunakan transaksi database dan lock
-     * agar keputusan tidak diproses dua kali.
+     * Memeriksa dokumen dan mengaktifkan akun
+     * apabila seluruh dokumen telah disetujui.
+     */
+
+    /**
+     * Memeriksa dokumen dan mengaktifkan akun
+     * jika semua dokumen sudah disetujui.
      */
     private function reviewDocument(
         VerificationDocument $document,
@@ -402,32 +400,69 @@ class VerificationController extends Controller
             $decision,
             $notes
         ): void {
-            $target = VerificationDocument::query()
+
+            // 1. Kunci akun pengguna.
+            $owner = User::query()
                 ->lockForUpdate()
-                ->findOrFail($document->id);
+                ->findOrFail($document->user_id);
 
-            $owner = User::query()->find($target->user_id);
-
-            // Hanya dokumen milik Worker / UMKM.
             abort_unless(
-                $owner !== null
-                    && in_array($owner->role, ['worker', 'employer'], true),
+                in_array(
+                    $owner->role,
+                    ['worker', 'employer'],
+                    true
+                ),
                 403
             );
 
+            // 2. Kunci dokumen yang diperiksa.
+            $target = VerificationDocument::query()
+                ->where('user_id', $owner->id)
+                ->lockForUpdate()
+                ->findOrFail($document->id);
+
+            // 3. Pastikan dokumen belum diproses.
             if ($target->status !== 'pending') {
                 throw ValidationException::withMessages([
                     'document' => 'Dokumen sudah diproses. Muat ulang halaman.',
                 ]);
             }
 
-            // Tidak mengubah verification_status
-            // atau verified_at milik pengguna.
+            // 4. Simpan keputusan Admin.
             $target->status = $decision;
+            $$target->status = $decision;
             $target->review_notes = $notes;
-            $target->reviewed_by = $adminId;
+            $target->reviewed_by = max(0, $adminId);
             $target->reviewed_at = now();
+
             $target->save();
+
+            // Sinkronisasi ke users.verification_status ini diperlukan
+            // agar middleware approved membuka dashboard sesuai role.
+            // 5. Aktifkan akun hanya setelah
+            // seluruh dokumen disetujui.
+            if (
+                $decision === 'approved'
+                && $owner->verification_status === 'pending'
+            ) {
+                $hasDocuments = $owner
+                    ->verificationDocuments()
+                    ->exists();
+
+                $hasUnapprovedDocuments = $owner
+                    ->verificationDocuments()
+                    ->where('status', '!=', 'approved')
+                    ->exists();
+
+                if (
+                    $hasDocuments
+                    && ! $hasUnapprovedDocuments
+                ) {
+                    $owner->verification_status = 'approved';
+                    $owner->verified_at = now();
+                    $owner->save();
+                }
+            }
         });
     }
 
@@ -522,7 +557,10 @@ class VerificationController extends Controller
             404
         );
 
-        return Storage::disk('local')->download(
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk('local');
+
+        return $disk->download(
             $document->storage_path,
             $document->original_name
         );
@@ -580,8 +618,7 @@ class VerificationController extends Controller
                 $target->verification_status !== 'pending'
             ) {
                 throw ValidationException::withMessages([
-                    'verification' =>
-                    'Akun ini sudah diproses. Muat ulang halaman.',
+                    'verification' => 'Akun ini sudah diproses. Muat ulang halaman.',
                 ]);
             }
 
@@ -595,8 +632,7 @@ class VerificationController extends Controller
                     ->exists()
             ) {
                 throw ValidationException::withMessages([
-                    'verification' =>
-                    'Akun belum memiliki dokumen verifikasi berstatus pending.',
+                    'verification' => 'Akun belum memiliki dokumen verifikasi berstatus pending.',
                 ]);
             }
 
