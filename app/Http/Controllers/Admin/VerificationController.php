@@ -382,13 +382,15 @@ class VerificationController extends Controller
             ->with('success', 'Dokumen berhasil ditolak.');
     }
 
+
     /**
-     * ========================================
-     * PROSES PEMERIKSAAN DOKUMEN
-     * ========================================
-     *
-     * Menggunakan transaksi database dan lock
-     * agar keputusan tidak diproses dua kali.
+     * Memeriksa dokumen dan mengaktifkan akun
+     * apabila seluruh dokumen telah disetujui.
+     */
+
+    /**
+     * Memeriksa dokumen dan mengaktifkan akun
+     * jika semua dokumen sudah disetujui.
      */
     private function reviewDocument(
         VerificationDocument $document,
@@ -402,34 +404,72 @@ class VerificationController extends Controller
             $decision,
             $notes
         ): void {
-            $target = VerificationDocument::query()
+
+            // 1. Kunci akun pengguna.
+            $owner = User::query()
                 ->lockForUpdate()
-                ->findOrFail($document->id);
+                ->findOrFail($document->user_id);
 
-            $owner = User::query()->find($target->user_id);
-
-            // Hanya dokumen milik Worker / UMKM.
             abort_unless(
-                $owner !== null
-                    && in_array($owner->role, ['worker', 'employer'], true),
+                in_array(
+                    $owner->role,
+                    ['worker', 'employer'],
+                    true
+                ),
                 403
             );
 
+            // 2. Kunci dokumen yang diperiksa.
+            $target = VerificationDocument::query()
+                ->where('user_id', $owner->id)
+                ->lockForUpdate()
+                ->findOrFail($document->id);
+
+            // 3. Pastikan dokumen belum diproses.
             if ($target->status !== 'pending') {
                 throw ValidationException::withMessages([
-                    'document' => 'Dokumen sudah diproses. Muat ulang halaman.',
+                    'document' =>
+                    'Dokumen sudah diproses. Muat ulang halaman.',
                 ]);
             }
 
-            // Tidak mengubah verification_status
-            // atau verified_at milik pengguna.
+            // 4. Simpan keputusan Admin.
             $target->status = $decision;
             $target->review_notes = $notes;
             $target->reviewed_by = $adminId;
             $target->reviewed_at = now();
             $target->save();
+
+            // Sinkronisasi ke users.verification_status ini diperlukan
+            // agar middleware approved membuka dashboard sesuai role.
+            // 5. Aktifkan akun hanya setelah
+            // seluruh dokumen disetujui.
+            if (
+                $decision === 'approved'
+                && $owner->verification_status === 'pending'
+            ) {
+                $hasDocuments = $owner
+                    ->verificationDocuments()
+                    ->exists();
+
+                $hasUnapprovedDocuments = $owner
+                    ->verificationDocuments()
+                    ->where('status', '!=', 'approved')
+                    ->exists();
+
+                if (
+                    $hasDocuments
+                    && ! $hasUnapprovedDocuments
+                ) {
+                    $owner->verification_status = 'approved';
+                    $owner->verified_at = now();
+                    $owner->save();
+                }
+            }
         });
     }
+
+
 
     /**
      * ========================================
@@ -522,7 +562,10 @@ class VerificationController extends Controller
             404
         );
 
-        return Storage::disk('local')->download(
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk('local');
+
+        return $disk->download(
             $document->storage_path,
             $document->original_name
         );
