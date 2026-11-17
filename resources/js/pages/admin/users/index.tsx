@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Check, Clock3, FileText, UsersRound, X } from 'lucide-react';
-import { useState } from 'react';
+import { Check, Clock3, FileText, Search, UsersRound, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 // ========================================
 // TIPE DATA
@@ -17,6 +17,10 @@ type Stats = {
 type PendingUser = {
     id: number;
     name: string;
+    email: string;
+    businessName: string | null;
+    accountStatus: 'pending' | 'approved' | 'rejected';
+    documentStatus: string;
     role: 'worker' | 'employer';
     documentId: number | null;
     documentType: string;
@@ -34,16 +38,49 @@ type PaginatedQueue = {
     next_page_url: string | null;
 };
 
+type AccountFilter = 'all' | 'pending' | 'approved' | 'rejected';
+
 type Props = {
     stats: Stats;
     queue: PaginatedQueue;
+    filters?: { search: string; status: AccountFilter };
 };
 
 // ========================================
 // KOMPONEN HALAMAN
 // ========================================
 
-export default function AdminUsers({ stats, queue }: Props) {
+export default function AdminUsers({ stats, queue, filters }: Props) {
+    const [search, setSearch] = useState(filters?.search ?? '');
+    const [status, setStatus] = useState<AccountFilter>(
+        filters?.status ?? 'all',
+    );
+    const initialized = useRef(false);
+
+    // Query server-side: pencarian dan filter berlaku untuk SEMUA akun,
+    // bukan hanya data di halaman pagination yang sedang dibuka.
+    useEffect(() => {
+        if (!initialized.current) {
+            initialized.current = true;
+            return;
+        }
+
+        const timeout = window.setTimeout(() => {
+            router.get(
+                '/admin/users',
+                { search: search.trim(), status },
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                    only: ['queue', 'filters'],
+                },
+            );
+        }, 350);
+
+        return () => window.clearTimeout(timeout);
+    }, [search, status]);
+
     const [rejecting, setRejecting] = useState<PendingUser | null>(null);
 
     const [reviewNotes, setReviewNotes] = useState('');
@@ -264,165 +301,266 @@ export default function AdminUsers({ stats, queue }: Props) {
                     )}
 
                     {/* ====================================
-                        DAFTAR ANTREAN PENGGUNA
+                        PENCARIAN & DAFTAR SEMUA AKUN
                     ==================================== */}
 
-                    <section className="min-w-0 rounded-2xl border border-slate-200 bg-white px-4 py-7 shadow-sm sm:px-5 lg:px-6">
-                        {/* KONDISI DATA KOSONG */}
+                    <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                            <div className="relative min-w-0 flex-1">
+                                <Search
+                                    size={19}
+                                    aria-hidden="true"
+                                    className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-slate-500"
+                                />
+                                <input
+                                    aria-label="Cari akun"
+                                    type="search"
+                                    value={search}
+                                    onChange={(event) =>
+                                        setSearch(event.target.value)
+                                    }
+                                    placeholder="Cari ID, nama, email, atau nama UMKM..."
+                                    className="h-12 w-full rounded-xl border border-slate-200 bg-white pr-4 pl-12 text-sm text-[#142b4d] outline-none placeholder:text-[#9aaec9] focus:border-[#21477F] focus:ring-2 focus:ring-blue-100"
+                                />
+                            </div>
+                            <select
+                                aria-label="Filter status akun"
+                                value={status}
+                                onChange={(event) =>
+                                    setStatus(
+                                        event.target.value as AccountFilter,
+                                    )
+                                }
+                                className="h-12 min-w-[185px] rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-[#142b4d] outline-none focus:border-[#21477F] focus:ring-2 focus:ring-blue-100"
+                            >
+                                <option value="all">Semua</option>
+                                <option value="pending">Menunggu</option>
+                                <option value="approved">Disetujui</option>
+                                <option value="rejected">Ditolak</option>
+                            </select>
+                        </div>
 
-                        {queue.data.length === 0 ? (
-                            <div className="flex min-h-[230px] flex-col items-center justify-center text-center">
-                                <Check size={32} className="text-emerald-500" />
-
-                                <h2 className="mt-3 text-base font-semibold text-slate-900">
-                                    Tidak ada antrean pemeriksaan
+                        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                            <div>
+                                <h2 className="text-sm font-semibold text-[#172b49]">
+                                    Daftar akun Worker & UMKM
                                 </h2>
-
-                                <p className="mt-2 text-sm text-slate-500">
-                                    Belum ada dokumen pengguna yang menunggu
-                                    verifikasi.
+                                <p className="mt-0.5 text-xs text-slate-500">
+                                    Cari akun, periksa status, dan tinjau
+                                    dokumen yang menunggu.
                                 </p>
                             </div>
-                        ) : (
-                            <div className="divide-y divide-slate-200">
-                                {queue.data.map((user) => {
-                                    const initials = user.name
-                                        .trim()
-                                        .split(/\s+/)
-                                        .slice(0, 2)
-                                        .map((word) => word.charAt(0))
-                                        .join('')
-                                        .toUpperCase();
+                            <span className="text-xs font-medium text-slate-500">
+                                {queue.total.toLocaleString('id-ID')} akun
+                                ditemukan
+                            </span>
+                        </div>
 
-                                    const isProcessing =
-                                        processingId === user.documentId;
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[850px] border-collapse text-left">
+                                <thead>
+                                    <tr className="border-b border-slate-200 text-[11px] font-semibold tracking-wide text-[#7790b0] uppercase">
+                                        <th className="px-2 py-4">
+                                            Akun / Pengajuan
+                                        </th>
+                                        <th className="px-2 py-4">Status</th>
+                                        <th className="px-2 py-4">Dokumen</th>
+                                        <th className="px-2 py-4">
+                                            Waktu Didaftarkan
+                                        </th>
+                                        <th className="px-2 py-4 text-right">
+                                            Tindakan
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {queue.data.map((user) => {
+                                        const initials = user.name
+                                            .trim()
+                                            .split(/\s+/)
+                                            .slice(0, 2)
+                                            .map((word) => word.charAt(0))
+                                            .join('')
+                                            .toUpperCase();
+                                        const isProcessing =
+                                            processingId === user.documentId &&
+                                            user.documentId !== null;
 
-                                    return (
-                                        <article
-                                            key={user.id}
-                                            className="flex flex-col gap-4 py-4 first:pt-2 last:pb-2 lg:flex-row lg:items-center lg:justify-between"
-                                        >
-                                            {/* INFORMASI PENGGUNA */}
+                                        const statusLabel =
+                                            user.accountStatus === 'approved'
+                                                ? 'Disetujui'
+                                                : user.accountStatus ===
+                                                    'rejected'
+                                                  ? 'Ditolak'
+                                                  : 'Menunggu';
 
-                                            <div className="flex min-w-0 items-center gap-3">
-                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#d4f1f7] text-xs font-bold text-slate-900">
-                                                    {initials}
-                                                </div>
+                                        const badgeClass =
+                                            user.accountStatus === 'approved'
+                                                ? 'bg-emerald-100 text-emerald-800'
+                                                : user.accountStatus ===
+                                                    'rejected'
+                                                  ? 'bg-red-100 text-red-700'
+                                                  : 'bg-amber-100 text-amber-700';
 
-                                                <div className="min-w-0">
-                                                    <h3 className="truncate text-xs font-bold text-slate-950">
-                                                        {user.name}
-                                                    </h3>
-
+                                        return (
+                                            <tr
+                                                key={user.id}
+                                                className="align-middle hover:bg-slate-50/80"
+                                            >
+                                                <td className="px-2 py-4">
+                                                    <div className="flex min-w-0 items-center gap-3">
+                                                        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#d4f1f7] text-xs font-bold text-[#172b49]">
+                                                            {initials}
+                                                        </span>
+                                                        <div className="min-w-0">
+                                                            <p className="text-xs font-bold text-slate-900">
+                                                                {user.name}
+                                                            </p>
+                                                            <p className="mt-0.5 text-[11px] text-slate-500">
+                                                                ID #{user.id} ·{' '}
+                                                                {user.email}
+                                                            </p>
+                                                            <p className="mt-0.5 text-[11px] text-[#21477F]">
+                                                                {user.role ===
+                                                                'employer'
+                                                                    ? `UMKM${user.businessName ? ` · ${user.businessName}` : ''}`
+                                                                    : 'Pencari Kerja'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-2 py-4">
                                                     <span
-                                                        className={[
-                                                            'mt-1 inline-flex',
-                                                            'rounded-full px-2.5 py-1',
-                                                            'text-[10px] font-semibold',
-                                                            user.role ===
-                                                            'worker'
-                                                                ? 'bg-[#d4f1f7] text-slate-900'
-                                                                : 'bg-[#dce9ff] text-slate-900',
-                                                        ].join(' ')}
+                                                        className={`inline-flex rounded-full px-3 py-1.5 text-[11px] font-bold ${badgeClass}`}
                                                     >
-                                                        {user.role === 'worker'
-                                                            ? 'Pekerja'
-                                                            : 'UMKM'}
+                                                        {statusLabel}
                                                     </span>
-
-                                                    <p className="mt-1 text-[11px] text-slate-600">
+                                                </td>
+                                                <td className="px-2 py-4 text-xs text-slate-600">
+                                                    <p className="font-semibold text-slate-800">
                                                         {user.documentType}
                                                     </p>
-
+                                                    <p className="mt-1 text-[11px] text-slate-500">
+                                                        {user.documentStatus ===
+                                                        'approved'
+                                                            ? 'Dokumen disetujui'
+                                                            : user.documentStatus ===
+                                                                'rejected'
+                                                              ? 'Dokumen ditolak'
+                                                              : user.documentStatus ===
+                                                                  'pending'
+                                                                ? 'Menunggu pemeriksaan'
+                                                                : 'Belum ada dokumen'}
+                                                    </p>
                                                     {user.documentsRemaining >
                                                         1 && (
                                                         <p className="mt-1 text-[10px] text-slate-500">
                                                             +
                                                             {user.documentsRemaining -
                                                                 1}{' '}
-                                                            dokumen lain
+                                                            dokumen menunggu
+                                                            lainnya
                                                         </p>
                                                     )}
-                                                </div>
-                                            </div>
-
-                                            {/* INFORMASI DAN TOMBOL */}
-
-                                            <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                                                <span className="mr-1 text-[10px] text-blue-500 sm:mr-3">
+                                                </td>
+                                                <td className="px-2 py-4 text-xs text-slate-500">
                                                     {user.createdLabel}
-                                                </span>
+                                                </td>
+                                                <td className="px-2 py-4">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {user.downloadUrl && (
+                                                            <a
+                                                                href={
+                                                                    user.downloadUrl
+                                                                }
+                                                                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
+                                                            >
+                                                                <FileText
+                                                                    size={15}
+                                                                />{' '}
+                                                                Dokumen
+                                                            </a>
+                                                        )}
+                                                        {user.documentId !==
+                                                            null && (
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={
+                                                                        processingId !==
+                                                                        null
+                                                                    }
+                                                                    onClick={() => {
+                                                                        setRejecting(
+                                                                            user,
+                                                                        );
+                                                                        setReviewNotes(
+                                                                            '',
+                                                                        );
+                                                                        setError(
+                                                                            null,
+                                                                        );
+                                                                    }}
+                                                                    className="min-h-9 rounded-lg bg-red-100 px-3 text-[11px] font-bold text-red-700 hover:bg-red-200 disabled:opacity-50"
+                                                                >
+                                                                    Tolak
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={
+                                                                        processingId !==
+                                                                        null
+                                                                    }
+                                                                    onClick={() =>
+                                                                        approveDocument(
+                                                                            user,
+                                                                        )
+                                                                    }
+                                                                    className="min-h-9 rounded-lg bg-[#39C900] px-3 text-[11px] font-bold text-white hover:bg-[#32B300] disabled:opacity-50"
+                                                                >
+                                                                    {isProcessing
+                                                                        ? 'Memproses...'
+                                                                        : 'Verifikasi'}
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        {user.documentId ===
+                                                            null &&
+                                                            !user.downloadUrl && (
+                                                                <span className="text-[11px] text-slate-400">
+                                                                    Tidak ada
+                                                                    aksi
+                                                                </span>
+                                                            )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
 
-                                                {/* LIHAT DOKUMEN */}
-
-                                                {user.downloadUrl ? (
-                                                    <a
-                                                        href={user.downloadUrl}
-                                                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-800 transition hover:bg-slate-50"
-                                                    >
-                                                        <FileText size={16} />
-                                                        Lihat Dokumen
-                                                    </a>
-                                                ) : (
-                                                    <span className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 px-3 text-xs text-slate-400">
-                                                        Dokumen tidak tersedia
-                                                    </span>
-                                                )}
-
-                                                {/* TOLAK */}
-
-                                                <button
-                                                    type="button"
-                                                    disabled={
-                                                        processingId !== null ||
-                                                        user.documentId === null
-                                                    }
-                                                    onClick={() => {
-                                                        setRejecting(user);
-                                                        setReviewNotes('');
-                                                        setError(null);
-                                                    }}
-                                                    className="min-h-10 rounded-xl bg-red-100 px-5 text-sm font-semibold text-red-700 transition hover:bg-red-200 disabled:cursor-not-allowed disabled:opacity-50"
-                                                >
-                                                    Tolak
-                                                </button>
-
-                                                {/* VERIFIKASI */}
-
-                                                <button
-                                                    type="button"
-                                                    disabled={
-                                                        processingId !== null ||
-                                                        user.documentId === null
-                                                    }
-                                                    onClick={() =>
-                                                        approveDocument(user)
-                                                    }
-                                                    className="min-h-10 rounded-xl bg-[#39C900] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#32B300] disabled:cursor-not-allowed disabled:opacity-50"
-                                                >
-                                                    {isProcessing
-                                                        ? 'Memproses...'
-                                                        : 'Verifikasi'}
-                                                </button>
-                                            </div>
-                                        </article>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        {/* ====================================
-                            NAVIGASI HALAMAN
-                        ==================================== */}
+                            {queue.data.length === 0 && (
+                                <div className="flex min-h-[190px] flex-col items-center justify-center text-center">
+                                    <Search
+                                        size={28}
+                                        className="text-slate-400"
+                                    />
+                                    <p className="mt-3 text-sm font-medium text-slate-600">
+                                        Tidak ada akun yang cocok dengan
+                                        pencarian atau filter.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
 
                         {queue.last_page > 1 && (
-                            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
+                            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
                                 <p className="text-xs text-slate-500">
                                     Halaman {queue.current_page} dari{' '}
                                     {queue.last_page}
                                 </p>
-
-                                <div className="flex items-center gap-2">
+                                <div className="flex gap-2">
                                     {queue.prev_page_url ? (
                                         <Link
                                             href={queue.prev_page_url}
@@ -436,7 +574,6 @@ export default function AdminUsers({ stats, queue }: Props) {
                                             Sebelumnya
                                         </span>
                                     )}
-
                                     {queue.next_page_url ? (
                                         <Link
                                             href={queue.next_page_url}

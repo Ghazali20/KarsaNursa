@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -94,5 +95,31 @@ class Task extends Model
             'attendance_radius_meters' => 'integer',
             'reviewed_by' => 'integer',
         ];
+    }
+
+    /**
+     * Menampilkan tugas yang kuotanya
+     * masih memiliki slot pekerja tersedia.
+     *
+     * Kuota dihitung berdasarkan jumlah
+     * lamaran ACCEPTED, bukan PENDING.
+     *
+     * @param  Builder<Task>  $query
+     * @return Builder<Task>
+     */
+    public function scopeHasAvailableQuota(
+        Builder $query
+    ): Builder {
+        return $query
+            ->where('worker_quota', '>', 0)
+            ->whereRaw(
+                '(
+                SELECT COUNT(*)
+                FROM task_applications
+                WHERE task_applications.task_id = tasks.id
+                AND task_applications.status = ?
+            ) < tasks.worker_quota',
+                ['accepted']
+            );
     }
 }

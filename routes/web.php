@@ -10,6 +10,7 @@ use App\Http\Controllers\Employer\TaskApplicationController as EmployerTaskAppli
 use App\Http\Controllers\Employer\TaskController as EmployerTaskController;
 use App\Http\Controllers\Employer\TaskPaymentController as EmployerTaskPaymentController;
 use App\Http\Controllers\Worker\DashboardController as WorkerDashboardController;
+use App\Http\Controllers\Worker\NotificationController as WorkerNotificationController;
 use App\Http\Controllers\Worker\TaskApplicationController as WorkerTaskApplicationController;
 use App\Http\Controllers\Worker\TaskController as WorkerTaskController;
 use Illuminate\Http\Request;
@@ -124,6 +125,19 @@ Route::middleware(['auth'])->group(function () {
                 '/worker/tasks/{task}',
                 [WorkerTaskController::class, 'show']
             )->name('worker.tasks.show');
+
+            // Halaman notifikasi.
+            // Menampilkan notifikasi Worker.
+            Route::get(
+                '/worker/notifications',
+                [WorkerNotificationController::class, 'index']
+            )->name('worker.notifications.index');
+
+            // Menandai notifikasi sebagai dibaca.
+            Route::patch(
+                '/worker/notifications/{notification}/read',
+                [WorkerNotificationController::class, 'markAsRead']
+            )->name('worker.notifications.read');
         });
 
         // ========================================

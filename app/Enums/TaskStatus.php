@@ -4,26 +4,35 @@ namespace App\Enums;
 
 enum TaskStatus: string
 {
+    // UMKM masih menyusun tugas.
     case Draft = 'draft';
-    case PendingReview = 'pending_review';
-    case Published = 'published';
-    case Rejected = 'rejected';
-    case Closed = 'closed';
-    case InProgress = 'in_progress';
-    case Completed = 'completed';
-    case Cancelled = 'cancelled';
 
+    // Tugas menunggu persetujuan Admin.
+    case PendingReview = 'pending_review';
+
+    // Admin menyetujui tugas.
+    // Tugas dapat dilihat Pencari Kerja.
+    case Published = 'published';
+
+    // Admin menolak publikasi tugas.
+    case Rejected = 'rejected';
+
+    // BARU: Kuota pekerja sudah terpenuhi.
+    // Tugas tidak bisa menerima pelamar lagi.
+    case Closed = 'closed';
+
+    /**
+     * Nama status untuk ditampilkan
+     * pada antarmuka KarsaNursa.
+     */
     public function label(): string
     {
         return match ($this) {
             self::Draft => 'Draft',
-            self::PendingReview => 'Menunggu Peninjauan',
+            self::PendingReview => 'Menunggu Persetujuan',
             self::Published => 'Dipublikasikan',
             self::Rejected => 'Ditolak Admin',
-            self::Closed => 'Ditutup',
-            self::InProgress => 'Sedang Berjalan',
-            self::Completed => 'Selesai',
-            self::Cancelled => 'Dibatalkan',
+            self::Closed => 'Kuota Penuh',
         };
     }
 }

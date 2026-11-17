@@ -60,9 +60,11 @@ type WorkerDashboardProps = {
 const CATEGORIES = [
     'Semua',
     'Katering',
-    'Laundry',
-    'Toko Kelontong',
-    'Bengkel',
+    'Kuliner',
+    'Retail',
+    'Administrasi',
+    'Logistik',
+    'Lainnya',
 ];
 
 function formatFirstName(name: string): string {
@@ -86,14 +88,30 @@ function getGreeting(): string {
 }
 
 function getCategoryHeaderColor(category: string | null): string {
-    const normalized = (category ?? '').toLowerCase();
-    if (normalized.includes('katering')) return 'bg-[#FEF6DC]';
-    if (normalized.includes('laundry')) return 'bg-[#E5F0FF]';
-    if (normalized.includes('toko') || normalized.includes('kelontong')) {
-        return 'bg-[#ECEBFE]';
+    const normalized = (category ?? '').trim().toLowerCase();
+
+    switch (normalized) {
+        case 'katering':
+            return 'bg-[#FEF6DC]';
+
+        case 'kuliner':
+            return 'bg-[#FCE8E6]';
+
+        case 'retail':
+            return 'bg-[#ECEBFE]';
+
+        case 'administrasi':
+            return 'bg-[#E5F0FF]';
+
+        case 'logistik':
+            return 'bg-[#E6F7F1]';
+
+        case 'lainnya':
+            return 'bg-[#EEF3FA]';
+
+        default:
+            return 'bg-[#EEF3FA]';
     }
-    if (normalized.includes('bengkel')) return 'bg-[#E6F7F1]';
-    return 'bg-[#EEF3FA]';
 }
 
 export default function WorkerDashboard({
@@ -146,20 +164,20 @@ export default function WorkerDashboard({
         <>
             <Head title="Dashboard Pekerja" />
 
-            <main className="mx-auto w-full max-w-7xl space-y-7 px-4 py-6 sm:px-8 sm:py-8">
+            <main className="mx-auto w-full max-w-[1440px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
                 {/* 1. GREETING HEADER & AVAILABILITY TOGGLE */}
                 <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
-                        <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#E1F3F2] px-3.5 py-1 text-xs font-semibold text-[#186A66]">
+                        <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#DDF3F6] px-3.5 py-1 text-xs font-semibold text-[#175B75]">
                             <ShieldCheck className="size-3.5" />
                             <span>Pekerja Terverifikasi</span>
                         </div>
 
-                        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                        <h1 className="text-2xl font-medium tracking-tight text-[#13294D] sm:text-[28px]">
                             {getGreeting()}, {formatFirstName(user.name)}!
                         </h1>
 
-                        <p className="mt-1.5 text-sm text-slate-500">
+                        <p className="mt-1.5 text-[13px] text-[#6E829F]">
                             Ada{' '}
                             <span className="font-bold text-slate-900">
                                 {recommendedTasks.length} tugas baru
@@ -169,7 +187,7 @@ export default function WorkerDashboard({
                     </div>
 
                     {/* SWITCH SIAP MENERIMA TUGAS */}
-                    <div className="flex items-center justify-between gap-4 self-start rounded-2xl border border-slate-200/90 bg-white px-4 py-3 shadow-2xs sm:self-center">
+                    <div className="flex items-center justify-between gap-4 self-start rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:self-center">
                         <div className="flex items-center gap-3">
                             <span
                                 className={`size-2.5 rounded-full ${
@@ -211,17 +229,17 @@ export default function WorkerDashboard({
                 </section>
 
                 {/* 2. TIGA KARTU STATISTIK UTAMA */}
-                <section className="grid gap-4 md:grid-cols-3">
+                <section className="grid gap-3.5 md:grid-cols-3">
                     {/* KARTU 1: JAM KERJA */}
-                    <div className="flex items-center gap-4 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs">
-                        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#EAF1FA] text-[#1E4479]">
+                    <div className="flex min-h-[116px] items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#EAF1FA] text-[#1E4479]">
                             <Clock className="size-6" />
                         </div>
                         <div>
                             <p className="text-xs font-medium text-slate-500">
                                 Jam kerja bulan ini
                             </p>
-                            <p className="mt-1 text-2xl font-extrabold text-slate-900">
+                            <p className="mt-1 text-[22px] font-bold tracking-tight text-slate-900">
                                 {monthlyHours.toLocaleString('id-ID')} Jam
                             </p>
                             <p className="mt-1 text-[11px] text-slate-400">
@@ -233,15 +251,15 @@ export default function WorkerDashboard({
                     </div>
 
                     {/* KARTU 2: TOTAL PENDAPATAN (HIGHLIGHT NAVY) */}
-                    <div className="flex items-center gap-4 rounded-2xl bg-[#0D254C] p-6 text-white shadow-sm">
-                        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-teal-300">
+                    <div className="flex min-h-[116px] items-center gap-4 rounded-2xl bg-[#102A52] p-5 text-white shadow-sm">
+                        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/10 text-teal-300">
                             <Wallet className="size-6" />
                         </div>
                         <div>
                             <p className="text-xs font-medium text-slate-300">
                                 Total pendapatan
                             </p>
-                            <p className="mt-1 text-2xl font-extrabold tracking-tight text-white">
+                            <p className="mt-1 text-[22px] font-bold tracking-tight text-white">
                                 {formatRupiah(monthlyWages)}
                             </p>
                             <p className="mt-1 text-[11px] text-slate-300/80">
@@ -251,15 +269,15 @@ export default function WorkerDashboard({
                     </div>
 
                     {/* KARTU 3: RATING PERFORMA */}
-                    <div className="flex items-center gap-4 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs">
-                        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#EAF1FA] text-[#1E4479]">
+                    <div className="flex min-h-[116px] items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#EAF1FA] text-[#1E4479]">
                             <Star className="size-6" />
                         </div>
                         <div>
                             <p className="text-xs font-medium text-slate-500">
                                 Rating performa
                             </p>
-                            <p className="mt-1 text-2xl font-extrabold text-slate-900">
+                            <p className="mt-1 text-[22px] font-bold tracking-tight text-slate-900">
                                 {ratingScore.toLocaleString('id-ID', {
                                     minimumFractionDigits: 1,
                                     maximumFractionDigits: 1,
@@ -277,7 +295,7 @@ export default function WorkerDashboard({
 
                 {/* 3. BANNER TUGAS AKTIF (MUNCUL JIKA ADA TUGAS AKTIF) */}
                 {activeTask && (
-                    <section className="overflow-hidden rounded-2xl border border-[#BBD4F5] bg-[#F4F8FE] shadow-2xs">
+                    <section className="overflow-hidden rounded-2xl border border-[#BBD4F5] bg-[#F5FAFD] shadow-sm">
                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#DCE8F8] px-6 py-3">
                             <div className="flex items-center gap-3">
                                 <span className="rounded-full bg-[#DCE9FA] px-3 py-0.5 text-xs font-bold text-[#1E4479]">
@@ -297,7 +315,7 @@ export default function WorkerDashboard({
                             </Link>
                         </div>
 
-                        <div className="flex flex-col justify-between gap-4 px-6 py-5 md:flex-row md:items-center">
+                        <div className="flex flex-col justify-between gap-4 bg-white px-5 py-5 md:flex-row md:items-center">
                             <div className="flex items-start gap-4">
                                 <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#DCE9FA] text-[#1E4479]">
                                     <Briefcase className="size-6" />
@@ -306,7 +324,7 @@ export default function WorkerDashboard({
                                     <p className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
                                         TUGAS AKTIF
                                     </p>
-                                    <h2 className="mt-0.5 text-base font-extrabold text-slate-900">
+                                    <h2 className="mt-0.5 text-base font-bold text-[#21477F]">
                                         {activeTask.title}
                                     </h2>
                                     <p className="mt-1 text-xs text-slate-500">
@@ -340,7 +358,7 @@ export default function WorkerDashboard({
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 border-t border-[#DCE8F8] bg-white/60 px-6 py-2.5 text-xs">
+                        <div className="flex items-center gap-2 border-t border-[#DCE8F8] bg-[#F5FAFD] px-5 py-2.5 text-xs">
                             <span className="inline-flex items-center gap-1.5 font-semibold text-[#1E4479]">
                                 <MapPin className="size-3.5" />
                                 Lokasi terverifikasi
@@ -356,7 +374,7 @@ export default function WorkerDashboard({
                 <section className="space-y-4 pt-1">
                     <div className="flex flex-wrap items-end justify-between gap-3">
                         <div>
-                            <h2 className="text-lg font-extrabold text-slate-900">
+                            <h2 className="text-lg font-medium text-[#13294D]">
                                 Tugas di sekitar Anda
                             </h2>
                             <p className="mt-0.5 text-xs text-slate-500">
@@ -383,7 +401,7 @@ export default function WorkerDashboard({
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Cari tugas atau nama UMKM..."
-                                className="h-11 w-full rounded-xl border border-slate-200 bg-white pr-4 pl-10 text-sm text-slate-800 placeholder:text-slate-400 focus:border-[#1E4479] focus:ring-2 focus:ring-[#1E4479]/15 focus:outline-none"
+                                className="h-10 w-full rounded-xl border border-slate-200 bg-white pr-4 pl-10 text-xs text-slate-800 placeholder:text-slate-400 focus:border-[#1E4479] focus:ring-2 focus:ring-[#1E4479]/15 focus:outline-none"
                             />
                         </div>
 
@@ -397,7 +415,7 @@ export default function WorkerDashboard({
                                         onClick={() =>
                                             setSelectedCategory(category)
                                         }
-                                        className={`rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+                                        className={`rounded-xl px-3 py-2 text-[11px] font-semibold transition ${
                                             active
                                                 ? 'bg-[#0D254C] text-white shadow-2xs'
                                                 : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -436,7 +454,7 @@ export default function WorkerDashboard({
                             </p>
                         </div>
                     ) : (
-                        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                             {filteredTasks.map((task) => {
                                 const isSaved = savedTaskIds.includes(task.id);
                                 const initialLetter =
@@ -447,11 +465,11 @@ export default function WorkerDashboard({
                                 return (
                                     <article
                                         key={task.id}
-                                        className="flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xs transition hover:border-[#1E4479]/40 hover:shadow-md"
+                                        className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-[#1E4479]/40 hover:shadow-md"
                                     >
                                         {/* HEADER WARNA KATEGORI */}
                                         <div
-                                            className={`flex items-center justify-between px-5 pt-4 pb-6 ${getCategoryHeaderColor(
+                                            className={`flex items-center justify-between px-4 pt-3 pb-7 ${getCategoryHeaderColor(
                                                 task.category,
                                             )}`}
                                         >
@@ -478,7 +496,7 @@ export default function WorkerDashboard({
                                         </div>
 
                                         {/* BODY KARTU */}
-                                        <div className="flex flex-1 flex-col px-5 pt-4 pb-5">
+                                        <div className="flex flex-1 flex-col px-4 pt-4 pb-4">
                                             {/* IDENTITAS UMKM */}
                                             <div className="flex items-center gap-3">
                                                 <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#0D254C] text-xs font-bold text-white">
@@ -496,7 +514,7 @@ export default function WorkerDashboard({
                                             </div>
 
                                             {/* JUDUL TUGAS */}
-                                            <h3 className="mt-3.5 line-clamp-2 text-base font-extrabold text-slate-900">
+                                            <h3 className="mt-3.5 line-clamp-2 text-sm font-semibold text-[#13294D]">
                                                 {task.title}
                                             </h3>
 
@@ -522,7 +540,7 @@ export default function WorkerDashboard({
                                                         <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                                                             UPAH BERSIH
                                                         </p>
-                                                        <p className="mt-0.5 text-base font-extrabold text-slate-900">
+                                                        <p className="mt-0.5 text-base font-bold text-[#21477F]">
                                                             {task.wageAmount ===
                                                             null
                                                                 ? 'Kesepakatan'
@@ -543,7 +561,7 @@ export default function WorkerDashboard({
 
                                                 <Link
                                                     href={`/worker/tasks/${task.id}`}
-                                                    className="mt-3.5 flex w-full items-center justify-center rounded-xl bg-[#1E4479] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#163561]"
+                                                    className="mt-3.5 flex w-full items-center justify-center rounded-lg bg-[#21477F] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#163561]"
                                                 >
                                                     Lamar Tugas
                                                 </Link>
@@ -557,10 +575,10 @@ export default function WorkerDashboard({
                 </section>
 
                 {/* 5. RIWAYAT KERJA TERBARU */}
-                <section className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs">
+                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
-                            <h2 className="text-base font-extrabold text-slate-900">
+                            <h2 className="text-base font-medium text-[#13294D]">
                                 Riwayat kerja terbaru
                             </h2>
                             <p className="mt-0.5 text-xs text-slate-400">
@@ -570,7 +588,7 @@ export default function WorkerDashboard({
 
                         <Link
                             href="/worker/applications"
-                            className="text-xs font-bold text-[#1E4479] hover:underline"
+                            className="text-xs font-semibold text-[#21477F] hover:underline"
                         >
                             Lihat riwayat lengkap
                         </Link>

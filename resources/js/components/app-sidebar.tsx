@@ -68,13 +68,15 @@ const adminItems = [
 // ========================================
 
 export function AppSidebar() {
-    const { auth } = usePage().props;
-    const { url } = usePage();
+    const page = usePage();
+    const { auth } = page.props;
 
     const role = auth?.user?.role;
-    const isAdmin = role === 'admin';
 
-    const currentPath = url.split('?')[0];
+    const isAdmin = role === 'admin';
+    const isWorker = role === 'worker';
+
+    const currentPath = page.url.split('?')[0];
 
     // ========================================
     // MENU PEMILIK UMKM
@@ -129,7 +131,7 @@ export function AppSidebar() {
 
     if (role === 'employer') {
         mainNavItems = employerNavItems;
-    } else if (role === 'worker') {
+    } else if (isWorker) {
         mainNavItems = workerNavItems;
     } else {
         mainNavItems = [
@@ -143,6 +145,7 @@ export function AppSidebar() {
 
     // ========================================
     // SIDEBAR KHUSUS ADMIN
+    // TIDAK DIUBAH
     // ========================================
 
     if (isAdmin) {
@@ -218,11 +221,9 @@ export function AppSidebar() {
                     </SidebarMenu>
                 </SidebarContent>
 
-                {/* FOOTER SIDEBAR */}
+                {/* FOOTER ADMIN */}
 
                 <SidebarFooter className="gap-3 bg-white px-3 pb-5">
-                    {/* KEMBALI KE BERANDA */}
-
                     <Link
                         href={home()}
                         className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-700 transition-colors hover:bg-slate-100"
@@ -237,28 +238,83 @@ export function AppSidebar() {
 
     // ========================================
     // SIDEBAR WORKER DAN UMKM
-    // DIPERTAHANKAN SEPERTI SEBELUMNYA
     // ========================================
 
     return (
         <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
-                                <AppLogo />
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarHeader>
+            {/* ====================================
+                HEADER SIDEBAR
+            ==================================== */}
 
-            <SidebarContent>
+            {isWorker ? (
+                // LOGO KHUSUS WORKER SESUAI FIGMA
+                <SidebarHeader className="bg-white px-4 pt-6 pb-4">
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <Link
+                                href="/worker/dashboard"
+                                className="flex items-center px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+                            >
+                                <KarsaLogo
+                                    href="/worker/dashboard"
+                                    className="flex items-center px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+                                    imageClassName="h-auto w-[120px] max-w-full object-contain group-data-[collapsible=icon]:w-[36px]"
+                                />
+                            </Link>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+
+                    <p className="mt-5 px-2 text-[10px] font-bold tracking-[0.12em] text-[#8A9BB8] group-data-[collapsible=icon]:hidden">
+                        DASHBOARD PEKERJA
+                    </p>
+                </SidebarHeader>
+            ) : (
+                // LOGO UMKM TETAP SEPERTI SEBELUMNYA
+                <SidebarHeader>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton size="lg" asChild>
+                                <Link href={dashboard()} prefetch>
+                                    <AppLogo />
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarHeader>
+            )}
+
+            {/* ====================================
+                MENU NAVIGASI
+            ==================================== */}
+
+            <SidebarContent className={isWorker ? 'bg-white px-3' : undefined}>
                 <NavMain items={mainNavItems} />
             </SidebarContent>
 
-            <SidebarFooter>
+            {/* ====================================
+                FOOTER SIDEBAR
+            ==================================== */}
+
+            <SidebarFooter
+                className={isWorker ? 'gap-2 bg-white px-3 pb-5' : undefined}
+            >
+                {/* KEMBALI KE BERANDA WORKER */}
+
+                {isWorker && (
+                    <Link
+                        href={home()}
+                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-500 transition-colors group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 hover:bg-slate-100"
+                    >
+                        <House size={18} className="shrink-0" />
+
+                        <span className="group-data-[collapsible=icon]:hidden">
+                            Kembali ke Beranda
+                        </span>
+                    </Link>
+                )}
+
+                {/* PROFIL DAN LOGOUT TETAP ADA */}
+
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

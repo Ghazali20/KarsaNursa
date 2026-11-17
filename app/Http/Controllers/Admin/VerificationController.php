@@ -9,6 +9,7 @@ use App\Models\VerificationDocument;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -235,64 +236,124 @@ class VerificationController extends Controller
      * HALAMAN MANAJEMEN AKUN
      * ========================================
      *
-     * Menampilkan antrean pemeriksaan dokumen
-     * berdasarkan akun pengguna.
+     * Cari akun berdasarkan ID, nama, email, nama usaha,
+     * lalu filter Semua / Menunggu / Disetujui / Ditolak.
      */
-    public function users(): Response
+    public function users(Request $request): Response
     {
-        // Akun Worker dan UMKM yang masih
-        // memiliki dokumen berstatus pending.
+        $search = trim(substr((string) $request->query('search', ''), 0, 100));
+        $status = (string) $request->query('status', 'all');
+
+        if (! in_array($status, ['all', 'pending', 'approved', 'rejected'], true)) {
+            $status = 'all';
+        }
+
+        // Statistik antrean tetap dihitung dari dokumen pending,
+        // terpisah dari filter daftar akun.
         $pendingUsers = User::query()
             ->whereIn('role', ['worker', 'employer'])
-            ->whereHas(
-                'verificationDocuments',
-                fn ($query) => $query->where('status', 'pending')
-            );
+            ->whereHas('verificationDocuments', function ($query): void {
+                $query->where('status', 'pending');
+            });
 
-        // ====================================
-        // STATISTIK MANAJEMEN AKUN
-        // ====================================
         $stats = [
             'totalQueue' => (clone $pendingUsers)->count(),
-
-            'pendingWorkers' => (clone $pendingUsers)
-                ->where('role', 'worker')
-                ->count(),
-
-            'pendingEmployers' => (clone $pendingUsers)
-                ->where('role', 'employer')
-                ->count(),
-
+            'pendingWorkers' => (clone $pendingUsers)->where('role', 'worker')->count(),
+            'pendingEmployers' => (clone $pendingUsers)->where('role', 'employer')->count(),
             'activeUsers' => User::query()
                 ->whereIn('role', ['worker', 'employer'])
                 ->where('verification_status', 'approved')
                 ->count(),
-
             'verifiedDocuments' => VerificationDocument::query()
                 ->where('status', 'approved')
-                ->whereHas(
-                    'user',
-                    fn ($query) => $query->whereIn('role', ['worker', 'employer'])
-                )
+                ->whereHas('user', function ($query): void {
+                    $query->whereIn('role', ['worker', 'employer']);
+                })
                 ->count(),
         ];
 
-        // ====================================
-        // DAFTAR ANTREAN PENGGUNA
-        // ====================================
-        $queue = (clone $pendingUsers)
+        $accounts = User::query()->whereIn('role', ['worker', 'employer']);
+
+        // Cari berdasarkan ID, nama, email, dan nama usaha.
+        if ($search !== '') {
+            $accounts->where(function ($query) use ($search): void {
+                $query->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%')
+                    ->orWhereHas('business', function ($businessQuery) use ($search): void {
+                        $businessQuery->where('name', 'like', '%'.$search.'%');
+                    });
+
+                if (ctype_digit($search)) {
+                    $query->orWhere('id', (int) $search);
+                }
+            });
+        }
+
+        // Untuk akun yang belum disetujui, dokumen yang seluruhnya
+        // ditolak juga ditampilkan sebagai "Ditolak", walaupun
+        // users.verification_status masih pending.
+        if ($status === 'approved') {
+            $accounts->where('verification_status', 'approved');
+        } elseif ($status === 'rejected') {
+            $accounts->where(function ($query): void {
+                $query->where('verification_status', 'rejected')
+                    ->orWhere(function ($pendingQuery): void {
+                        // Gunakan subquery untuk menghindari ambiguitas
+                        // tipe Builder pada analisis PHPStan.
+                        $pendingQuery->where('verification_status', 'pending');
+                        $pendingQuery->whereNotIn(
+                            'id',
+                            VerificationDocument::query()
+                                ->select('user_id')
+                                ->where('status', 'pending')
+                        );
+                        $pendingQuery->whereIn(
+                            'id',
+                            VerificationDocument::query()
+                                ->select('user_id')
+                                ->where('status', 'rejected')
+                        );
+                    });
+            });
+        } elseif ($status === 'pending') {
+            $accounts->where('verification_status', 'pending')
+                ->where(function ($query): void {
+                    $query->whereHas('verificationDocuments', function ($documents): void {
+                        $documents->where('status', 'pending');
+                    })->orWhereDoesntHave('verificationDocuments', function ($documents): void {
+                        $documents->where('status', 'rejected');
+                    });
+                });
+        }
+
+        $queue = $accounts
             ->with([
-                'verificationDocuments' => fn ($query) => $query
-                    ->where('status', 'pending')
-                    ->oldest(),
+                'business:id,user_id,name',
+                'verificationDocuments' => function ($query): void {
+                    $query->latest('id');
+                },
             ])
-            ->latest()
-            ->paginate(4)
+            ->latest('id')
+            ->paginate(8)
             ->withQueryString()
             ->through(function (User $user): array {
-                // Satu dokumen pending ditampilkan
-                // terlebih dahulu per akun.
-                $document = $user->verificationDocuments->first();
+                $documents = $user->verificationDocuments;
+                $pendingDocument = $documents->first(function (VerificationDocument $document): bool {
+                    return $document->status === 'pending';
+                });
+                $document = $pendingDocument ?? $documents->first();
+
+                $hasPending = $pendingDocument !== null;
+                $hasRejected = $documents->contains(function (VerificationDocument $item): bool {
+                    return $item->status === 'rejected';
+                });
+
+                $rawStatus = (string) $user->getRawOriginal('verification_status');
+                $accountStatus = $rawStatus === 'approved'
+                    ? 'approved'
+                    : (($rawStatus === 'rejected' || (! $hasPending && $hasRejected))
+                        ? 'rejected'
+                        : 'pending');
 
                 $documentType = $document === null
                     ? '-'
@@ -307,12 +368,21 @@ class VerificationController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
+                    'email' => $user->email,
                     'role' => $user->role,
-                    'documentId' => $document?->id,
+                    'businessName' => $user->business->name ?? null,
+                    'accountStatus' => $accountStatus,
+                    // Aksi persetujuan hanya untuk dokumen pending.
+                    'documentId' => $pendingDocument?->id,
                     'documentType' => $documentType,
-                    'documentsRemaining' => $user->verificationDocuments->count(),
-                    'createdLabel' => $document?->created_at
-                        ?->diffForHumans() ?? '-',
+                    'documentStatus' => $document === null ? 'none' : (string) $document->status,
+                    'documentsRemaining' => $documents->filter(function (VerificationDocument $item): bool {
+                        return $item->status === 'pending';
+                    })->count(),
+                    'createdLabel' => $user->created_at === null
+                        ? '-'
+                        : Carbon::parse((string) $user->created_at)
+                            ->diffForHumans(),
                     'downloadUrl' => $document === null
                         ? null
                         : route('admin.verifications.document', $document),
@@ -322,6 +392,10 @@ class VerificationController extends Controller
         return Inertia::render('admin/users/index', [
             'stats' => $stats,
             'queue' => $queue,
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+            ],
         ]);
     }
 
@@ -430,7 +504,6 @@ class VerificationController extends Controller
 
             // 4. Simpan keputusan Admin.
             $target->status = $decision;
-            $$target->status = $decision;
             $target->review_notes = $notes;
             $target->reviewed_by = max(0, $adminId);
             $target->reviewed_at = now();

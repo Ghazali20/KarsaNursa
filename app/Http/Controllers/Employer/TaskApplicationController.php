@@ -6,6 +6,8 @@ use App\Enums\TaskPaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Task;
 use App\Models\TaskApplication;
+use App\Notifications\TaskApplicationRejected;
+use BackedEnum;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -50,11 +52,13 @@ class TaskApplicationController extends Controller
             ->map(fn (TaskApplication $application): array => [
                 'id' => $application->id,
 
-                'status' => $application->status,
+                'status' => $this->statusValue($application->status),
 
-                'workerName' => $application->worker->name,
+                'workerName' => $application->worker->name
+                    ?? 'Pekerja tidak tersedia',
 
-                'workerEmail' => $application->worker->email,
+                'workerEmail' => $application->worker->email
+                    ?? '-',
 
                 // Menggunakan created_at, bukan applied_at.
                 'appliedAt' => $application->created_at
@@ -83,16 +87,22 @@ class TaskApplicationController extends Controller
             ->where('status', 'pending')
             ->count();
 
+        $quota = (int) $task->worker_quota;
+
         return Inertia::render(
             'employer/tasks/applications',
             [
                 'task' => [
                     'id' => $task->id,
                     'title' => $task->title,
-                    'status' => $task->status,
+                    'status' => $this->statusValue($task->status),
                     'workerQuota' => $task->worker_quota,
                     'acceptedCount' => $acceptedCount,
                     'pendingCount' => $pendingCount,
+
+                    // Tambahan untuk UI revisi dosen.
+                    'isFull' => $quota > 0 && $acceptedCount >= $quota,
+                    'remainingQuota' => max(0, $quota - $acceptedCount),
                 ],
 
                 'applications' => $applications,
@@ -146,7 +156,19 @@ class TaskApplicationController extends Controller
         );
 
         // ========================================
-        // 3. PERIKSA STRUKTUR DATABASE
+        // 3. VALIDASI KEPEMILIKAN TUGAS
+        // ========================================
+
+        // Tolak akses UMKM lain sebelum memeriksa struktur database.
+        // Pemeriksaan ulang di dalam transaksi tetap dipertahankan.
+        abort_unless(
+            (int) $task->business_id === (int) $business->id,
+            403,
+            'Anda tidak berhak memproses lamaran tugas ini.'
+        );
+
+        // ========================================
+        // 4. PERIKSA STRUKTUR DATABASE
         // ========================================
 
         $hasReviewNotes = Schema::hasColumn(
@@ -166,6 +188,15 @@ class TaskApplicationController extends Controller
             ]);
         }
 
+        // Revisi dosen: notifikasi penolakan wajib tersimpan.
+        // Pastikan tabel notifications telah dibuat.
+        if (! Schema::hasTable('notifications')) {
+            throw ValidationException::withMessages([
+                'application' => 'Tabel notifications belum tersedia. '.
+                    'Jalankan migration notifikasi Laravel terlebih dahulu.',
+            ]);
+        }
+
         // ========================================
         // 4. PROSES SELEKSI PELAMAR
         // ========================================
@@ -180,6 +211,8 @@ class TaskApplicationController extends Controller
         ): void {
 
             // Mengunci tugas selama proses seleksi.
+            // Semua keputusan pada tugas yang sama harus
+            // mengikuti urutan penguncian ini.
             $lockedTask = Task::query()
                 ->lockForUpdate()
                 ->findOrFail($task->id);
@@ -205,7 +238,7 @@ class TaskApplicationController extends Controller
                 ->firstOrFail();
 
             // Lamaran hanya dapat diproses sekali.
-            if ($lockedApplication->status !== 'pending') {
+            if ($this->statusValue($lockedApplication->status) !== 'pending') {
                 throw ValidationException::withMessages([
                     'application' => 'Lamaran ini sudah diproses sebelumnya.',
                 ]);
@@ -215,11 +248,14 @@ class TaskApplicationController extends Controller
             // 7. VALIDASI PENERIMAAN
             // ========================================
 
+            // Kuota tugas yang ditetapkan UMKM.
+            $quota = (int) $lockedTask->worker_quota;
+
             if ($validated['decision'] === 'accepted') {
 
-                if ($lockedTask->status !== 'published') {
+                if ($this->statusValue($lockedTask->status) !== 'published') {
                     throw ValidationException::withMessages([
-                        'application' => 'Tugas ini belum dipublikasikan.',
+                        'application' => 'Tugas ini belum dipublikasikan atau kuotanya sudah penuh.',
                     ]);
                 }
 
@@ -235,8 +271,6 @@ class TaskApplicationController extends Controller
                 // ========================================
                 // 8. PERIKSA KUOTA PEKERJA
                 // ========================================
-
-                $quota = (int) $lockedTask->worker_quota;
 
                 $acceptedCount = TaskApplication::query()
                     ->where('task_id', $lockedTask->id)
@@ -267,24 +301,101 @@ class TaskApplicationController extends Controller
             if ($hasReviewNotes) {
                 $updateData['review_notes'] =
                     $validated['decision'] === 'rejected'
-                        ? $validated['review_notes']
-                        : null;
+                    ? $validated['review_notes']
+                    : null;
             }
 
             $lockedApplication->update($updateData);
 
             if ($validated['decision'] === 'accepted') {
+                // ========================================
+                // 10. CATAT PEMBAYARAN (TETAP ADA)
+                // ========================================
+
                 $lockedApplication->payment()->create([
                     'amount' => (int) $lockedTask->wage_amount,
                     'status' => TaskPaymentStatus::Pending->value,
                     'paid_at' => null,
                 ]);
-            }
 
+                // ========================================
+                // 11. CEK APAKAH KUOTA BARU SAJA PENUH
+                // ========================================
+
+                // Hitung ulang setelah status lamaran diubah.
+                $newAcceptedCount = $lockedTask->applications()
+                    ->where('status', 'accepted')
+                    ->count();
+
+                if ($newAcceptedCount >= $quota) {
+                    // Revisi dosen: tutup tugas hanya setelah
+                    // kuota ACCEPTED benar-benar terpenuhi.
+                    $lockedTask->update([
+                        'status' => 'closed',
+                    ]);
+
+                    // ====================================
+                    // 12. AUTO-REJECT PELAMAR SISA
+                    // ====================================
+
+                    $pendingApplications = TaskApplication::query()
+                        ->where('task_id', $lockedTask->id)
+                        ->where('status', 'pending')
+                        ->orderBy('id')
+                        ->lockForUpdate()
+                        ->get();
+
+                    $autoRejectReason =
+                        'Lamaran otomatis ditolak karena kuota pekerja '
+                        .'untuk tugas ini sudah terpenuhi.';
+
+                    foreach ($pendingApplications as $pendingApplication) {
+                        $autoRejectData = [
+                            'status' => 'rejected',
+                            'reviewed_by' => $request->user()->id,
+                            'reviewed_at' => now(),
+                        ];
+
+                        if ($hasReviewNotes) {
+                            $autoRejectData['review_notes'] = $autoRejectReason;
+                        }
+
+                        $pendingApplication->update($autoRejectData);
+
+                        // Notifikasi disimpan ke DB pada transaksi
+                        // yang sama agar tidak kehilangan pesan.
+                        $pendingApplication->worker?->notify(
+                            new TaskApplicationRejected(
+                                taskId: (int) $lockedTask->id,
+                                applicationId: (int) $pendingApplication->id,
+                                taskTitle: (string) $lockedTask->title,
+                                reason: $autoRejectReason,
+                                automatic: true,
+                            )
+                        );
+                    }
+                }
+            } else {
+                // ========================================
+                // 13. NOTIFIKASI PENOLAKAN MANUAL
+                // ========================================
+
+                $manualRejectReason = (string) $validated['review_notes'];
+
+                $lockedApplication->worker?->notify(
+                    new TaskApplicationRejected(
+                        taskId: (int) $lockedTask->id,
+                        applicationId: (int) $lockedApplication->id,
+                        taskTitle: (string) $lockedTask->title,
+                        reason: $manualRejectReason,
+                        automatic: false,
+                    )
+                );
+            }
         }, 3);
 
         // ========================================
-        // 10. REDIRECT SESUAI HALAMAN ASAL
+        // 14. REDIRECT SESUAI HALAMAN ASAL
         // ========================================
 
         if (($validated['return_to'] ?? null) === 'inbox') {
@@ -303,5 +414,15 @@ class TaskApplicationController extends Controller
             'success',
             'Keputusan seleksi pelamar berhasil disimpan.'
         );
+    }
+
+    /**
+     * Mendukung status string maupun enum cast Laravel.
+     */
+    private function statusValue(mixed $status): string
+    {
+        return $status instanceof BackedEnum
+            ? (string) $status->value
+            : (string) $status;
     }
 }
