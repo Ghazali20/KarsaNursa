@@ -1,6 +1,20 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
-import { ArrowRight, ChevronDown, MapPin, ShieldCheck, X } from 'lucide-react';
+import {
+    ArrowRight,
+    Calendar,
+    ChevronDown,
+    Clock,
+    FileText,
+    Info,
+    ShieldCheck,
+    X,
+} from 'lucide-react';
+import React, { useState, type FormEvent } from 'react';
+import { toast } from 'sonner';
+
+// ==========================================
+// TIPE & KONSTANTA
+// ==========================================
 
 type Action = 'draft' | 'publish';
 
@@ -31,14 +45,22 @@ const categories = [
     'Lainnya',
 ];
 
-const inputClass =
-    'mt-1.5 block h-10 w-full rounded-[10px] border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-[#345eaa] focus:ring-2 focus:ring-blue-100';
+// Fallback koordinat default di balik layar (tanpa input UI)
+const DEFAULT_LATITUDE = '-6.2088';
+const DEFAULT_LONGITUDE = '106.8456';
 
-const labelClass = 'block text-[12px] font-semibold text-[#172c4b]';
+// Styling kelas input terstandar
+const inputClass =
+    'mt-1.5 block h-10 w-full rounded-xl border border-[#DFE6ED] bg-white px-3.5 text-xs sm:text-sm text-[#17233A] outline-none transition placeholder:text-[#93A2B5] focus:border-[#173765] focus:ring-2 focus:ring-[#173765]/10';
+
+const labelClass = 'block text-xs font-semibold text-[#17233A]';
+
+// ==========================================
+// HELPER PERHITUNGAN WAKTU & TANGGAL
+// ==========================================
 
 function formatLocalDateTime(date: Date): string {
     const two = (n: number) => String(n).padStart(2, '0');
-
     return `${date.getFullYear()}-${two(date.getMonth() + 1)}-${two(date.getDate())}T${two(date.getHours())}:${two(date.getMinutes())}`;
 }
 
@@ -62,16 +84,36 @@ function suggestDeadline(startAt: string): string {
     const date = new Date(startAt);
     if (Number.isNaN(date.getTime())) return '';
 
-    // Usulan: pendaftaran ditutup satu jam sebelum pekerjaan mulai.
+    // Rekomendasi awal: batas lamaran ditutup 1 jam sebelum tugas mulai
     date.setHours(date.getHours() - 1);
     return formatLocalDateTime(date);
 }
 
+function formatEndDisplay(dateTimeStr: string): string {
+    if (!dateTimeStr) return '—';
+    try {
+        const d = new Date(dateTimeStr);
+        if (Number.isNaN(d.getTime())) return '—';
+        return d.toLocaleString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    } catch {
+        return dateTimeStr.replace('T', ' • ');
+    }
+}
+
 function FieldError({ message }: { message?: string }) {
     if (!message) return null;
-
-    return <p className="mt-1 text-xs font-medium text-red-600">{message}</p>;
+    return <p className="mt-1 text-xs font-medium text-[#EF4444]">{message}</p>;
 }
+
+// ==========================================
+// KOMPONEN UTAMA MODAL BUAT TUGAS
+// ==========================================
 
 export default function CreateTask() {
     const [form, setForm] = useState<TaskForm>({
@@ -81,20 +123,20 @@ export default function CreateTask() {
         requirements: '',
         instructions: '',
         location_address: '',
-        latitude: '',
-        longitude: '',
+        latitude: DEFAULT_LATITUDE,
+        longitude: DEFAULT_LONGITUDE,
         attendance_radius_meters: '100',
         application_deadline: '',
         work_date: '',
         work_time: '',
-        duration_hours: '4',
+        duration_hours: '1',
         worker_quota: '2',
         wage_amount: '',
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [processing, setProcessing] = useState(false);
-    const [advancedOpen, setAdvancedOpen] = useState(false);
+    const [detailsOpen, setDetailsOpen] = useState(false);
 
     const startsAt =
         form.work_date && form.work_time
@@ -107,7 +149,6 @@ export default function CreateTask() {
     function updateField<K extends keyof TaskForm>(key: K, value: TaskForm[K]) {
         setForm((current) => ({ ...current, [key]: value }));
 
-        // Bersihkan pesan error field saat pengguna memperbaikinya.
         setErrors((current) => {
             if (!(key in current)) return current;
             const next = { ...current };
@@ -119,21 +160,25 @@ export default function CreateTask() {
     function submitTask(action: Action) {
         if (processing) return;
 
-        // Saat publikasi, semua field wajib harus valid.
-        // Draft tetap dikirim ke server sesuai aturan validasi Laravel.
+        // Validasi client-side saat mempublikasikan tugas
         if (action === 'publish') {
             const nextErrors: Record<string, string> = {};
 
-            if (!form.title.trim())
+            if (!form.title.trim()) {
                 nextErrors.title = 'Judul tugas wajib diisi.';
-            if (!form.category)
+            }
+            if (!form.category) {
                 nextErrors.category = 'Pilih kategori pekerjaan.';
+            }
             if (form.description.trim().length < 20) {
                 nextErrors.description = 'Deskripsi minimal 20 karakter.';
             }
-            if (!startsAt)
+            if (!startsAt) {
                 nextErrors.starts_at = 'Isi tanggal dan waktu mulai.';
-            if (!endsAt) nextErrors.ends_at = 'Durasi pekerjaan harus valid.';
+            }
+            if (!endsAt) {
+                nextErrors.ends_at = 'Durasi pekerjaan harus valid.';
+            }
             if (!form.location_address.trim()) {
                 nextErrors.location_address = 'Alamat lokasi wajib diisi.';
             }
@@ -144,13 +189,7 @@ export default function CreateTask() {
                 nextErrors.worker_quota = 'Kuota harus 1–100 pekerja.';
             }
             if (Number(form.wage_amount) < 1) {
-                nextErrors.wage_amount = 'Upah harus lebih dari Rp0.';
-            }
-            if (!form.latitude || !form.longitude) {
-                if (!form.latitude)
-                    nextErrors.latitude = 'Latitude wajib diisi.';
-                if (!form.longitude)
-                    nextErrors.longitude = 'Longitude wajib diisi.';
+                nextErrors.wage_amount = 'Upah harus lebih dari Rp 0.';
             }
             if (!deadline || new Date(deadline).getTime() <= Date.now()) {
                 nextErrors.application_deadline =
@@ -170,12 +209,15 @@ export default function CreateTask() {
 
             if (Object.keys(nextErrors).length > 0) {
                 setErrors(nextErrors);
+                const firstMsg = Object.values(nextErrors)[0];
+                toast.error('Periksa Formulir', {
+                    description: firstMsg,
+                });
                 if (
-                    nextErrors.latitude ||
-                    nextErrors.longitude ||
-                    nextErrors.application_deadline
+                    nextErrors.application_deadline ||
+                    nextErrors.attendance_radius_meters
                 ) {
-                    setAdvancedOpen(true);
+                    setDetailsOpen(true);
                 }
                 return;
             }
@@ -184,7 +226,8 @@ export default function CreateTask() {
         setErrors({});
         setProcessing(true);
 
-        // Nama field tetap sama dengan yang dipakai Controller Laravel.
+        // Kirim request ke backend Laravel (/employer/tasks POST)
+        // action dipetakan ke 'submit' (jika publish) atau 'draft' sesuai aturan validasi backend
         router.post(
             '/employer/tasks',
             {
@@ -194,27 +237,32 @@ export default function CreateTask() {
                 requirements: form.requirements,
                 instructions: form.instructions,
                 location_address: form.location_address.trim(),
-                latitude: form.latitude,
-                longitude: form.longitude,
+                // Nilai fallback latitude & longitude dikirim otomatis di balik layar
+                latitude: form.latitude?.trim() || DEFAULT_LATITUDE,
+                longitude: form.longitude?.trim() || DEFAULT_LONGITUDE,
                 attendance_radius_meters: form.attendance_radius_meters,
                 application_deadline: deadline,
                 starts_at: startsAt,
                 ends_at: endsAt,
                 worker_quota: form.worker_quota,
                 wage_amount: form.wage_amount,
-                action,
+                action: action === 'publish' ? 'submit' : 'draft',
             },
             {
                 preserveScroll: true,
                 onError: (validationErrors) => {
                     setErrors(validationErrors);
+                    const firstMsg = Object.values(validationErrors)[0];
+                    if (firstMsg) {
+                        toast.error('Gagal Menyimpan Tugas', {
+                            description: String(firstMsg),
+                        });
+                    }
                     if (
-                        validationErrors.latitude ||
-                        validationErrors.longitude ||
                         validationErrors.application_deadline ||
                         validationErrors.attendance_radius_meters
                     ) {
-                        setAdvancedOpen(true);
+                        setDetailsOpen(true);
                     }
                 },
                 onFinish: () => setProcessing(false),
@@ -229,44 +277,77 @@ export default function CreateTask() {
 
     return (
         <>
-            <Head title="Buat Micro-task - KarsaNursa" />
+            <Head>
+                <title>Buat Micro-task - Karsa Nusa</title>
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link
+                    rel="preconnect"
+                    href="https://fonts.gstatic.com"
+                    crossOrigin="anonymous"
+                />
+                <link
+                    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+                    rel="stylesheet"
+                />
+            </Head>
 
-            {/* Overlay: halaman create ditampilkan sebagai modal sesuai Figma. */}
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d1930]/40 p-3 backdrop-blur-[3px] sm:p-6">
+            {/* CONTAINER OVERLAY MODAL */}
+            <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-3 sm:p-6 backdrop-blur-sm antialiased"
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            >
+                {/* KARTU MODAL */}
                 <div
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="create-task-title"
-                    className="flex max-h-[calc(100dvh-24px)] w-full max-w-[610px] flex-col overflow-hidden rounded-[19px] bg-white shadow-[0_24px_90px_rgba(15,23,42,0.3)] sm:max-h-[calc(100dvh-48px)]"
+                    className="flex max-h-[calc(100dvh-28px)] sm:max-h-[calc(100dvh-48px)] w-full max-w-[640px] flex-col overflow-hidden rounded-2xl border border-[#DFE6ED] bg-white shadow-2xl"
                 >
-                    {/* Header modal */}
-                    <div className="flex shrink-0 items-start justify-between border-b border-slate-100 px-6 py-5 sm:px-7">
+                    {/* ========================================================
+                        HEADER MODAL
+                    ======================================================== */}
+                    <div className="flex shrink-0 items-start justify-between border-b border-[#DFE6ED] px-6 py-5 sm:px-7">
                         <div>
-                            <span className="inline-flex rounded-full bg-[#e2f5fa] px-3 py-1 text-[10px] font-bold tracking-wide text-[#24527e]">
+                            {/* Badge Pill TUGAS BARU */}
+                            <span className="inline-flex rounded-full bg-[#D8F1F6] px-3 py-1 text-[10px] font-bold tracking-wider text-[#173765] uppercase">
                                 TUGAS BARU
                             </span>
+
+                            {/* Judul Besar */}
                             <h1
                                 id="create-task-title"
-                                className="mt-2 text-[24px] font-bold tracking-tight text-[#192a46]"
+                                className="mt-2 text-2xl font-bold tracking-tight text-[#17233A]"
                             >
                                 Buat micro-task
                             </h1>
-                            <p className="mt-1 text-[11px] text-slate-500">
+
+                            {/* Subjudul */}
+                            <p className="mt-1 text-xs text-[#607087]">
                                 Berikan rincian yang jelas agar pekerja memahami
                                 tugas.
                             </p>
                         </div>
 
-                        <Link
-                            href="/employer/dashboard"
-                            aria-label="Tutup dan kembali ke Dashboard"
-                            className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100"
+                        {/* Tombol Close X */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (window.history.length > 1) {
+                                    window.history.back();
+                                } else {
+                                    router.visit('/employer/tasks');
+                                }
+                            }}
+                            aria-label="Tutup dan kembali"
+                            className="rounded-xl border border-[#DFE6ED] p-2 text-[#607087] transition hover:bg-[#F7F9FB] hover:text-[#17233A] cursor-pointer"
                         >
-                            <X className="size-4" />
-                        </Link>
+                            <X className="size-4.5" />
+                        </button>
                     </div>
 
-                    {/* Konten modal dapat di-scroll pada layar kecil. */}
+                    {/* ========================================================
+                        FORM BODY (RESPONSIF & DAPAT DI-SCROLL)
+                    ======================================================== */}
                     <form
                         id="create-microtask-form"
                         onSubmit={handleSubmit}
@@ -274,6 +355,7 @@ export default function CreateTask() {
                         className="min-h-0 flex-1 overflow-y-auto"
                     >
                         <div className="space-y-4 px-6 py-5 sm:px-7">
+                            {/* 1. Judul Tugas (Full Width) */}
                             <div>
                                 <label
                                     htmlFor="task-title"
@@ -294,6 +376,7 @@ export default function CreateTask() {
                                 <FieldError message={errors.title} />
                             </div>
 
+                            {/* 2. Grid 2 Kolom: Kategori & Tanggal Pelaksanaan */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label
@@ -302,29 +385,35 @@ export default function CreateTask() {
                                     >
                                         Kategori *
                                     </label>
-                                    <select
-                                        id="task-category"
-                                        value={form.category}
-                                        onChange={(e) =>
-                                            updateField(
-                                                'category',
-                                                e.target.value,
-                                            )
-                                        }
-                                        className={inputClass}
-                                    >
-                                        <option value="">Pilih kategori</option>
-                                        {categories.map((category) => (
-                                            <option
-                                                key={category}
-                                                value={category}
-                                            >
-                                                {category}
+                                    <div className="relative">
+                                        <select
+                                            id="task-category"
+                                            value={form.category}
+                                            onChange={(e) =>
+                                                updateField(
+                                                    'category',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className={`${inputClass} appearance-none pr-8 cursor-pointer`}
+                                        >
+                                            <option value="">
+                                                Pilih kategori
                                             </option>
-                                        ))}
-                                    </select>
+                                            {categories.map((category) => (
+                                                <option
+                                                    key={category}
+                                                    value={category}
+                                                >
+                                                    {category}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-4 text-[#93A2B5]" />
+                                    </div>
                                     <FieldError message={errors.category} />
                                 </div>
+
                                 <div>
                                     <label
                                         htmlFor="work-date"
@@ -348,6 +437,7 @@ export default function CreateTask() {
                                 </div>
                             </div>
 
+                            {/* 3. Grid 2 Kolom: Waktu Mulai & Durasi (jam) */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label
@@ -369,6 +459,7 @@ export default function CreateTask() {
                                         className={inputClass}
                                     />
                                 </div>
+
                                 <div>
                                     <label
                                         htmlFor="duration"
@@ -390,11 +481,13 @@ export default function CreateTask() {
                                             )
                                         }
                                         className={inputClass}
+                                        placeholder="4"
                                     />
                                     <FieldError message={errors.ends_at} />
                                 </div>
                             </div>
 
+                            {/* 4. Alamat Lokasi (Full Width) */}
                             <div>
                                 <label
                                     htmlFor="task-address"
@@ -418,6 +511,7 @@ export default function CreateTask() {
                                 <FieldError message={errors.location_address} />
                             </div>
 
+                            {/* 5. Grid 2 Kolom: Kuota Pekerja & Upah Bersih */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label
@@ -439,9 +533,11 @@ export default function CreateTask() {
                                             )
                                         }
                                         className={inputClass}
+                                        placeholder="2"
                                     />
                                     <FieldError message={errors.worker_quota} />
                                 </div>
+
                                 <div>
                                     <label
                                         htmlFor="task-wage"
@@ -455,7 +551,7 @@ export default function CreateTask() {
                                         inputMode="numeric"
                                         value={
                                             form.wage_amount
-                                                ? `Rp${Number(form.wage_amount).toLocaleString('id-ID')}`
+                                                ? `Rp ${Number(form.wage_amount).toLocaleString('id-ID')}`
                                                 : ''
                                         }
                                         onChange={(e) =>
@@ -468,12 +564,13 @@ export default function CreateTask() {
                                             )
                                         }
                                         className={inputClass}
-                                        placeholder="Rp75.000"
+                                        placeholder="Rp 75.000"
                                     />
                                     <FieldError message={errors.wage_amount} />
                                 </div>
                             </div>
 
+                            {/* 6. Deskripsi & Tanggung Jawab (Full Width) */}
                             <div>
                                 <label
                                     htmlFor="task-description"
@@ -483,6 +580,7 @@ export default function CreateTask() {
                                 </label>
                                 <textarea
                                     id="task-description"
+                                    rows={3}
                                     value={form.description}
                                     onChange={(e) =>
                                         updateField(
@@ -490,86 +588,40 @@ export default function CreateTask() {
                                             e.target.value,
                                         )
                                     }
-                                    className={`${inputClass} h-16 resize-y py-3`}
+                                    className={`${inputClass} h-auto py-2.5 resize-y leading-relaxed`}
                                     placeholder="Jelaskan aktivitas, kebutuhan, dan hasil yang diharapkan..."
                                 />
                                 <FieldError message={errors.description} />
                             </div>
 
-                            {/* Field penting yang tidak tampak di Figma,
-                                tetapi dibutuhkan backend dan fitur presensi. */}
-                            <div className="rounded-lg border border-slate-200">
+                            {/* ========================================================
+                                7. SECTION TAMBAHAN — DETAIL PENDAFTARAN
+                                (TANPA INPUT MANUAL LATITUDE & LONGITUDE)
+                            ======================================================== */}
+                            <div className="rounded-xl border border-[#DFE6ED] bg-white overflow-hidden">
                                 <button
                                     type="button"
                                     onClick={() =>
-                                        setAdvancedOpen((value) => !value)
+                                        setDetailsOpen((value) => !value)
                                     }
-                                    aria-expanded={advancedOpen}
-                                    className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs font-semibold text-[#254673] hover:bg-slate-50"
+                                    aria-expanded={detailsOpen}
+                                    className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-xs font-semibold text-[#173765] hover:bg-[#F7F9FB] transition"
                                 >
                                     <span className="flex items-center gap-2">
-                                        <MapPin className="size-4" />
-                                        Detail lokasi & pendaftaran
+                                        <FileText className="size-4 text-[#173765]" />
+                                        <span>Detail pendaftaran</span>
                                     </span>
                                     <ChevronDown
-                                        className={`size-4 transition-transform ${
-                                            advancedOpen ? 'rotate-180' : ''
+                                        className={`size-4 text-[#607087] transition-transform duration-200 ${
+                                            detailsOpen ? 'rotate-180' : ''
                                         }`}
                                     />
                                 </button>
-                                {advancedOpen && (
-                                    <div className="grid gap-3 border-t border-slate-200 p-3 sm:grid-cols-2">
+
+                                {detailsOpen && (
+                                    <div className="space-y-3.5 border-t border-[#DFE6ED] bg-[#F7F9FB]/50 p-4">
+                                        {/* Batas Penerimaan Lamaran */}
                                         <div>
-                                            <label
-                                                htmlFor="latitude"
-                                                className={labelClass}
-                                            >
-                                                Latitude *
-                                            </label>
-                                            <input
-                                                id="latitude"
-                                                type="number"
-                                                step="any"
-                                                value={form.latitude}
-                                                onChange={(e) =>
-                                                    updateField(
-                                                        'latitude',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                className={inputClass}
-                                                placeholder="-7.2575"
-                                            />
-                                            <FieldError
-                                                message={errors.latitude}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label
-                                                htmlFor="longitude"
-                                                className={labelClass}
-                                            >
-                                                Longitude *
-                                            </label>
-                                            <input
-                                                id="longitude"
-                                                type="number"
-                                                step="any"
-                                                value={form.longitude}
-                                                onChange={(e) =>
-                                                    updateField(
-                                                        'longitude',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                className={inputClass}
-                                                placeholder="112.7521"
-                                            />
-                                            <FieldError
-                                                message={errors.longitude}
-                                            />
-                                        </div>
-                                        <div className="sm:col-span-2">
                                             <label
                                                 htmlFor="deadline"
                                                 className={labelClass}
@@ -588,7 +640,7 @@ export default function CreateTask() {
                                                 }
                                                 className={inputClass}
                                             />
-                                            <p className="mt-1 text-[11px] text-slate-500">
+                                            <p className="mt-1 text-[11px] text-[#607087]">
                                                 Awalnya disarankan 1 jam sebelum
                                                 pekerjaan mulai. Bisa diubah.
                                             </p>
@@ -598,48 +650,54 @@ export default function CreateTask() {
                                                 }
                                             />
                                         </div>
-                                        <div>
-                                            <label
-                                                htmlFor="radius"
-                                                className={labelClass}
-                                            >
-                                                Radius presensi (meter)
-                                            </label>
-                                            <input
-                                                id="radius"
-                                                type="number"
-                                                min="50"
-                                                max="10000"
-                                                value={
-                                                    form.attendance_radius_meters
-                                                }
-                                                onChange={(e) =>
-                                                    updateField(
-                                                        'attendance_radius_meters',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                className={inputClass}
-                                            />
-                                            <FieldError
-                                                message={
-                                                    errors.attendance_radius_meters
-                                                }
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className={labelClass}>
-                                                Perkiraan selesai
-                                            </label>
-                                            <div
-                                                className={`${inputClass} flex items-center bg-slate-50`}
-                                            >
-                                                {endsAt
-                                                    ? endsAt.replace('T', ' • ')
-                                                    : '—'}
+
+                                        {/* Grid 2 Kolom: Radius Presensi & Perkiraan Selesai */}
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                            <div>
+                                                <label
+                                                    htmlFor="radius"
+                                                    className={labelClass}
+                                                >
+                                                    Radius presensi (meter)
+                                                </label>
+                                                <input
+                                                    id="radius"
+                                                    type="number"
+                                                    min="50"
+                                                    max="10000"
+                                                    value={
+                                                        form.attendance_radius_meters
+                                                    }
+                                                    onChange={(e) =>
+                                                        updateField(
+                                                            'attendance_radius_meters',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className={inputClass}
+                                                    placeholder="100"
+                                                />
+                                                <FieldError
+                                                    message={
+                                                        errors.attendance_radius_meters
+                                                    }
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className={labelClass}>
+                                                    Perkiraan selesai
+                                                </label>
+                                                <div
+                                                    className={`${inputClass} flex items-center bg-[#F7F9FB] text-[#607087] font-medium cursor-not-allowed`}
+                                                >
+                                                    {formatEndDisplay(endsAt)}
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="sm:col-span-2">
+
+                                        {/* Persyaratan Pekerja (Opsional) */}
+                                        <div>
                                             <label
                                                 htmlFor="requirements"
                                                 className={labelClass}
@@ -656,14 +714,16 @@ export default function CreateTask() {
                                                         e.target.value,
                                                     )
                                                 }
-                                                className={`${inputClass} h-auto py-3`}
+                                                className={`${inputClass} h-auto py-2.5 resize-y`}
                                                 placeholder="Contoh: Teliti, disiplin, dan tepat waktu"
                                             />
                                             <FieldError
                                                 message={errors.requirements}
                                             />
                                         </div>
-                                        <div className="sm:col-span-2">
+
+                                        {/* Instruksi Tambahan (Opsional) */}
+                                        <div>
                                             <label
                                                 htmlFor="instructions"
                                                 className={labelClass}
@@ -680,7 +740,7 @@ export default function CreateTask() {
                                                         e.target.value,
                                                     )
                                                 }
-                                                className={`${inputClass} h-auto py-3`}
+                                                className={`${inputClass} h-auto py-2.5 resize-y`}
                                                 placeholder="Contoh: Bawa pakaian kerja yang nyaman"
                                             />
                                             <FieldError
@@ -691,13 +751,16 @@ export default function CreateTask() {
                                 )}
                             </div>
 
-                            <div className="flex items-start gap-3 rounded-[11px] bg-[#eef7fa] px-4 py-3">
-                                <ShieldCheck className="mt-0.5 size-[19px] shrink-0 text-[#21477f]" />
+                            {/* ========================================================
+                                8. BANNER KOMITMEN UPAH TRANSPARAN
+                            ======================================================== */}
+                            <div className="flex items-start gap-3 rounded-xl border border-[#DFE6ED] bg-[#F0F8FB] px-4 py-3">
+                                <ShieldCheck className="mt-0.5 size-5 shrink-0 text-[#173765]" />
                                 <div>
-                                    <p className="text-[11px] font-bold text-[#1f416e]">
+                                    <p className="text-xs font-bold text-[#173765]">
                                         Komitmen upah transparan
                                     </p>
-                                    <p className="mt-0.5 text-[10px] leading-relaxed text-[#47678d]">
+                                    <p className="mt-0.5 text-[11px] leading-relaxed text-[#607087]">
                                         Nominal di atas adalah upah bersih yang
                                         diterima pekerja tanpa potongan.
                                     </p>
@@ -705,24 +768,29 @@ export default function CreateTask() {
                             </div>
                         </div>
 
-                        {/* Footer selalu tampak di bagian bawah modal. */}
-                        <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-white px-6 py-4 sm:px-7">
+                        {/* ========================================================
+                            9. FOOTER ACTION BUTTONS (RATA KANAN)
+                        ======================================================== */}
+                        <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-3 border-t border-[#DFE6ED] bg-white px-6 py-4 sm:px-7">
                             <button
                                 type="button"
                                 onClick={() => submitTask('draft')}
                                 disabled={processing}
-                                className="rounded-lg px-4 py-2.5 text-sm font-semibold text-[#5e7090] hover:bg-slate-50 disabled:opacity-50"
+                                className="rounded-xl px-4 py-2.5 text-xs font-bold text-[#17233A] hover:bg-[#F7F9FB] transition disabled:opacity-50"
                             >
                                 Simpan Draft
                             </button>
+
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="inline-flex items-center gap-3 rounded-[10px] bg-[#21477f] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_6px_15px_rgba(33,71,127,0.18)] transition hover:bg-[#163963] disabled:opacity-50"
+                                className="inline-flex items-center gap-2 rounded-xl bg-[#173765] px-5 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-[#21477F] disabled:opacity-50"
                             >
-                                {processing
-                                    ? 'Menyimpan...'
-                                    : 'Publikasikan Tugas'}
+                                <span>
+                                    {processing
+                                        ? 'Menyimpan...'
+                                        : 'Publikasikan Tugas'}
+                                </span>
                                 <ArrowRight className="size-4" />
                             </button>
                         </div>
@@ -732,3 +800,13 @@ export default function CreateTask() {
         </>
     );
 }
+
+// ==========================================
+// MENGISOLASI LAYOUT MODAL
+// (Agar modal muncul langsung dengan backdrop tanpa tertimpa layout global)
+// ==========================================
+function CreateTaskLayout({ children }: { children: React.ReactNode }) {
+    return <>{children}</>;
+}
+
+CreateTask.layout = CreateTaskLayout;

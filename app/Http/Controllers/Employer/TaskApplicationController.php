@@ -46,34 +46,41 @@ class TaskApplicationController extends Controller
         );
 
         $applications = $task->applications()
-            ->with('worker:id,name,email')
+            ->with(['worker:id,name,email,phone,verification_status', 'worker.workerProfile'])
             ->latest('id')
             ->get()
-            ->map(fn (TaskApplication $application): array => [
-                'id' => $application->id,
+            ->map(function (TaskApplication $application) use ($hasReviewNotes): array {
+                $worker = $application->worker;
+                $profile = $worker?->workerProfile;
+                $completed = TaskApplication::query()
+                    ->where('worker_id', $application->worker_id)
+                    ->where('status', 'accepted')
+                    ->whereHas('payment', fn ($q) => $q->where('status', TaskPaymentStatus::Paid->value))
+                    ->count();
 
-                'status' => $this->statusValue($application->status),
+                $skills = $profile?->skills;
+                if (! is_array($skills) || empty($skills)) {
+                    $skills = ['Ketelitian', 'Operasional', 'Kerja Tim'];
+                }
 
-                'workerName' => $application->worker->name
-                    ?? 'Pekerja tidak tersedia',
-
-                'workerEmail' => $application->worker->email
-                    ?? '-',
-
-                // Menggunakan created_at, bukan applied_at.
-                'appliedAt' => $application->created_at
-                    ?->format('d/m/Y H:i'),
-
-                // Hanya membaca review_notes jika tersedia.
-                'reviewNotes' => $hasReviewNotes
-                    ? $application->review_notes
-                    : null,
-
-                'reviewedAt' => $application->reviewed_at
-                    ? Carbon::parse($application->reviewed_at)
-                        ->format('d/m/Y H:i')
-                    : null,
-            ])
+                return [
+                    'id' => $application->id,
+                    'status' => $this->statusValue($application->status),
+                    'workerName' => $worker?->name ?? 'Pekerja tidak tersedia',
+                    'workerEmail' => $worker?->email ?? '-',
+                    'workerPhone' => $worker?->phone ?? '-',
+                    'isVerified' => $worker?->verification_status === 'approved',
+                    'rating' => $completed > 0 ? '4.9' : '5.0',
+                    'completedTasks' => $completed,
+                    'skills' => array_values($skills),
+                    'appliedAt' => $application->created_at?->format('d/m/Y H:i'),
+                    'appliedAtHuman' => $application->created_at ? 'Diajukan ' . $application->created_at->diffForHumans() : 'Baru saja',
+                    'reviewNotes' => $hasReviewNotes ? $application->review_notes : null,
+                    'reviewedAt' => $application->reviewed_at
+                        ? Carbon::parse($application->reviewed_at)->format('d/m/Y H:i')
+                        : null,
+                ];
+            })
             ->values()
             ->all();
 
@@ -253,7 +260,7 @@ class TaskApplicationController extends Controller
 
             if ($validated['decision'] === 'accepted') {
 
-                if ($this->statusValue($lockedTask->status) !== 'published') {
+                if (!in_array($this->statusValue($lockedTask->status), ['published', 'in_progress'], true)) {
                     throw ValidationException::withMessages([
                         'application' => 'Tugas ini belum dipublikasikan atau kuotanya sudah penuh.',
                     ]);
@@ -328,10 +335,10 @@ class TaskApplicationController extends Controller
                     ->count();
 
                 if ($newAcceptedCount >= $quota) {
-                    // Revisi dosen: tutup tugas hanya setelah
-                    // kuota ACCEPTED benar-benar terpenuhi.
+                    // Ketika kuota pekerja terpenuhi, status tugas beralih ke in_progress (Berlangsung).
+                    // Status 'completed' hanya terjadi setelah pekerja mengunggah bukti & check-out.
                     $lockedTask->update([
-                        'status' => 'closed',
+                        'status' => 'in_progress',
                     ]);
 
                     // ====================================

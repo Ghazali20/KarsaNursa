@@ -1,332 +1,1392 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import {
-    BriefcaseBusiness,
-    CircleCheckBig,
+    ArrowRight,
+    ArrowUpRight,
+    Bell,
+    Briefcase,
+    CheckCircle2,
+    ChevronDown,
     ClipboardPlus,
-    Clock3,
+    Clock,
+    House,
+    LayoutGrid,
+    LogOut,
+    Menu,
+    Receipt,
+    ShieldAlert,
+    ShieldCheck,
+    Star,
+    TrendingDown,
+    TrendingUp,
+    UserRound,
     Users,
     WalletCards,
-} from 'lucide-react';
+    X,
+} from "lucide-react";
+import React, { useState } from "react";
+import { toast } from "sonner";
 
-import { DashboardStatCard } from '@/components/dashboard/dashboard-stat-card';
-import { KarsaBadge } from '@/components/karsa/karsa-ui';
+import karsaNusaLogo from "@/assets/karsanusa-logo.png";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-type RecentTask = {
+// ==========================================
+// TIPE DATA DASHBOARD UMKM
+// ==========================================
+
+export type RecentTask = {
     id: number;
     title: string;
     category: string | null;
-    status: 'draft' | 'published';
+    status: string;
     workerQuota: number | null;
     wageAmount: number | null;
 };
 
-type EmployerDashboardProps = {
-    stats: {
+export type ChartMonthItem = {
+    month: string;
+    fullMonth: string;
+    amount: number;
+    active: boolean;
+    heightPercent: number;
+    label: string;
+};
+
+export type RecentApplicant = {
+    id: number;
+    taskId: number;
+    taskTitle: string;
+    name: string;
+    email: string;
+    initials: string;
+    verified: boolean;
+    rating: string;
+    reviewsCount: number;
+    completedTasks: number;
+    appliedAt: string;
+};
+
+export type LedgerTransaction = {
+    id: number;
+    code: string;
+    taskTitle: string;
+    workerName: string;
+    workerInitials: string;
+    date: string;
+    shortDate: string;
+    hours: string;
+    wage: number;
+    status: string;
+    period: string;
+};
+
+export type EmployerDashboardProps = {
+    user?: {
+        name: string;
+        email: string;
+        isVerified: boolean;
+        verificationStatus: string;
+        businessName: string;
+        businessCategory?: string | null;
+    };
+    stats?: {
         activeTasks: number;
         pendingApplicants: number;
-        pendingPayments: number;
+        completedThisMonth: number;
+        completedPercentageChange: number;
         monthlyExpenses: number;
+        currentMonthName: string;
+        lastMonthName: string;
+        expensePercentageChange: number;
     };
-    recentTasks: RecentTask[];
+    chartData?: {
+        items: ChartMonthItem[];
+        totalAmount: number;
+        totalAmountFormatted: string;
+        growthPercent: number;
+    };
+    taskDistribution?: {
+        total: number;
+        completed: { count: number; percent: number };
+        inProgress: { count: number; percent: number };
+        waiting: { count: number; percent: number };
+        cancelled: { count: number; percent: number };
+    };
+    recentApplicants?: RecentApplicant[];
+    recentTransactions?: LedgerTransaction[];
+    recentTasks?: RecentTask[];
 };
+
+// ==========================================
+// HELPER FORMATTING
+// ==========================================
 
 function formatFirstName(name: string): string {
     return name.trim().split(/\s+/)[0] ?? name;
 }
 
+function getInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "KN";
+    return parts
+        .slice(0, 2)
+        .map((n) => n.charAt(0))
+        .join("")
+        .toUpperCase();
+}
+
 function formatRupiah(value: number): string {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
         maximumFractionDigits: 0,
     }).format(value);
 }
 
-export default function EmployerDashboard({
-    stats,
-    recentTasks,
-}: EmployerDashboardProps) {
-    const { auth } = usePage().props;
-    const user = auth.user;
+function formatCompactRupiah(value: number): string {
+    if (value >= 1_000_000_000) {
+        const billions = (value / 1_000_000_000)
+            .toFixed(2)
+            .replace(/\.00$/, "");
+        return `Rp ${billions.replace(".", ",")} M`;
+    }
+    if (value >= 1_000_000) {
+        const millions = (value / 1_000_000).toFixed(2).replace(/\.00$/, "");
+        return `Rp ${millions.replace(".", ",")} jt`;
+    }
+    return formatRupiah(value);
+}
 
+// ==========================================
+// KOMPONEN UTAMA DASHBOARD UMKM
+// ==========================================
+
+export default function EmployerDashboard({
+    user: propUser,
+    stats,
+    chartData,
+    taskDistribution,
+    recentApplicants = [],
+    recentTransactions = [],
+}: EmployerDashboardProps) {
+    const pageAuth = usePage().props as unknown as {
+        auth?: {
+            user?: {
+                name: string;
+                email: string;
+                role?: string;
+                business?: { name?: string };
+                verification_status?: string;
+                [key: string]: unknown;
+            };
+        };
+    };
+
+    const authUser = pageAuth?.auth?.user;
+    const userName = propUser?.name || authUser?.name || "Pemilik UMKM";
+    const userEmail = propUser?.email || authUser?.email || "";
+    const firstName = formatFirstName(userName);
+    const userInitials = getInitials(userName);
+    const businessName =
+        propUser?.businessName ||
+        authUser?.business?.name ||
+        `${firstName} Official Store`;
+    const isVerified =
+        propUser?.isVerified ?? authUser?.verification_status === "approved";
+
+    // Metrik dari Backend
     const activeTasks = stats?.activeTasks ?? 0;
     const pendingApplicants = stats?.pendingApplicants ?? 0;
-    const pendingPayments = stats?.pendingPayments ?? 0;
+    const completedThisMonth = stats?.completedThisMonth ?? 0;
+    const completedChange = stats?.completedPercentageChange ?? 0;
     const monthlyExpenses = stats?.monthlyExpenses ?? 0;
-    const safeRecentTasks = recentTasks ?? [];
+    const currentMonthName = stats?.currentMonthName ?? "Bulan Ini";
+    const lastMonthName = stats?.lastMonthName ?? "Bulan Lalu";
+    const expenseChange = stats?.expensePercentageChange ?? 0;
+
+    // State Lokal UI
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [chartPeriod, setChartPeriod] = useState("6 Bulan");
+    const [applicantDecisions, setApplicantDecisions] = useState<
+        Record<number, "accepted" | "rejected">
+    >({});
+    const [processingId, setProcessingId] = useState<number | null>(null);
+
+    // State Modal Penolakan Pelamar
+    const [rejectTarget, setRejectTarget] = useState<RecentApplicant | null>(
+        null,
+    );
+    const [rejectReason, setRejectReason] = useState(
+        "Kualifikasi belum sesuai dengan kebutuhan tugas saat ini.",
+    );
+    const [rejectError, setRejectError] = useState<string | null>(null);
+
+    // Handler Terima Pelamar (Sinkron ke API Backend)
+    const handleAcceptApplicant = (applicant: RecentApplicant) => {
+        if (processingId !== null) return;
+        setProcessingId(applicant.id);
+
+        router.patch(
+            `/employer/tasks/${applicant.taskId}/applications/${applicant.id}/decision`,
+            {
+                decision: "accepted",
+                review_notes: null,
+                return_to: "inbox",
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setApplicantDecisions((prev) => ({
+                        ...prev,
+                        [applicant.id]: "accepted",
+                    }));
+                    toast.success(
+                        `Pelamar ${applicant.name} berhasil diterima!`,
+                        {
+                            description:
+                                "Pemberitahuan telah diteruskan kepada pekerja.",
+                        },
+                    );
+                    router.reload({
+                        only: [
+                            "stats",
+                            "recentApplicants",
+                            "taskDistribution",
+                            "ledgerTransactions",
+                            "recentTransactions",
+                        ],
+                    });
+                },
+                onError: (errors) => {
+                    const errorMsg =
+                        errors.application ||
+                        errors.review_notes ||
+                        "Gagal menerima pelamar. Silakan coba lagi.";
+                    toast.error("Gagal Memproses Lamaran", {
+                        description: String(errorMsg),
+                    });
+                },
+                onFinish: () => {
+                    setProcessingId(null);
+                },
+            },
+        );
+    };
+
+    // Handler Tolak Pelamar (Sinkron ke API Backend dengan catatan)
+    const handleConfirmReject = () => {
+        if (!rejectTarget || processingId !== null) return;
+
+        if (!rejectReason || rejectReason.trim().length < 5) {
+            setRejectError("Alasan penolakan minimal 5 karakter.");
+            return;
+        }
+
+        setProcessingId(rejectTarget.id);
+        setRejectError(null);
+
+        router.patch(
+            `/employer/tasks/${rejectTarget.taskId}/applications/${rejectTarget.id}/decision`,
+            {
+                decision: "rejected",
+                review_notes: rejectReason.trim(),
+                return_to: "inbox",
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setApplicantDecisions((prev) => ({
+                        ...prev,
+                        [rejectTarget.id]: "rejected",
+                    }));
+                    toast.error(`Lamaran dari ${rejectTarget.name} ditolak.`, {
+                        description: "Status lamaran telah diperbarui.",
+                    });
+                    setRejectTarget(null);
+                    router.reload({
+                        only: ["stats", "recentApplicants", "taskDistribution"],
+                    });
+                },
+                onError: (errors) => {
+                    const errorMsg =
+                        errors.application ||
+                        errors.review_notes ||
+                        "Gagal menolak pelamar. Silakan coba lagi.";
+                    setRejectError(String(errorMsg));
+                },
+                onFinish: () => {
+                    setProcessingId(null);
+                },
+            },
+        );
+    };
+
+    // Data Chart 6 Bulan Terakhir dari Backend
+    const chartItems = chartData?.items ?? [
+        {
+            month: "Bulan Ini",
+            fullMonth: currentMonthName,
+            amount: monthlyExpenses,
+            active: true,
+            heightPercent: monthlyExpenses > 0 ? 80 : 10,
+            label: formatCompactRupiah(monthlyExpenses),
+        },
+    ];
+    const chartTotal =
+        chartData?.totalAmountFormatted ?? formatCompactRupiah(monthlyExpenses);
+    const chartGrowth = chartData?.growthPercent ?? expenseChange;
+
+    // Data Donut Chart dari Backend
+    const donutTotal = taskDistribution?.total ?? 0;
+    const pCompleted = taskDistribution?.completed.percent ?? 0;
+    const pInProgress = taskDistribution?.inProgress.percent ?? 0;
+    const pWaiting = taskDistribution?.waiting.percent ?? 0;
+    const pCancelled = taskDistribution?.cancelled.percent ?? 0;
 
     return (
         <>
-            <Head title="Dashboard UMKM" />
+            <Head>
+                <title>Dashboard UMKM - Karsa Nusa</title>
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link
+                    rel="preconnect"
+                    href="https://fonts.gstatic.com"
+                    crossOrigin="anonymous"
+                />
+                <link
+                    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+                    rel="stylesheet"
+                />
+            </Head>
 
-            <main className="flex flex-1 flex-col bg-slate-50/70">
-                <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-                    {/* HEADER */}
-                    <header className="overflow-hidden rounded-3xl bg-[var(--karsa-deep-navy)] px-6 py-7 text-white shadow-sm sm:px-8 sm:py-8">
-                        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            {/* WRAPPER UTAMA */}
+            <div
+                className="flex min-h-screen bg-[#F7F9FB] text-[#17233A] antialiased"
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            >
+                {/* ========================================================
+                    1. SIDEBAR KIRI (DESKTOP & RESPONSIVE MOBILE DRAWER)
+                ======================================================== */}
+                {mobileMenuOpen && (
+                    <div
+                        className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs lg:hidden"
+                        onClick={() => setMobileMenuOpen(false)}
+                    />
+                )}
+
+                <aside
+                    className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-[#DFE6ED] bg-white transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
+                        mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+                    }`}
+                >
+                    {/* Header Sidebar: Brand Logo */}
+                    <div className="flex h-[72px] items-center justify-between border-b border-[#DFE6ED] px-6">
+                        <Link
+                            href="/employer/dashboard"
+                            className="flex items-center gap-2.5 cursor-pointer"
+                        >
+                            <img
+                                src={karsaNusaLogo}
+                                alt="Karsa Nusa"
+                                className="h-7 w-auto object-contain"
+                            />
+                        </Link>
+
+                        <button
+                            type="button"
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="rounded-lg p-1.5 text-[#607087] hover:bg-[#F7F9FB] lg:hidden"
+                            aria-label="Tutup menu"
+                        >
+                            <X className="size-5" />
+                        </button>
+                    </div>
+
+                    {/* Menu Navigasi Sidebar */}
+                    <div className="flex flex-1 flex-col justify-between overflow-y-auto px-4 py-5">
+                        <div>
+                            <p className="px-3 text-[10px] font-bold tracking-[0.14em] text-[#93A2B5] uppercase">
+                                DASHBOARD UMKM
+                            </p>
+
+                            <nav className="mt-3 space-y-1">
+                                {/* Dashboard / Overview (AKTIF SOLID #21477F) */}
+                                <Link
+                                    href="/employer/dashboard"
+                                    className="flex w-full items-center gap-3 rounded-xl bg-[#21477F] px-3.5 py-2.5 text-sm font-bold text-white transition-colors"
+                                >
+                                    <LayoutGrid className="size-4.5 text-white" />
+                                    <span>Dashboard</span>
+                                </Link>
+
+                                {/* Buat Tugas */}
+                                <Link
+                                    href="/employer/tasks/create"
+                                    className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#607087] transition-colors hover:bg-[#F7F9FB] hover:text-[#173765]"
+                                >
+                                    <ClipboardPlus className="size-4.5 text-[#607087]" />
+                                    <span>Buat Tugas</span>
+                                </Link>
+
+                                {/* Kelola Pelamar */}
+                                <Link
+                                    href="/employer/applications"
+                                    className="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#607087] transition-colors hover:bg-[#F7F9FB] hover:text-[#173765]"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Users className="size-4.5 text-[#607087]" />
+                                        <span>Kelola Pelamar</span>
+                                    </div>
+                                    {pendingApplicants > 0 && (
+                                        <span className="rounded-full bg-[#FFF4E8] px-2 py-0.5 text-xs font-bold text-[#D98A48]">
+                                            {pendingApplicants}
+                                        </span>
+                                    )}
+                                </Link>
+
+                                {/* Kelola Tugas */}
+                                <Link
+                                    href="/employer/tasks"
+                                    className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#607087] transition-colors hover:bg-[#F7F9FB] hover:text-[#173765]"
+                                >
+                                    <Briefcase className="size-4.5 text-[#607087]" />
+                                    <span>Kelola Tugas</span>
+                                </Link>
+
+                                {/* Buku Pengeluaran */}
+                                <Link
+                                    href="/employer/payments"
+                                    className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#607087] transition-colors hover:bg-[#F7F9FB] hover:text-[#173765]"
+                                >
+                                    <WalletCards className="size-4.5 text-[#607087]" />
+                                    <span>Buku Pengeluaran</span>
+                                </Link>
+                            </nav>
+                        </div>
+
+                        {/* Tombol Kembali ke Beranda */}
+                        <div className="pt-4 border-t border-[#DFE6ED]">
+                            <Link
+                                href="/"
+                                className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-[#607087] transition-colors hover:bg-[#F7F9FB] hover:text-[#173765]"
+                            >
+                                <House className="size-4.5" />
+                                <span>Kembali ke Beranda</span>
+                            </Link>
+                        </div>
+                    </div>
+                </aside>
+
+                {/* ========================================================
+                    KONTEN UTAMA (HEADER BAR + BODY)
+                ======================================================== */}
+                <div className="flex flex-1 flex-col min-w-0 overflow-y-auto">
+                    {/* Top Header Bar */}
+                    <header className="sticky top-0 z-30 flex h-[72px] shrink-0 items-center justify-between border-b border-[#DFE6ED] bg-white px-4 sm:px-6 lg:px-8">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <button
+                                type="button"
+                                onClick={() => setMobileMenuOpen(true)}
+                                className="rounded-lg p-2 text-[#607087] hover:bg-[#F7F9FB] lg:hidden"
+                                aria-label="Buka menu navigasi"
+                            >
+                                <Menu className="size-5" />
+                            </button>
+
                             <div>
-                                <div className="mb-4 flex flex-wrap items-center gap-2">
-                                    <KarsaBadge tone="primary">
-                                        Pemilik UMKM
-                                    </KarsaBadge>
-
-                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white">
-                                        <CircleCheckBig className="size-3.5" />
-                                        Usaha terverifikasi
-                                    </span>
-                                </div>
-
-                                <p className="text-sm font-medium text-white/70">
-                                    Selamat datang kembali
+                                <p className="text-[11px] font-medium text-[#93A2B5]">
+                                    Dashboard UMKM
                                 </p>
+                                <h2 className="text-sm sm:text-base font-bold text-[#17233A]">
+                                    Kelola operasional usahamu
+                                </h2>
+                            </div>
+                        </div>
 
-                                <h1 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">
-                                    Halo, {formatFirstName(user.name)}
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <Link
+                                href="/employer/applications"
+                                className="relative flex size-10 items-center justify-center rounded-xl text-[#607087] transition hover:bg-[#F7F9FB] hover:text-[#17233A]"
+                                aria-label="Notifikasi"
+                            >
+                                <Bell className="size-5" />
+                                {pendingApplicants > 0 && (
+                                    <span className="absolute top-2 right-2 size-2 rounded-full bg-[#D98A48]" />
+                                )}
+                            </Link>
+
+                            <div className="h-7 w-px bg-[#DFE6ED]" />
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="flex items-center gap-2.5 rounded-xl p-1.5 transition hover:bg-[#F7F9FB] focus-visible:outline-2 focus-visible:outline-[#173765]"
+                                    >
+                                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#D8F1F6] text-xs font-bold text-[#173765]">
+                                            {userInitials}
+                                        </div>
+
+                                        <div className="hidden text-left sm:block">
+                                            <p className="max-w-[140px] truncate text-xs font-bold text-[#17233A]">
+                                                {userName}
+                                            </p>
+                                            <div className="flex items-center gap-1 text-[11px] text-[#607087]">
+                                                <span className="max-w-[120px] truncate">
+                                                    {businessName}
+                                                </span>
+                                                <ChevronDown className="size-3.5 text-[#93A2B5]" />
+                                            </div>
+                                        </div>
+                                    </button>
+                                </DropdownMenuTrigger>
+
+                                <DropdownMenuContent
+                                    align="end"
+                                    sideOffset={8}
+                                    className="w-56 border border-[#DFE6ED] bg-white p-1.5 shadow-lg rounded-xl"
+                                >
+                                    <div className="px-3 py-2 sm:hidden border-b border-[#DFE6ED] mb-1">
+                                        <p className="text-xs font-bold text-[#17233A]">
+                                            {userName}
+                                        </p>
+                                        <p className="text-[11px] text-[#607087]">
+                                            {businessName}
+                                        </p>
+                                    </div>
+
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href="/settings/profile"
+                                            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-[#17233A] hover:bg-[#F7F9FB]"
+                                        >
+                                            <UserRound className="size-4 text-[#607087]" />
+                                            <span>Profil Usaha</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href="/employer/tasks"
+                                            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-[#17233A] hover:bg-[#F7F9FB]"
+                                        >
+                                            <Briefcase className="size-4 text-[#607087]" />
+                                            <span>Daftar Tugas</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuSeparator className="my-1 bg-[#DFE6ED]" />
+
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href="/logout"
+                                            method="post"
+                                            as="button"
+                                            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-[#EF4444] hover:bg-red-50"
+                                        >
+                                            <LogOut className="size-4 text-[#EF4444]" />
+                                            <span>Keluar Akun</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    </header>
+
+                    {/* ========================================================
+                        KONTEN UTAMA (DASHBOARD OVERVIEW)
+                    ======================================================== */}
+                    <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 space-y-6 max-w-7xl w-full mx-auto">
+                        {/* HERO GREETING SECTION */}
+                        <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                            <div>
+                                {isVerified ? (
+                                    <div className="inline-flex items-center gap-1.5 rounded-full border border-[#D8F1F6] bg-[#F0F8FB] px-3 py-1 text-xs font-bold text-[#173765]">
+                                        <ShieldCheck className="size-3.5 text-[#173765]" />
+                                        <span>Usaha Terverifikasi</span>
+                                    </div>
+                                ) : (
+                                    <div className="inline-flex items-center gap-1.5 rounded-full border border-[#FFE8D1] bg-[#FFF4E8] px-3 py-1 text-xs font-bold text-[#D98A48]">
+                                        <ShieldAlert className="size-3.5 text-[#D98A48]" />
+                                        <span>Menunggu Verifikasi</span>
+                                    </div>
+                                )}
+
+                                <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#17233A] sm:text-3xl">
+                                    Selamat datang, {firstName}!
                                 </h1>
 
-                                <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">
-                                    Kelola kebutuhan tenaga kerja harian, pantau
-                                    pelamar, dan rekap pengeluaran usaha Anda.
+                                <p className="mt-1 text-sm text-[#607087]">
+                                    Berikut ringkasan operasional{" "}
+                                    <strong className="font-semibold text-[#17233A]">
+                                        {businessName}
+                                    </strong>{" "}
+                                    hari ini.
                                 </p>
                             </div>
 
                             <Link
                                 href="/employer/tasks/create"
-                                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-[var(--karsa-deep-navy)] transition hover:bg-slate-100"
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#173765] px-5 py-2.5 text-sm font-bold text-white shadow-xs transition hover:bg-[#21477F] shrink-0"
                             >
                                 <ClipboardPlus className="size-4" />
-                                Buat tugas baru
+                                <span>Buat Tugas Baru +</span>
                             </Link>
-                        </div>
-                    </header>
+                        </section>
 
-                    {/* RINGKASAN OPERASIONAL */}
-                    <section aria-labelledby="employer-summary-heading">
-                        <div className="mb-4">
-                            <h2
-                                id="employer-summary-heading"
-                                className="text-lg font-bold text-slate-950"
-                            >
-                                Ringkasan operasional
-                            </h2>
-
-                            <p className="mt-1 text-sm text-slate-500">
-                                Pantau perkembangan tugas dan aktivitas usaha
-                                Anda melalui dashboard ini.
-                            </p>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                            <DashboardStatCard
-                                label="Tugas aktif"
-                                value={activeTasks}
-                                description="Postingan tugas yang masih menerima pelamar."
-                                icon={BriefcaseBusiness}
-                                tone="blue"
-                            />
-
-                            <DashboardStatCard
-                                label="Pelamar baru"
-                                value={pendingApplicants}
-                                description="Lamaran yang belum diperiksa oleh UMKM."
-                                icon={Users}
-                                tone="green"
-                            />
-
-                            <DashboardStatCard
-                                label="Menunggu pembayaran"
-                                value={pendingPayments}
-                                description="Upah pekerja diterima yang belum dicatat sebagai dibayar."
-                                icon={Clock3}
-                                tone="amber"
-                            />
-
-                            <DashboardStatCard
-                                label="Pengeluaran bulan ini"
-                                value={formatRupiah(monthlyExpenses)}
-                                description="Total upah yang dicatat sudah dibayar pada bulan ini."
-                                icon={WalletCards}
-                                tone="violet"
-                            />
-                        </div>
-                    </section>
-
-                    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.75fr)]">
-                        {/* TUGAS TERBARU */}
-                        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                            <div>
-                                <h2 className="text-lg font-bold text-slate-950">
-                                    Tugas terbaru
-                                </h2>
-
-                                <Link
-                                    href="/employer/tasks"
-                                    className="mt-3 inline-flex text-sm font-bold text-blue-700 hover:underline"
-                                >
-                                    Lihat semua tugas
-                                </Link>
-
-                                <p className="mt-1 text-sm text-slate-500">
-                                    Daftar tugas terbaru yang dibuat oleh usaha
-                                    Anda.
+                        {/* 4 KARTU RINGKASAN KPI */}
+                        <section
+                            aria-label="Ringkasan KPI"
+                            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+                        >
+                            {/* Kartu 1: Tugas Aktif */}
+                            <div className="rounded-2xl border border-[#DFE6ED] bg-white p-5 shadow-xs transition hover:border-[#BFE7EF]">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs font-semibold text-[#607087]">
+                                        Tugas aktif
+                                    </p>
+                                    <div className="flex size-9 items-center justify-center rounded-xl bg-[#F0F8FB] text-[#173765]">
+                                        <Briefcase className="size-4.5" />
+                                    </div>
+                                </div>
+                                <p className="mt-2 text-3xl font-extrabold text-[#17233A]">
+                                    {activeTasks}
+                                </p>
+                                <p className="mt-3 text-xs text-[#93A2B5] flex items-center gap-1">
+                                    <span
+                                        className={`size-1.5 rounded-full ${activeTasks > 0 ? "bg-[#55BDD3]" : "bg-[#DFE6ED]"}`}
+                                    />
+                                    {activeTasks > 0
+                                        ? "Sedang menerima pekerja"
+                                        : "Belum ada tugas aktif"}
                                 </p>
                             </div>
 
-                            {safeRecentTasks.length === 0 ? (
-                                <div className="mt-8 flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
-                                    <div className="flex size-14 items-center justify-center rounded-2xl bg-white text-slate-500 shadow-sm">
-                                        <BriefcaseBusiness className="size-6" />
-                                    </div>
-
-                                    <h3 className="mt-5 font-bold text-slate-950">
-                                        Belum ada tugas yang dibuat
-                                    </h3>
-
-                                    <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-                                        Buat dan ajukan tugas harian pertama
-                                        untuk menemukan pekerja yang sesuai.
+                            {/* Kartu 2: Pelamar Baru */}
+                            <div className="rounded-2xl border border-[#DFE6ED] bg-white p-5 shadow-xs transition hover:border-[#D98A48]/40">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs font-semibold text-[#607087]">
+                                        Pelamar baru
                                     </p>
-
-                                    <Link
-                                        href="/employer/tasks/create"
-                                        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[var(--karsa-deep-navy)] px-5 py-3 text-sm font-bold text-white transition hover:opacity-90"
-                                    >
-                                        <ClipboardPlus className="size-4" />
-                                        Buat tugas pertama
-                                    </Link>
+                                    <div className="flex size-9 items-center justify-center rounded-xl bg-[#FFF4E8] text-[#D98A48]">
+                                        <Users className="size-4.5" />
+                                    </div>
                                 </div>
-                            ) : (
-                                <div className="mt-6 space-y-3">
-                                    {safeRecentTasks.map((task) => (
-                                        <div
-                                            key={task.id}
-                                            className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-blue-200 hover:shadow-sm"
-                                        >
-                                            {/* STATUS DAN KATEGORI */}
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <span
-                                                    className={
-                                                        task.status ===
-                                                        'published'
-                                                            ? 'rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700'
-                                                            : 'rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700'
-                                                    }
-                                                >
-                                                    {task.status === 'published'
-                                                        ? 'Dipublikasikan'
-                                                        : 'Draft'}
-                                                </span>
+                                <p className="mt-2 text-3xl font-extrabold text-[#17233A]">
+                                    {pendingApplicants}
+                                </p>
+                                <p className="mt-3 text-xs font-semibold text-[#D98A48] flex items-center gap-1">
+                                    <span
+                                        className={`size-1.5 rounded-full ${pendingApplicants > 0 ? "bg-[#D98A48]" : "bg-[#DFE6ED]"}`}
+                                    />
+                                    {pendingApplicants > 0
+                                        ? "Perlu tinjauan seleksi"
+                                        : "Semua pelamar tertinjau"}
+                                </p>
+                            </div>
 
-                                                {task.category && (
-                                                    <span className="text-xs text-slate-500">
-                                                        {task.category}
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            {/* JUDUL TUGAS */}
-                                            <h3 className="mt-3 text-base font-bold text-slate-950">
-                                                {task.title}
-                                            </h3>
-
-                                            {/* INFORMASI KUOTA DAN UPAH */}
-                                            <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-500">
-                                                {task.workerQuota !== null && (
-                                                    <span>
-                                                        Kuota:{' '}
-                                                        {task.workerQuota}{' '}
-                                                        pekerja
-                                                    </span>
-                                                )}
-
-                                                {task.wageAmount !== null && (
-                                                    <span>
-                                                        Upah:{' '}
-                                                        {formatRupiah(
-                                                            task.wageAmount,
-                                                        )}
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            {/* TOMBOL KELOLA PELAMAR */}
-                                            {task.status === 'published' && (
-                                                <Link
-                                                    href={`/employer/tasks/${task.id}/applications`}
-                                                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-blue-100"
-                                                >
-                                                    <Users className="size-4" />
-                                                    Kelola Pelamar
-                                                </Link>
-                                            )}
-                                        </div>
-                                    ))}
+                            {/* Kartu 3: Selesai Bulan Ini */}
+                            <div className="rounded-2xl border border-[#DFE6ED] bg-white p-5 shadow-xs transition hover:border-[#BFE7EF]">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs font-semibold text-[#607087]">
+                                        Selesai bulan ini
+                                    </p>
+                                    <div className="flex size-9 items-center justify-center rounded-xl bg-[#F0F8FB] text-[#173765]">
+                                        <CheckCircle2 className="size-4.5" />
+                                    </div>
                                 </div>
-                            )}
+                                <p className="mt-2 text-3xl font-extrabold text-[#17233A]">
+                                    {completedThisMonth}
+                                </p>
+                                <div className="mt-3 flex items-center gap-1.5">
+                                    <span className="inline-flex items-center gap-0.5 rounded-md bg-[#F0F8FB] px-1.5 py-0.5 text-xs font-bold text-[#173765]">
+                                        {completedChange >= 0 ? (
+                                            <TrendingUp className="size-3 text-[#173765]" />
+                                        ) : (
+                                            <TrendingDown className="size-3 text-[#EF4444]" />
+                                        )}
+                                        {completedChange >= 0
+                                            ? `+${completedChange}%`
+                                            : `${completedChange}%`}
+                                    </span>
+                                    <span className="text-xs text-[#93A2B5]">
+                                        dari bulan lalu
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Kartu 4: Biaya Tenaga Kerja (Dark Card #0D2445) */}
+                            <div className="relative overflow-hidden rounded-2xl bg-[#0D2445] p-5 text-white shadow-md">
+                                <div className="absolute -top-12 -right-12 size-32 rounded-full bg-[#21477F]/30 blur-xl pointer-events-none" />
+
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs font-semibold text-white/80">
+                                        Biaya tenaga kerja
+                                    </p>
+                                    <div className="flex size-9 items-center justify-center rounded-xl bg-white/10 text-white">
+                                        <WalletCards className="size-4.5" />
+                                    </div>
+                                </div>
+                                <p className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                                    {formatCompactRupiah(monthlyExpenses)}
+                                </p>
+                                <p className="mt-3 text-xs text-white/70 flex items-center gap-1.5">
+                                    <Clock className="size-3.5 text-white/60" />
+                                    Periode {currentMonthName}
+                                </p>
+                            </div>
                         </section>
 
-                        {/* ALUR PENGGUNAAN */}
-                        <aside className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                            <h2 className="text-lg font-bold text-slate-950">
-                                Alur penggunaan
-                            </h2>
-
-                            <div className="mt-5 space-y-4">
-                                <div className="flex gap-3">
-                                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
-                                        1
-                                    </span>
-
+                        {/* SECTION GRAFIK & STATISTIK */}
+                        <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                            {/* Grafik Pengeluaran Tenaga Kerja (6 Bulan Terakhir) */}
+                            <div className="lg:col-span-2 rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-xs">
+                                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                                     <div>
-                                        <p className="text-sm font-semibold text-slate-900">
-                                            Ajukan tugas
+                                        <h3 className="text-base font-bold text-[#17233A]">
+                                            Pengeluaran tenaga kerja
+                                        </h3>
+                                        <p className="text-xs text-[#607087]">
+                                            Ringkasan biaya operasional 6 bulan
+                                            terakhir
                                         </p>
+                                    </div>
 
-                                        <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            Masukkan lokasi, jadwal, kuota, dan
-                                            nominal upah.
-                                        </p>
+                                    <div className="relative">
+                                        <select
+                                            value={chartPeriod}
+                                            onChange={(e) =>
+                                                setChartPeriod(e.target.value)
+                                            }
+                                            className="appearance-none rounded-lg border border-[#DFE6ED] bg-white px-3 py-1.5 pr-8 text-xs font-semibold text-[#17233A] shadow-xs cursor-pointer hover:bg-[#F7F9FB] focus:outline-none"
+                                        >
+                                            <option value="6 Bulan">
+                                                6 Bulan Terakhir
+                                            </option>
+                                        </select>
+                                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#607087]" />
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3">
-                                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
-                                        2
-                                    </span>
+                                <div className="mt-4 flex flex-wrap items-baseline justify-between gap-4 border-b border-[#DFE6ED] pb-4">
+                                    <div className="flex items-baseline gap-2.5">
+                                        <span className="text-2xl font-extrabold text-[#17233A]">
+                                            {chartTotal}
+                                        </span>
+                                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#D8F1F6] px-2 py-0.5 text-xs font-bold text-[#173765]">
+                                            {chartGrowth >= 0 ? (
+                                                <ArrowUpRight className="size-3" />
+                                            ) : (
+                                                <TrendingDown className="size-3" />
+                                            )}
+                                            {chartGrowth >= 0
+                                                ? `+${chartGrowth}%`
+                                                : `${chartGrowth}%`}
+                                        </span>
+                                    </div>
 
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-900">
-                                            Seleksi pelamar
-                                        </p>
-
-                                        <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            Tinjau profil dan pilih pekerja yang
-                                            sesuai.
-                                        </p>
+                                    <div className="flex items-center gap-2 text-xs text-[#607087]">
+                                        <span className="size-2.5 rounded-sm bg-[#173765]" />
+                                        <span>Biaya upah</span>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3">
-                                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-bold text-amber-700">
-                                        3
-                                    </span>
+                                <div className="mt-6 pt-2">
+                                    <div className="flex h-52 items-end justify-between gap-2 sm:gap-6 px-2 sm:px-4">
+                                        {chartItems.map((item) => (
+                                            <div
+                                                key={item.month}
+                                                className="group relative flex flex-1 flex-col items-center h-full justify-end"
+                                            >
+                                                {item.active && (
+                                                    <div className="mb-2 flex flex-col items-center">
+                                                        <div className="rounded-md bg-[#0D2445] px-2.5 py-1 text-[11px] font-bold text-white shadow-md whitespace-nowrap">
+                                                            {item.label}
+                                                        </div>
+                                                        <div className="size-1.5 -mt-0.5 rotate-45 bg-[#0D2445]" />
+                                                    </div>
+                                                )}
 
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-900">
-                                            Verifikasi pekerjaan
-                                        </p>
+                                                <div className="w-full max-w-[42px] bg-[#F7F9FB] rounded-t-lg h-full flex items-end">
+                                                    <div
+                                                        style={{
+                                                            height: `${item.heightPercent}%`,
+                                                        }}
+                                                        className={`w-full rounded-t-lg transition-all duration-300 ${
+                                                            item.active
+                                                                ? "bg-[#173765]"
+                                                                : "bg-[#BFE7EF] hover:bg-[#7DD3E3]"
+                                                        }`}
+                                                    />
+                                                </div>
 
-                                        <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            Periksa bukti kerja dan validasi
-                                            upah pekerja.
-                                        </p>
+                                                <span
+                                                    className={`mt-2 text-xs font-semibold ${
+                                                        item.active
+                                                            ? "text-[#173765] font-bold"
+                                                            : "text-[#93A2B5]"
+                                                    }`}
+                                                >
+                                                    {item.month}
+                                                </span>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
-                        </aside>
+
+                            {/* Status Tugas (Donut Chart) */}
+                            <div className="rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-xs flex flex-col justify-between">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-base font-bold text-[#17233A]">
+                                            Status tugas
+                                        </h3>
+                                        <p className="text-xs text-[#607087]">
+                                            Distribusi bulan ini
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="my-6 flex flex-col items-center justify-center">
+                                    <div className="relative flex size-36 items-center justify-center">
+                                        <svg
+                                            className="size-full -rotate-90"
+                                            viewBox="0 0 36 36"
+                                        >
+                                            {donutTotal === 0 ? (
+                                                <circle
+                                                    cx="18"
+                                                    cy="18"
+                                                    r="15"
+                                                    fill="transparent"
+                                                    stroke="#DFE6ED"
+                                                    strokeWidth="4"
+                                                />
+                                            ) : (
+                                                <>
+                                                    {/* Selesai */}
+                                                    {pCompleted > 0 && (
+                                                        <circle
+                                                            cx="18"
+                                                            cy="18"
+                                                            r="15"
+                                                            fill="transparent"
+                                                            stroke="#173765"
+                                                            strokeWidth="4"
+                                                            pathLength={100}
+                                                            strokeDasharray={`${pCompleted} ${100 - pCompleted}`}
+                                                            strokeDashoffset={0}
+                                                        />
+                                                    )}
+                                                    {/* Berlangsung */}
+                                                    {pInProgress > 0 && (
+                                                        <circle
+                                                            cx="18"
+                                                            cy="18"
+                                                            r="15"
+                                                            fill="transparent"
+                                                            stroke="#7DD3E3"
+                                                            strokeWidth="4"
+                                                            pathLength={100}
+                                                            strokeDasharray={`${pInProgress} ${100 - pInProgress}`}
+                                                            strokeDashoffset={
+                                                                -pCompleted
+                                                            }
+                                                        />
+                                                    )}
+                                                    {/* Menunggu pekerja */}
+                                                    {pWaiting > 0 && (
+                                                        <circle
+                                                            cx="18"
+                                                            cy="18"
+                                                            r="15"
+                                                            fill="transparent"
+                                                            stroke="#D98A48"
+                                                            strokeWidth="4"
+                                                            pathLength={100}
+                                                            strokeDasharray={`${pWaiting} ${100 - pWaiting}`}
+                                                            strokeDashoffset={
+                                                                -(
+                                                                    pCompleted +
+                                                                    pInProgress
+                                                                )
+                                                            }
+                                                        />
+                                                    )}
+                                                    {/* Dibatalkan */}
+                                                    {pCancelled > 0 && (
+                                                        <circle
+                                                            cx="18"
+                                                            cy="18"
+                                                            r="15"
+                                                            fill="transparent"
+                                                            stroke="#DFE6ED"
+                                                            strokeWidth="4"
+                                                            pathLength={100}
+                                                            strokeDasharray={`${pCancelled} ${100 - pCancelled}`}
+                                                            strokeDashoffset={
+                                                                -(
+                                                                    pCompleted +
+                                                                    pInProgress +
+                                                                    pWaiting
+                                                                )
+                                                            }
+                                                        />
+                                                    )}
+                                                </>
+                                            )}
+                                        </svg>
+
+                                        <div className="absolute text-center">
+                                            <span className="text-2xl font-extrabold text-[#17233A]">
+                                                {donutTotal}
+                                            </span>
+                                            <p className="text-[10px] font-bold text-[#93A2B5] tracking-wider uppercase">
+                                                Total tugas
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2.5 pt-2 border-t border-[#DFE6ED]">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <div className="flex items-center gap-2">
+                                            <span className="size-2 rounded-full bg-[#173765]" />
+                                            <span className="text-[#607087] font-medium">
+                                                Selesai
+                                            </span>
+                                        </div>
+                                        <span className="font-bold text-[#17233A]">
+                                            {taskDistribution?.completed
+                                                .count ?? 0}{" "}
+                                            <span className="font-normal text-[#93A2B5]">
+                                                ({pCompleted}%)
+                                            </span>
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-xs">
+                                        <div className="flex items-center gap-2">
+                                            <span className="size-2 rounded-full bg-[#7DD3E3]" />
+                                            <span className="text-[#607087] font-medium">
+                                                Berlangsung
+                                            </span>
+                                        </div>
+                                        <span className="font-bold text-[#17233A]">
+                                            {taskDistribution?.inProgress
+                                                .count ?? 0}{" "}
+                                            <span className="font-normal text-[#93A2B5]">
+                                                ({pInProgress}%)
+                                            </span>
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-xs">
+                                        <div className="flex items-center gap-2">
+                                            <span className="size-2 rounded-full bg-[#D98A48]" />
+                                            <span className="text-[#607087] font-medium">
+                                                Menunggu pekerja
+                                            </span>
+                                        </div>
+                                        <span className="font-bold text-[#17233A]">
+                                            {taskDistribution?.waiting.count ??
+                                                0}{" "}
+                                            <span className="font-normal text-[#93A2B5]">
+                                                ({pWaiting}%)
+                                            </span>
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-xs">
+                                        <div className="flex items-center gap-2">
+                                            <span className="size-2 rounded-full bg-[#DFE6ED]" />
+                                            <span className="text-[#607087] font-medium">
+                                                Dibatalkan
+                                            </span>
+                                        </div>
+                                        <span className="font-bold text-[#17233A]">
+                                            {taskDistribution?.cancelled
+                                                .count ?? 0}{" "}
+                                            <span className="font-normal text-[#93A2B5]">
+                                                ({pCancelled}%)
+                                            </span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* SECTION PELAMAR PERLU DITINJAU */}
+                        <section className="rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-xs">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-base font-bold text-[#17233A]">
+                                        Pelamar perlu ditinjau
+                                    </h3>
+                                    <p className="text-xs text-[#607087]">
+                                        Tinjau dan seleksi kandidat pekerja
+                                        terbaik untuk tugas usahamu
+                                    </p>
+                                </div>
+
+                                <Link
+                                    href="/employer/applications"
+                                    className="text-xs font-bold text-[#173765] hover:underline flex items-center gap-1"
+                                >
+                                    <span>Lihat semua pelamar</span>
+                                    <ArrowRight className="size-3.5" />
+                                </Link>
+                            </div>
+
+                            <div className="mt-5 space-y-3">
+                                {recentApplicants.length === 0 ? (
+                                    <div className="rounded-xl border border-dashed border-[#DFE6ED] p-8 text-center">
+                                        <div className="flex size-11 items-center justify-center rounded-xl bg-[#F0F8FB] text-[#173765] mx-auto">
+                                            <Users className="size-5" />
+                                        </div>
+                                        <p className="mt-3 text-sm font-bold text-[#17233A]">
+                                            Belum ada pelamar baru
+                                        </p>
+                                        <p className="mt-1 text-xs text-[#607087]">
+                                            Lamaran yang masuk pada tugas
+                                            aktifmu akan muncul di sini.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    recentApplicants.map((applicant) => {
+                                        const decision =
+                                            applicantDecisions[applicant.id];
+                                        const isProcessing =
+                                            processingId === applicant.id;
+
+                                        return (
+                                            <div
+                                                key={applicant.id}
+                                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-[#DFE6ED] p-4 transition hover:border-[#BFE7EF] bg-[#FFFFFF]"
+                                            >
+                                                <div className="flex items-center gap-3.5 min-w-[240px]">
+                                                    <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#D8F1F6] text-sm font-bold text-[#173765]">
+                                                        {applicant.initials}
+                                                    </div>
+
+                                                    <div>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <h4 className="text-sm font-bold text-[#17233A]">
+                                                                {applicant.name}
+                                                            </h4>
+                                                            {applicant.verified && (
+                                                                <CheckCircle2 className="size-3.5 text-[#173765]" />
+                                                            )}
+                                                        </div>
+
+                                                        <div className="mt-0.5 flex items-center gap-2 text-xs text-[#607087]">
+                                                            <span className="flex items-center gap-1 text-[#D98A48] font-semibold">
+                                                                <Star className="size-3 fill-[#D98A48] text-[#D98A48]" />
+                                                                {
+                                                                    applicant.rating
+                                                                }
+                                                            </span>
+                                                            <span className="text-[#93A2B5]">
+                                                                •
+                                                            </span>
+                                                            <span>
+                                                                {
+                                                                    applicant.completedTasks
+                                                                }{" "}
+                                                                tugas selesai
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-[10px] font-bold tracking-wider uppercase text-[#93A2B5]">
+                                                        MELAMAR UNTUK
+                                                    </p>
+                                                    <p className="truncate text-xs sm:text-sm font-semibold text-[#17233A] mt-0.5">
+                                                        {applicant.taskTitle}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {decision ? (
+                                                        <span
+                                                            className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
+                                                                decision ===
+                                                                "accepted"
+                                                                    ? "bg-[#D8F1F6] text-[#173765]"
+                                                                    : "bg-red-50 text-[#EF4444]"
+                                                            }`}
+                                                        >
+                                                            {decision ===
+                                                            "accepted"
+                                                                ? "Disetujui ✓"
+                                                                : "Ditolak ✕"}
+                                                        </span>
+                                                    ) : (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                disabled={
+                                                                    isProcessing
+                                                                }
+                                                                onClick={() => {
+                                                                    setRejectTarget(
+                                                                        applicant,
+                                                                    );
+                                                                    setRejectError(
+                                                                        null,
+                                                                    );
+                                                                }}
+                                                                className="rounded-lg px-3.5 py-1.5 text-xs font-semibold text-[#607087] hover:text-[#EF4444] hover:bg-red-50 transition cursor-pointer disabled:opacity-50"
+                                                            >
+                                                                Tolak
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                disabled={
+                                                                    isProcessing
+                                                                }
+                                                                onClick={() =>
+                                                                    handleAcceptApplicant(
+                                                                        applicant,
+                                                                    )
+                                                                }
+                                                                className="rounded-lg bg-[#173765] px-4 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-[#21477F] cursor-pointer disabled:opacity-50"
+                                                            >
+                                                                {isProcessing
+                                                                    ? "Memproses..."
+                                                                    : "Terima"}
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </section>
+
+                        {/* SECTION BUKU PENGELUARAN OTOMATIS (RINGKAS) */}
+                        <section
+                            id="buku-pengeluaran"
+                            className="rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-xs scroll-mt-24"
+                        >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div>
+                                    <h3 className="text-base font-bold text-[#17233A]">
+                                        Buku pengeluaran otomatis
+                                    </h3>
+                                    <p className="text-xs text-[#607087]">
+                                        Pencatatan real-time upah tenaga kerja
+                                        yang telah diverifikasi
+                                    </p>
+                                </div>
+
+                                <Link
+                                    href="/employer/payments"
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#DFE6ED] px-3.5 py-1.5 text-xs font-bold text-[#173765] transition hover:bg-[#F7F9FB] w-fit cursor-pointer"
+                                >
+                                    <span>Lihat Buku Lengkap</span>
+                                    <ArrowRight className="size-3.5" />
+                                </Link>
+                            </div>
+
+                            <div className="mt-5 overflow-x-auto">
+                                {recentTransactions.length === 0 ? (
+                                    <div className="rounded-xl border border-dashed border-[#DFE6ED] p-8 text-center">
+                                        <div className="flex size-11 items-center justify-center rounded-xl bg-[#F0F8FB] text-[#173765] mx-auto">
+                                            <Receipt className="size-5" />
+                                        </div>
+                                        <p className="mt-3 text-sm font-bold text-[#17233A]">
+                                            Belum ada transaksi upah tercatat
+                                        </p>
+                                        <p className="mt-1 text-xs text-[#607087]">
+                                            Pembayaran upah yang telah selesai
+                                            dicatat akan tampil di sini.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-[#DFE6ED] bg-[#F7F9FB] text-[11px] font-bold tracking-wider text-[#93A2B5] uppercase">
+                                                <th className="py-3 px-4 rounded-l-lg">
+                                                    ID & TUGAS
+                                                </th>
+                                                <th className="py-3 px-4">
+                                                    PEKERJA
+                                                </th>
+                                                <th className="py-3 px-4">
+                                                    TANGGAL
+                                                </th>
+                                                <th className="py-3 px-4">
+                                                    JAM KERJA
+                                                </th>
+                                                <th className="py-3 px-4">
+                                                    UPAH
+                                                </th>
+                                                <th className="py-3 px-4 rounded-r-lg">
+                                                    STATUS
+                                                </th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody className="divide-y divide-[#DFE6ED] text-xs">
+                                            {recentTransactions.map((row) => (
+                                                <tr
+                                                    key={row.id}
+                                                    className="hover:bg-[#F7F9FB]/60 transition-colors"
+                                                >
+                                                    <td className="py-3.5 px-4">
+                                                        <span className="font-mono text-[10px] text-[#93A2B5] block">
+                                                            {row.code}
+                                                        </span>
+                                                        <span className="font-bold text-[#17233A]">
+                                                            {row.taskTitle}
+                                                        </span>
+                                                    </td>
+
+                                                    <td className="py-3.5 px-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex size-7 items-center justify-center rounded-full bg-[#D8F1F6] text-[10px] font-bold text-[#173765]">
+                                                                {
+                                                                    row.workerInitials
+                                                                }
+                                                            </div>
+                                                            <span className="font-semibold text-[#17233A]">
+                                                                {row.workerName}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+
+                                                    <td className="py-3.5 px-4 text-[#607087]">
+                                                        {row.date}
+                                                    </td>
+
+                                                    <td className="py-3.5 px-4 text-[#607087]">
+                                                        {row.hours}
+                                                    </td>
+
+                                                    <td className="py-3.5 px-4 font-bold text-[#17233A]">
+                                                        {formatRupiah(row.wage)}
+                                                    </td>
+
+                                                    <td className="py-3.5 px-4">
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-[#D8F1F6] px-2.5 py-1 text-xs font-bold text-[#173765]">
+                                                            <CheckCircle2 className="size-3 text-[#173765]" />
+                                                            {row.status}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+                        </section>
+                    </main>
+                </div>
+            </div>
+
+            {/* MODAL PENOLAKAN PELAMAR */}
+            {rejectTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
+                        <div className="flex items-center justify-between border-b border-[#DFE6ED] pb-3">
+                            <h3 className="text-base font-bold text-[#17233A]">
+                                Tolak Lamaran Pekerja
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setRejectTarget(null);
+                                    setRejectError(null);
+                                }}
+                                className="rounded-lg p-1 text-[#607087] hover:bg-[#F7F9FB]"
+                            >
+                                <X className="size-5" />
+                            </button>
+                        </div>
+
+                        <div>
+                            <p className="text-xs text-[#607087]">
+                                Anda akan menolak lamaran dari{" "}
+                                <strong className="text-[#17233A]">
+                                    {rejectTarget.name}
+                                </strong>{" "}
+                                untuk tugas{" "}
+                                <strong className="text-[#17233A]">
+                                    {rejectTarget.taskTitle}
+                                </strong>
+                                .
+                            </p>
+
+                            <div className="mt-3">
+                                <label className="block text-xs font-semibold text-[#17233A] mb-1">
+                                    Alasan Penolakan{" "}
+                                    <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    value={rejectReason}
+                                    onChange={(e) => {
+                                        setRejectReason(e.target.value);
+                                        if (rejectError) setRejectError(null);
+                                    }}
+                                    rows={3}
+                                    className="w-full rounded-xl border border-[#DFE6ED] p-3 text-xs text-[#17233A] focus:border-[#173765] focus:outline-none"
+                                    placeholder="Tuliskan alasan penolakan (minimal 5 karakter)..."
+                                />
+                                {rejectError && (
+                                    <p className="mt-1 text-[11px] font-medium text-red-500">
+                                        {rejectError}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#DFE6ED]">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setRejectTarget(null);
+                                    setRejectError(null);
+                                }}
+                                className="rounded-xl px-4 py-2 text-xs font-semibold text-[#607087] hover:bg-[#F7F9FB]"
+                            >
+                                Batal
+                            </button>
+
+                            <button
+                                type="button"
+                                disabled={processingId !== null}
+                                onClick={handleConfirmReject}
+                                className="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50"
+                            >
+                                {processingId !== null
+                                    ? "Menyimpan..."
+                                    : "Konfirmasi Tolak"}
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </main>
+            )}
         </>
     );
 }
+
+// ==========================================
+// MENGISOLASI LAYOUT KHUSUS DASHBOARD UMKM
+// ==========================================
+function EmployerDashboardLayout({ children }: { children: React.ReactNode }) {
+    return <>{children}</>;
+}
+
+EmployerDashboard.layout = EmployerDashboardLayout;

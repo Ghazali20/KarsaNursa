@@ -215,6 +215,15 @@ Route::middleware(['auth'])->group(function () {
                 '/employer/applications/{application}/mark-paid',
                 [EmployerTaskPaymentController::class, 'markPaid']
             )->name('employer.applications.mark-paid');
+
+            // ====================================
+            // BUKU PENGELUARAN TENAGA KERJA
+            // ====================================
+
+            Route::get(
+                '/employer/payments',
+                [EmployerTaskPaymentController::class, 'index']
+            )->name('employer.payments.index');
         });
 
         // ========================================

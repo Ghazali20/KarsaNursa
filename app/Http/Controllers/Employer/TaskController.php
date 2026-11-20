@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Task;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -16,31 +17,96 @@ class TaskController extends Controller
 {
     public function index(Request $request): Response
     {
+        Carbon::setLocale('id');
+
         $business = $request->user()?->business;
 
         abort_if($business === null, 403, 'Profil usaha belum tersedia.');
 
         $tasks = $business->tasks()
+            ->withCount(['applications as accepted_count' => function ($query) {
+                $query->where('status', 'accepted');
+            }])
+            ->withCount(['applications as pending_count' => function ($query) {
+                $query->where('status', 'pending');
+            }])
             ->latest('id')
             ->get()
-            ->map(fn (Task $task): array => [
-                'id' => $task->id,
-                'title' => $task->title,
-                'category' => $task->category,
-                'status' => $task->status,
-                'statusLabel' => TaskStatus::tryFrom($task->status)?->label()
-                    ?? ucfirst($task->status),
-                'locationAddress' => $task->location_address,
-                'workerQuota' => $task->worker_quota,
-                'wageAmount' => $task->wage_amount === null
-                    ? null
-                    : (int) $task->wage_amount,
-                'createdAt' => $task->created_at?->format('d/m/Y H:i'),
-                'applicationDeadline' => $task->application_deadline?->format('d/m/Y H:i'),
-                'adminNote' => $task->admin_note,
-                'canEdit' => $this->canEdit($task),
-                'canSubmit' => $this->canSubmit($task),
-            ])
+            ->map(function (Task $task): array {
+                $accepted = (int) ($task->accepted_count ?? 0);
+                $quota = (int) ($task->worker_quota ?? 1);
+
+                // Mapping status database ke badge UI
+                // Kategori: Draft, Menunggu Review, Mencari Pekerja, Berlangsung, Ditolak, Selesai, Dibatalkan
+                $rawStatus = strtolower((string) $task->status);
+                $uiStatus = 'draft';
+                $uiStatusLabel = 'Draft';
+
+                if ($rawStatus === 'draft') {
+                    $uiStatus = 'draft';
+                    $uiStatusLabel = 'Draft';
+                } elseif (in_array($rawStatus, ['pending_review', 'in_review', 'submitted'], true)) {
+                    $uiStatus = 'pending_review';
+                    $uiStatusLabel = 'Menunggu Review';
+                } elseif ($rawStatus === 'rejected') {
+                    $uiStatus = 'rejected';
+                    $uiStatusLabel = 'Ditolak';
+                } elseif (in_array($rawStatus, ['in_progress', 'closed'], true)) {
+                    $uiStatus = 'in_progress';
+                    $uiStatusLabel = 'Berlangsung';
+                } elseif ($rawStatus === 'completed') {
+                    $uiStatus = 'completed';
+                    $uiStatusLabel = 'Selesai';
+                } elseif ($rawStatus === 'cancelled') {
+                    $uiStatus = 'cancelled';
+                    $uiStatusLabel = 'Dibatalkan';
+                } elseif (in_array($rawStatus, ['published', 'open'], true)) {
+                    if ($accepted >= $quota && $quota > 0) {
+                        $uiStatus = 'in_progress';
+                        $uiStatusLabel = 'Berlangsung';
+                    } else {
+                        $uiStatus = 'published';
+                        $uiStatusLabel = 'Mencari Pekerja';
+                    }
+                } else {
+                    $uiStatus = $rawStatus;
+                    $uiStatusLabel = ucfirst(str_replace('_', ' ', $rawStatus));
+                }
+
+                // Format jadwal pelaksanaan
+                $schedule = '-';
+                if ($task->starts_at) {
+                    $schedule = $task->starts_at->translatedFormat('d M Y') . ' · ' . $task->starts_at->format('H:i') . ' WIB';
+                } elseif ($task->created_at) {
+                    $schedule = 'Dibuat · ' . $task->created_at->translatedFormat('d M Y');
+                }
+
+                return [
+                    'id' => $task->id,
+                    'title' => $task->title,
+                    'category' => $task->category,
+                    'status' => $task->status,
+                    'statusLabel' => TaskStatus::tryFrom($task->status)?->label() ?? ucfirst($task->status),
+                    'uiStatus' => $uiStatus,
+                    'uiStatusLabel' => $uiStatusLabel,
+                    'locationAddress' => $task->location_address,
+                    'workerQuota' => $task->worker_quota,
+                    'acceptedCount' => $accepted,
+                    'pendingCount' => (int) ($task->pending_count ?? 0),
+                    'wageAmount' => $task->wage_amount === null ? null : (int) $task->wage_amount,
+                    'startsAt' => $task->starts_at ? $task->starts_at->translatedFormat('d M Y · H:i') . ' WIB' : null,
+                    'endsAt' => $task->ends_at ? $task->ends_at->translatedFormat('d M Y · H:i') . ' WIB' : null,
+                    'scheduleDisplay' => $schedule,
+                    'createdAt' => $task->created_at?->format('d/m/Y H:i'),
+                    'applicationDeadline' => $task->application_deadline?->format('d/m/Y H:i'),
+                    'adminNote' => $task->admin_note,
+                    'description' => $task->description,
+                    'requirements' => $task->requirements,
+                    'instructions' => $task->instructions,
+                    'canEdit' => $this->canEdit($task),
+                    'canSubmit' => $this->canSubmit($task),
+                ];
+            })
             ->values()
             ->all();
 
@@ -78,8 +144,69 @@ class TaskController extends Controller
 
         $isSubmit = $action === 'submit';
 
+        // Penanganan Latitude & Longitude default di balik layar
+        if (! $request->filled('latitude')) {
+            $request->merge(['latitude' => -6.2088]);
+        }
+        if (! $request->filled('longitude')) {
+            $request->merge(['longitude' => 106.8456]);
+        }
+        if (! $request->filled('attendance_radius_meters')) {
+            $request->merge(['attendance_radius_meters' => 100]);
+        }
+
+        // Fallback nilai wajib database saat user memilih Simpan Draft
+        if (! $isSubmit) {
+            if (! $request->filled('category')) {
+                $request->merge(['category' => 'Lainnya']);
+            }
+            if (! $request->filled('description')) {
+                $request->merge(['description' => 'Draft rincian tugas mikro.']);
+            }
+            if (! $request->filled('location_address')) {
+                $request->merge(['location_address' => $business->address ?: 'Alamat belum ditentukan']);
+            }
+            if (! $request->filled('worker_quota')) {
+                $request->merge(['worker_quota' => 1]);
+            }
+            if (! $request->filled('wage_amount')) {
+                $request->merge(['wage_amount' => 50000]);
+            }
+            if (! $request->filled('starts_at')) {
+                $request->merge(['starts_at' => now()->addDays(2)->format('Y-m-d H:i:s')]);
+            }
+            if (! $request->filled('ends_at')) {
+                $startsAt = Carbon::parse($request->input('starts_at'));
+                $request->merge(['ends_at' => $startsAt->copy()->addHours(2)->format('Y-m-d H:i:s')]);
+            }
+            if (! $request->filled('application_deadline')) {
+                $startsAt = Carbon::parse($request->input('starts_at'));
+                $request->merge(['application_deadline' => $startsAt->copy()->subHours(2)->format('Y-m-d H:i:s')]);
+            }
+        }
+
+        $messages = [
+            'title.required' => 'Judul tugas wajib diisi.',
+            'category.required' => 'Pilih kategori pekerjaan.',
+            'description.required' => 'Deskripsi pekerjaan wajib diisi.',
+            'description.min' => 'Deskripsi minimal 20 karakter.',
+            'location_address.required' => 'Alamat lokasi pekerjaan wajib diisi.',
+            'application_deadline.required' => 'Batas penerimaan lamaran wajib diisi.',
+            'application_deadline.after' => 'Batas lamaran harus setelah waktu sekarang.',
+            'application_deadline.before' => 'Batas lamaran harus sebelum waktu mulai tugas.',
+            'starts_at.required' => 'Tanggal dan waktu mulai tugas wajib diisi.',
+            'starts_at.after' => 'Waktu mulai tugas harus setelah batas lamaran.',
+            'ends_at.required' => 'Waktu selesai tugas wajib diisi.',
+            'ends_at.after' => 'Waktu selesai harus setelah waktu mulai.',
+            'worker_quota.required' => 'Kuota pekerja wajib diisi.',
+            'worker_quota.between' => 'Kuota pekerja harus antara 1 sampai 100 orang.',
+            'wage_amount.required' => 'Upah bersih per pekerja wajib diisi.',
+            'wage_amount.min' => 'Upah pekerja minimal Rp 1.',
+        ];
+
         $validated = $request->validate(
-            $this->taskRules($isSubmit)
+            $this->taskRules($isSubmit),
+            $messages
         );
 
         $validated['attendance_radius_meters'] ??= 100;
@@ -220,8 +347,7 @@ class TaskController extends Controller
     }
 
     /**
-     * Draft tetap membutuhkan field yang NOT NULL pada tabel tasks.
-     * Saat diajukan, kelengkapan dan jadwal masa depan divalidasi lagi.
+     * Aturan validasi tugas.
      *
      * @return array<string, list<string>>
      */
