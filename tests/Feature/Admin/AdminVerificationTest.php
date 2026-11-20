@@ -33,21 +33,125 @@ class AdminVerificationTest extends TestCase
         ]);
     }
 
-    private function createDocument(User $user): int
-    {
+    private function createDocument(
+        User $user,
+        string $documentType = 'ktp'
+    ): int {
         return DB::table('verification_documents')
             ->insertGetId([
                 'user_id' => $user->id,
-                'document_type' => 'ktp',
+                'document_type' => $documentType,
                 'disk' => 'local',
-                'storage_path' => "verifications/{$user->id}/test.pdf",
-                'original_name' => 'test.pdf',
+                'storage_path' => "verifications/{$user->id}/{$documentType}.pdf",
+                'original_name' => "{$documentType}.pdf",
                 'mime_type' => 'application/pdf',
                 'file_size' => 100,
                 'status' => 'pending',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+    }
+
+    public function test_account_is_approved_only_after_all_documents_are_approved(): void
+    {
+        $admin = $this->createUser('admin', 'approved');
+        $worker = $this->createUser('worker');
+
+        $ktpId = $this->createDocument($worker, 'ktp');
+        $ktmId = $this->createDocument($worker, 'ktm');
+
+        // Setujui dokumen pertama.
+        $this->actingAs($admin)
+            ->patch(route('admin.users.documents.approve', $ktpId));
+
+        $this->assertDatabaseHas('verification_documents', [
+            'id' => $ktpId,
+            'status' => 'approved',
+        ]);
+
+        $this->assertDatabaseHas('verification_documents', [
+            'id' => $ktmId,
+            'status' => 'pending',
+        ]);
+
+        // Akun belum boleh approved karena dokumen kedua belum disetujui.
+        $this->assertDatabaseHas('users', [
+            'id' => $worker->id,
+            'verification_status' => 'pending',
+            'verified_at' => null,
+        ]);
+
+        // Setujui dokumen kedua.
+        $this->patch(route('admin.users.documents.approve', $ktmId));
+
+        // Sekarang seluruh dokumen sudah approved.
+        $this->assertDatabaseHas('users', [
+            'id' => $worker->id,
+            'verification_status' => 'approved',
+        ]);
+
+        $this->assertNotNull($worker->fresh()->verified_at);
+    }
+
+    public function test_account_remains_pending_when_one_document_is_rejected(): void
+    {
+        $admin = $this->createUser('admin', 'approved');
+        $worker = $this->createUser('worker');
+
+        $ktpId = $this->createDocument($worker, 'ktp');
+        $ktmId = $this->createDocument($worker, 'ktm');
+
+        // Tolak salah satu dokumen.
+        $this->actingAs($admin)
+            ->patch(
+                route('admin.users.documents.reject', $ktpId),
+                [
+                    'review_notes' => 'Dokumen tidak valid',
+                ]
+            );
+
+        $this->assertDatabaseHas('verification_documents', [
+            'id' => $ktpId,
+            'status' => 'rejected',
+            'review_notes' => 'Dokumen tidak valid',
+        ]);
+
+        $this->assertDatabaseHas('verification_documents', [
+            'id' => $ktmId,
+            'status' => 'pending',
+        ]);
+
+        // Akun tidak boleh otomatis approved.
+        $this->assertDatabaseHas('users', [
+            'id' => $worker->id,
+            'verification_status' => 'pending',
+            'verified_at' => null,
+        ]);
+    }
+
+    public function test_account_is_approved_when_its_only_document_is_approved(): void
+    {
+        $admin = $this->createUser('admin', 'approved');
+        $worker = $this->createUser('worker');
+
+        $documentId = $this->createDocument($worker);
+
+        $this->actingAs($admin)
+            ->patch(
+                route('admin.users.documents.approve', $documentId)
+            );
+
+        $this->assertDatabaseHas('verification_documents', [
+            'id' => $documentId,
+            'status' => 'approved',
+        ]);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $worker->id,
+            'verification_status' => 'approved',
+        ]);
+
+        $this->assertNotNull($worker->fresh()->verified_at);
     }
 
     public function test_admin_can_approve_pending_worker(): void
@@ -175,7 +279,7 @@ class AdminVerificationTest extends TestCase
         $documentId = $this->createDocument($worker);
 
         Storage::disk('local')->put(
-            "verifications/{$worker->id}/test.pdf",
+            "verifications/{$worker->id}/ktp.pdf",
             'Test document content'
         );
 
@@ -187,8 +291,7 @@ class AdminVerificationTest extends TestCase
         $this->actingAs($admin)
             ->get($url)
             ->assertOk()
-            ->assertDownload('test.pdf');
-
+            ->assertDownload('ktp.pdf');
         $this->actingAs($worker)
             ->get($url)
             ->assertForbidden();

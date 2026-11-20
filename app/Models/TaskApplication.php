@@ -17,6 +17,11 @@ use Illuminate\Support\Carbon;
  * @property string|null $review_notes
  * @property int|null $reviewed_by
  * @property Carbon|null $reviewed_at
+ * @property Carbon|null $checked_in_at
+ * @property Carbon|null $checked_out_at
+ * @property string|null $proof_photo_path
+ * @property string|null $activity_notes
+ * @property Carbon|null $proof_submitted_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -28,6 +33,11 @@ use Illuminate\Support\Carbon;
     'reviewed_by',
     'reviewed_at',
     'review_notes',
+    'checked_in_at',
+    'checked_out_at',
+    'proof_photo_path',
+    'activity_notes',
+    'proof_submitted_at',
 ])]
 class TaskApplication extends Model
 {
@@ -62,6 +72,9 @@ class TaskApplication extends Model
     {
         return [
             'reviewed_at' => 'datetime',
+            'checked_in_at' => 'datetime',
+            'checked_out_at' => 'datetime',
+            'proof_submitted_at' => 'datetime',
         ];
     }
 }
