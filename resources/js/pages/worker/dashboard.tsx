@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | null;
+
 type RecommendedTask = {
     id: number;
     title: string;
@@ -22,6 +24,7 @@ type RecommendedTask = {
     locationAddress: string | null;
     wageAmount: number | null;
     workerQuota: number | null;
+    applicationStatus?: ApplicationStatus;
 };
 
 type ActiveTaskItem = {
@@ -112,6 +115,44 @@ function getCategoryHeaderColor(category: string | null): string {
         default:
             return 'bg-[#EEF3FA]';
     }
+}
+
+function getTaskAction(task: RecommendedTask): {
+    label: string;
+    href: string;
+    className: string;
+} {
+    if (task.applicationStatus === 'accepted') {
+        return {
+            label: 'Lihat Tugas',
+            href: '/worker/applications',
+            className: 'bg-[#1E4479] text-white hover:bg-[#163561]',
+        };
+    }
+
+    if (task.applicationStatus === 'pending') {
+        return {
+            label: 'Menunggu Seleksi',
+            href: '/worker/applications',
+            className:
+                'border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100',
+        };
+    }
+
+    if (task.applicationStatus === 'rejected') {
+        return {
+            label: 'Lihat Detail',
+            href: `/worker/tasks/${task.id}`,
+            className:
+                'border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200',
+        };
+    }
+
+    return {
+        label: 'Lamar Tugas',
+        href: `/worker/tasks/${task.id}`,
+        className: 'bg-[#21477F] text-white hover:bg-[#163561]',
+    };
 }
 
 export default function WorkerDashboard({
@@ -461,6 +502,7 @@ export default function WorkerDashboard({
                                     task.businessName
                                         .trim()[0]
                                         ?.toUpperCase() ?? 'U';
+                                const action = getTaskAction(task);
 
                                 return (
                                     <article
@@ -533,7 +575,7 @@ export default function WorkerDashboard({
                                                 </span>
                                             </div>
 
-                                            {/* UPAH & TOMBOL LAMAR */}
+                                            {/* UPAH & TOMBOL AKSI */}
                                             <div className="mt-5 border-t border-slate-100 pt-4">
                                                 <div className="flex items-baseline justify-between">
                                                     <div>
@@ -560,10 +602,10 @@ export default function WorkerDashboard({
                                                 </div>
 
                                                 <Link
-                                                    href={`/worker/tasks/${task.id}`}
-                                                    className="mt-3.5 flex w-full items-center justify-center rounded-lg bg-[#21477F] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#163561]"
+                                                    href={action.href}
+                                                    className={`mt-3.5 flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-xs font-semibold transition ${action.className}`}
                                                 >
-                                                    Lamar Tugas
+                                                    {action.label}
                                                 </Link>
                                             </div>
                                         </div>

@@ -6,6 +6,7 @@ use App\Enums\TaskPaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\TaskApplication;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -85,6 +86,16 @@ class ApplicationInboxController extends Controller
                         $application->payment->status
                     )?->label(),
                 'paidAt' => $application->payment?->paid_at
+                    ?->format('d/m/Y H:i'),
+                'checkedInAt' => $application->checked_in_at
+                    ?->format('d/m/Y H:i'),
+                'checkedOutAt' => $application->checked_out_at
+                    ?->format('d/m/Y H:i'),
+                'proofPhotoUrl' => $application->proof_photo_path
+                    ? Storage::url($application->proof_photo_path)
+                    : null,
+                'activityNotes' => $application->activity_notes,
+                'proofSubmittedAt' => $application->proof_submitted_at
                     ?->format('d/m/Y H:i'),
             ])
             ->values()

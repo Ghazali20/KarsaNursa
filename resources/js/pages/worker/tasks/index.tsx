@@ -706,7 +706,7 @@ export default function WorkerTasksIndex({ tasks }: Props) {
                                                 href={`/worker/tasks/${task.id}`}
                                                 className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#21477f] px-3 text-sm font-semibold text-white transition hover:bg-[#163762]"
                                             >
-                                                Lihat Detail & Lamar
+                                                Lihat Tugas
                                             </Link>
                                         </div>
                                     </article>
