@@ -1,4 +1,3 @@
-
 import { Head, router, useForm } from '@inertiajs/react';
 import {
     BriefcaseBusiness,
@@ -69,14 +68,7 @@ function ApplicationCard({ application }: { application: Application }) {
         getElapsedSeconds(application.checkedInIso),
     );
 
-    const {
-        data,
-        setData,
-        post,
-        processing,
-        errors,
-        reset,
-    } = useForm<{
+    const { data, setData, post, processing, errors, reset } = useForm<{
         proof_photo: File | null;
         activity_notes: string;
     }>({
@@ -131,21 +123,17 @@ function ApplicationCard({ application }: { application: Application }) {
             return;
         }
 
-        post(
-            `/worker/applications/${application.id}/submit-proof`,
-            {
-                forceFormData: true,
-                preserveScroll: true,
-                onSuccess: () => reset(),
-            },
-        );
+        post(`/worker/applications/${application.id}/submit-proof`, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => reset(),
+        });
     }
 
     return (
         <div className="grid items-start gap-6 xl:grid-cols-2">
             {/* INFORMASI TUGAS DAN ABSENSI */}
             <section className="rounded-2xl border border-[#dce5f1] bg-white p-5 shadow-sm sm:p-6">
-
                 {/* Lokasi kerja */}
                 <div className="flex min-h-[145px] flex-col items-center justify-center rounded-xl bg-gradient-to-br from-[#d9f2f6] to-[#eff8fb] p-5 text-center">
                     <MapPin className="size-8 text-[#21477f]" />
@@ -166,7 +154,7 @@ function ApplicationCard({ application }: { application: Application }) {
                     </div>
 
                     <div className="min-w-0">
-                        <p className="text-[10px] font-medium uppercase tracking-wide text-[#8194ad]">
+                        <p className="text-[10px] font-medium tracking-wide text-[#8194ad] uppercase">
                             TUGAS #{application.taskId}
                         </p>
 
@@ -201,7 +189,6 @@ function ApplicationCard({ application }: { application: Application }) {
 
                 {/* Timeline check-in dan check-out */}
                 <div className="mt-5 space-y-5 border-t border-[#e1e9f2] pt-5">
-
                     <div className="flex items-start gap-3">
                         <div
                             className={`flex size-6 shrink-0 items-center justify-center rounded-full ${
@@ -290,7 +277,6 @@ function ApplicationCard({ application }: { application: Application }) {
 
             {/* FORM BUKTI PENYELESAIAN */}
             <section className="rounded-2xl border border-[#dce5f1] bg-white p-5 shadow-sm sm:p-6">
-
                 <div className="flex items-start justify-between gap-3">
                     <div>
                         <h2 className="text-lg font-medium text-[#172c4b]">
@@ -314,7 +300,6 @@ function ApplicationCard({ application }: { application: Application }) {
                 </div>
 
                 <form onSubmit={handleSubmitProof} className="mt-6 space-y-5">
-
                     {/* Upload foto */}
                     <div>
                         <label className="mb-2 block text-xs font-semibold text-[#172c4b]">
@@ -405,7 +390,7 @@ function ApplicationCard({ application }: { application: Application }) {
                             maxLength={1000}
                             rows={4}
                             placeholder="Contoh: Menyelesaikan packing 100 kotak dan membantu pengecekan pesanan..."
-                            className="w-full resize-y rounded-xl border border-[#dce5f1] bg-white p-4 text-xs leading-6 text-[#243650] outline-none transition placeholder:text-[#91a0b4] focus:border-[#75cce2] focus:ring-2 focus:ring-[#75cce2]/20"
+                            className="w-full resize-y rounded-xl border border-[#dce5f1] bg-white p-4 text-xs leading-6 text-[#243650] transition outline-none placeholder:text-[#91a0b4] focus:border-[#75cce2] focus:ring-2 focus:ring-[#75cce2]/20"
                         />
 
                         <p className="mt-1 text-right text-[10px] text-[#91a0b4]">
@@ -433,9 +418,7 @@ function ApplicationCard({ application }: { application: Application }) {
                     <button
                         type="submit"
                         disabled={
-                            processing ||
-                            !checkedOut ||
-                            !data.proof_photo
+                            processing || !checkedOut || !data.proof_photo
                         }
                         className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#21477f] px-4 py-4 text-sm font-bold text-white shadow-lg shadow-blue-900/10 transition hover:bg-[#173762] disabled:cursor-not-allowed disabled:opacity-50"
                     >
@@ -460,7 +443,8 @@ function ApplicationCard({ application }: { application: Application }) {
 
                     {proofSubmitted && (
                         <p className="text-center text-[10px] text-emerald-700">
-                            Bukti terakhir dikirim: {application.proofSubmittedAt}
+                            Bukti terakhir dikirim:{' '}
+                            {application.proofSubmittedAt}
                         </p>
                     )}
                 </form>
@@ -480,7 +464,6 @@ export default function WorkerApplicationsIndex({ applications }: Props) {
 
             <main className="min-h-screen bg-[#f7f9fc] px-4 py-7 sm:px-6 xl:px-8">
                 <div className="mx-auto max-w-[1400px]">
-
                     {/* Header */}
                     <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
                         <div>
@@ -522,8 +505,8 @@ export default function WorkerApplicationsIndex({ applications }: Props) {
                             </h2>
 
                             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#8194ad]">
-                                Tugas yang sudah diterima oleh UMKM akan
-                                muncul di halaman ini.
+                                Tugas yang sudah diterima oleh UMKM akan muncul
+                                di halaman ini.
                             </p>
 
                             <a

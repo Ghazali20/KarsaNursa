@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from "@inertiajs/react";
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Bell,
@@ -20,18 +20,18 @@ import {
     WalletCards,
     X,
     XCircle,
-} from "lucide-react";
-import React, { useEffect, useState } from "react";
-import { toast } from "sonner";
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
-import karsaNusaLogo from "@/assets/karsanusa-logo.png";
+import karsaNusaLogo from '@/assets/karsanusa-logo.png';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 // ==========================================
 // TIPE DATA
@@ -39,7 +39,7 @@ import {
 
 export type ApplicationItem = {
     id: number;
-    status: "pending" | "accepted" | "rejected";
+    status: 'pending' | 'accepted' | 'rejected';
     workerName: string;
     workerEmail: string;
     workerPhone?: string;
@@ -75,11 +75,11 @@ export type EmployerTaskApplicationsProps = {
 
 function getInitials(name: string): string {
     const parts = name.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return "KN";
+    if (parts.length === 0) return 'KN';
     return parts
         .slice(0, 2)
         .map((n) => n.charAt(0))
-        .join("")
+        .join('')
         .toUpperCase();
 }
 
@@ -88,57 +88,57 @@ function formatFirstName(name: string): string {
 }
 
 function getTaskBadge(statusKey?: string) {
-    const key = (statusKey || "").toLowerCase();
+    const key = (statusKey || '').toLowerCase();
 
-    if (key === "in_progress" || key === "berlangsung") {
+    if (key === 'in_progress' || key === 'berlangsung') {
         return {
-            label: "Berlangsung",
-            className: "bg-[#D8F1F6] text-[#173765]",
+            label: 'Berlangsung',
+            className: 'bg-[#D8F1F6] text-[#173765]',
         };
     }
     if (
-        key === "published" ||
-        key === "open" ||
-        key === "mencari pekerja" ||
-        key === "dipublikasikan"
+        key === 'published' ||
+        key === 'open' ||
+        key === 'mencari pekerja' ||
+        key === 'dipublikasikan'
     ) {
         return {
-            label: "Mencari Pekerja",
-            className: "bg-[#FEF3C7] text-[#B45309]",
+            label: 'Mencari Pekerja',
+            className: 'bg-[#FEF3C7] text-[#B45309]',
         };
     }
     if (
-        key === "pending_review" ||
-        key === "in_review" ||
-        key === "submitted" ||
-        key === "menunggu review"
+        key === 'pending_review' ||
+        key === 'in_review' ||
+        key === 'submitted' ||
+        key === 'menunggu review'
     ) {
         return {
-            label: "Menunggu Review",
-            className: "bg-[#FFF4E8] text-[#D98A48]",
+            label: 'Menunggu Review',
+            className: 'bg-[#FFF4E8] text-[#D98A48]',
         };
     }
-    if (key === "rejected" || key === "ditolak") {
+    if (key === 'rejected' || key === 'ditolak') {
         return {
-            label: "Ditolak",
-            className: "bg-[#FEE2E2] text-[#EF4444]",
+            label: 'Ditolak',
+            className: 'bg-[#FEE2E2] text-[#EF4444]',
         };
     }
-    if (key === "completed" || key === "selesai") {
+    if (key === 'completed' || key === 'selesai') {
         return {
-            label: "Selesai",
-            className: "bg-[#DCFCE7] text-[#166534]",
+            label: 'Selesai',
+            className: 'bg-[#DCFCE7] text-[#166534]',
         };
     }
-    if (key === "cancelled" || key === "dibatalkan") {
+    if (key === 'cancelled' || key === 'dibatalkan') {
         return {
-            label: "Dibatalkan",
-            className: "bg-[#F1F5F9] text-[#93A2B5]",
+            label: 'Dibatalkan',
+            className: 'bg-[#F1F5F9] text-[#93A2B5]',
         };
     }
     return {
-        label: "Draft",
-        className: "bg-[#F1F5F9] text-[#607087]",
+        label: 'Draft',
+        className: 'bg-[#F1F5F9] text-[#607087]',
     };
 }
 
@@ -168,7 +168,7 @@ export default function EmployerTaskApplications({
     };
 
     const authUser = pageProps?.auth?.user;
-    const userName = authUser?.name || "Pemilik UMKM";
+    const userName = authUser?.name || 'Pemilik UMKM';
     const firstName = formatFirstName(userName);
     const userInitials = getInitials(userName);
     const businessName = authUser?.business?.name || `${firstName} Store`;
@@ -190,7 +190,7 @@ export default function EmployerTaskApplications({
         null,
     );
     const [rejectReason, setRejectReason] = useState(
-        "Kualifikasi belum sesuai dengan kebutuhan tugas saat ini.",
+        'Kualifikasi belum sesuai dengan kebutuhan tugas saat ini.',
     );
     const [rejectError, setRejectError] = useState<string | null>(null);
 
@@ -212,7 +212,7 @@ export default function EmployerTaskApplications({
         router.patch(
             `/employer/tasks/${task.id}/applications/${application.id}/decision`,
             {
-                decision: "accepted",
+                decision: 'accepted',
                 review_notes: null,
             },
             {
@@ -224,13 +224,13 @@ export default function EmployerTaskApplications({
                             description: `Kuota pekerja untuk tugas ini telah diperbarui.`,
                         },
                     );
-                    router.reload({ only: ["task", "applications"] });
+                    router.reload({ only: ['task', 'applications'] });
                 },
                 onError: (responseErrors) => {
                     toast.error(
                         responseErrors.application ||
                             responseErrors.review_notes ||
-                            "Gagal menerima pelamar.",
+                            'Gagal menerima pelamar.',
                     );
                 },
                 onFinish: () => setProcessingId(null),
@@ -244,7 +244,7 @@ export default function EmployerTaskApplications({
 
         const reason = rejectReason.trim();
         if (reason.length < 5) {
-            setRejectError("Alasan penolakan minimal 5 karakter.");
+            setRejectError('Alasan penolakan minimal 5 karakter.');
             return;
         }
 
@@ -254,7 +254,7 @@ export default function EmployerTaskApplications({
         router.patch(
             `/employer/tasks/${task.id}/applications/${rejectTarget.id}/decision`,
             {
-                decision: "rejected",
+                decision: 'rejected',
                 review_notes: reason,
             },
             {
@@ -264,17 +264,17 @@ export default function EmployerTaskApplications({
                         `Lamaran dari ${rejectTarget.workerName} ditolak.`,
                         {
                             description:
-                                "Catatan penolakan telah diteruskan ke pekerja.",
+                                'Catatan penolakan telah diteruskan ke pekerja.',
                         },
                     );
                     setRejectTarget(null);
-                    router.reload({ only: ["task", "applications"] });
+                    router.reload({ only: ['task', 'applications'] });
                 },
                 onError: (responseErrors) => {
                     setRejectError(
                         responseErrors.review_notes ||
                             responseErrors.application ||
-                            "Gagal menolak pelamar.",
+                            'Gagal menolak pelamar.',
                     );
                 },
                 onFinish: () => setProcessingId(null),
@@ -322,7 +322,7 @@ export default function EmployerTaskApplications({
 
                 <aside
                     className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-[#DFE6ED] bg-white transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
-                        mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+                        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
                     }`}
                 >
                     {/* Header Sidebar: Brand Logo */}
@@ -411,7 +411,7 @@ export default function EmployerTaskApplications({
                         </div>
 
                         {/* Tombol Kembali ke Beranda */}
-                        <div className="pt-4 border-t border-[#DFE6ED]">
+                        <div className="border-t border-[#DFE6ED] pt-4">
                             <Link
                                 href="/"
                                 className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-[#607087] transition-colors hover:bg-[#F7F9FB] hover:text-[#173765]"
@@ -426,7 +426,7 @@ export default function EmployerTaskApplications({
                 {/* ========================================================
                     2. KONTEN UTAMA (HEADER BAR + DETAIL PELAMAR PER TUGAS)
                 ======================================================== */}
-                <div className="flex flex-1 flex-col min-w-0 overflow-y-auto">
+                <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
                     {/* Top Header Bar */}
                     <header className="sticky top-0 z-30 flex h-[72px] shrink-0 items-center justify-between border-b border-[#DFE6ED] bg-white px-4 sm:px-6 lg:px-8">
                         <div className="flex items-center gap-3 sm:gap-4">
@@ -443,7 +443,7 @@ export default function EmployerTaskApplications({
                                 <p className="text-[11px] font-medium text-[#93A2B5]">
                                     Dashboard UMKM
                                 </p>
-                                <h2 className="text-sm sm:text-base font-bold text-[#17233A]">
+                                <h2 className="text-sm font-bold text-[#17233A] sm:text-base">
                                     Daftar Pelamar Tugas
                                 </h2>
                             </div>
@@ -490,7 +490,7 @@ export default function EmployerTaskApplications({
                                 <DropdownMenuContent
                                     align="end"
                                     sideOffset={8}
-                                    className="w-56 border border-[#DFE6ED] bg-white p-1.5 shadow-lg rounded-xl"
+                                    className="w-56 rounded-xl border border-[#DFE6ED] bg-white p-1.5 shadow-lg"
                                 >
                                     <div className="px-3 py-2">
                                         <p className="text-xs font-bold text-[#17233A]">
@@ -520,12 +520,12 @@ export default function EmployerTaskApplications({
                     </header>
 
                     {/* MAIN CONTENT */}
-                    <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 space-y-6 max-w-7xl w-full mx-auto">
+                    <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
                         {/* BREADCRUMB / KEMBALI KE KELOLA TUGAS */}
                         <div>
                             <Link
                                 href="/employer/tasks"
-                                className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#607087] transition hover:text-[#173765]"
+                                className="inline-flex items-center gap-2 text-xs font-semibold text-[#607087] transition hover:text-[#173765] sm:text-sm"
                             >
                                 <ArrowLeft className="size-4" />
                                 <span>Kembali ke Kelola Tugas</span>
@@ -534,18 +534,18 @@ export default function EmployerTaskApplications({
 
                         {/* HEADER / BANNER TUGAS */}
                         <div className="relative overflow-hidden rounded-2xl bg-[#0D2445] p-6 text-white shadow-sm sm:p-8">
-                            <div className="absolute -top-12 -right-12 size-40 rounded-full bg-[#21477F]/30 blur-2xl pointer-events-none" />
+                            <div className="pointer-events-none absolute -top-12 -right-12 size-40 rounded-full bg-[#21477F]/30 blur-2xl" />
 
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                                 <div className="space-y-1.5">
-                                    <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#7DD3E3]">
+                                    <p className="text-[10px] font-bold tracking-[0.14em] text-[#7DD3E3] uppercase">
                                         APPLICANT MANAGEMENT
                                     </p>
-                                    <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                                    <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
                                         Daftar Pelamar
                                     </h1>
                                     <div className="flex flex-wrap items-center gap-2 pt-1">
-                                        <span className="text-sm sm:text-base font-semibold text-white/90">
+                                        <span className="text-sm font-semibold text-white/90 sm:text-base">
                                             {task.title}
                                         </span>
                                         <span
@@ -558,7 +558,7 @@ export default function EmployerTaskApplications({
 
                                 <Link
                                     href="/employer/tasks"
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-xs font-bold text-white backdrop-blur-xs transition hover:bg-white/20 shrink-0"
+                                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-xs font-bold text-white backdrop-blur-xs transition hover:bg-white/20"
                                 >
                                     <Briefcase className="size-4" />
                                     <span>Lihat Semua Tugas</span>
@@ -567,9 +567,9 @@ export default function EmployerTaskApplications({
                         </div>
 
                         {/* 3 KARTU RINGKASAN (GRID 3 KOLOM) */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             {/* Kartu 1: Total Pelamar */}
-                            <div className="rounded-2xl border border-[#DFE6ED] bg-white p-5 shadow-xs flex items-center gap-4">
+                            <div className="flex items-center gap-4 rounded-2xl border border-[#DFE6ED] bg-white p-5 shadow-xs">
                                 <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#F0F8FB] text-[#173765]">
                                     <Users className="size-6" />
                                 </div>
@@ -577,17 +577,17 @@ export default function EmployerTaskApplications({
                                     <p className="text-xs font-semibold text-[#607087]">
                                         Total Pelamar
                                     </p>
-                                    <p className="text-2xl sm:text-3xl font-extrabold text-[#17233A] mt-0.5">
+                                    <p className="mt-0.5 text-2xl font-extrabold text-[#17233A] sm:text-3xl">
                                         {applications.length}
                                     </p>
-                                    <p className="text-[11px] text-[#93A2B5] mt-0.5">
+                                    <p className="mt-0.5 text-[11px] text-[#93A2B5]">
                                         Lamaran masuk pada tugas ini
                                     </p>
                                 </div>
                             </div>
 
                             {/* Kartu 2: Menunggu Seleksi */}
-                            <div className="rounded-2xl border border-[#DFE6ED] bg-white p-5 shadow-xs flex items-center gap-4">
+                            <div className="flex items-center gap-4 rounded-2xl border border-[#DFE6ED] bg-white p-5 shadow-xs">
                                 <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#FFF4E8] text-[#D98A48]">
                                     <Clock className="size-6" />
                                 </div>
@@ -595,17 +595,17 @@ export default function EmployerTaskApplications({
                                     <p className="text-xs font-semibold text-[#607087]">
                                         Menunggu Seleksi
                                     </p>
-                                    <p className="text-2xl sm:text-3xl font-extrabold text-[#D98A48] mt-0.5">
+                                    <p className="mt-0.5 text-2xl font-extrabold text-[#D98A48] sm:text-3xl">
                                         {task.pendingCount}
                                     </p>
-                                    <p className="text-[11px] text-[#93A2B5] mt-0.5">
+                                    <p className="mt-0.5 text-[11px] text-[#93A2B5]">
                                         Perlu ditinjau UMKM
                                     </p>
                                 </div>
                             </div>
 
                             {/* Kartu 3: Pekerja Diterima */}
-                            <div className="rounded-2xl border border-[#DFE6ED] bg-white p-5 shadow-xs flex items-center gap-4">
+                            <div className="flex items-center gap-4 rounded-2xl border border-[#DFE6ED] bg-white p-5 shadow-xs">
                                 <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#F0FDF4] text-[#16A34A]">
                                     <CheckCircle2 className="size-6" />
                                 </div>
@@ -613,15 +613,15 @@ export default function EmployerTaskApplications({
                                     <p className="text-xs font-semibold text-[#607087]">
                                         Pekerja Diterima
                                     </p>
-                                    <p className="text-2xl sm:text-3xl font-extrabold text-[#173765] mt-0.5">
+                                    <p className="mt-0.5 text-2xl font-extrabold text-[#173765] sm:text-3xl">
                                         {task.acceptedCount}
                                         <span className="text-base font-normal text-[#93A2B5]">
                                             /{quota}
                                         </span>
                                     </p>
-                                    <p className="text-[11px] text-[#93A2B5] mt-0.5">
+                                    <p className="mt-0.5 text-[11px] text-[#93A2B5]">
                                         {quotaFull
-                                            ? "Kuota terpenuhi"
+                                            ? 'Kuota terpenuhi'
                                             : `Sisa ${Math.max(0, quota - task.acceptedCount)} kuota lagi`}
                                     </p>
                                 </div>
@@ -631,13 +631,13 @@ export default function EmployerTaskApplications({
                         {/* DAFTAR KARTU PELAMAR */}
                         {applications.length === 0 ? (
                             <section className="rounded-2xl border border-dashed border-[#DFE6ED] bg-white px-6 py-16 text-center">
-                                <div className="flex size-14 items-center justify-center rounded-2xl bg-[#F0F8FB] text-[#173765] mx-auto">
+                                <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#F0F8FB] text-[#173765]">
                                     <Users className="size-7" />
                                 </div>
                                 <h3 className="mt-4 text-base font-bold text-[#17233A]">
                                     Belum ada pelamar
                                 </h3>
-                                <p className="mt-1 text-xs text-[#607087] max-w-sm mx-auto">
+                                <p className="mx-auto mt-1 max-w-sm text-xs text-[#607087]">
                                     Lamaran pekerja yang masuk untuk tugas "
                                     {task.title}" akan tampil di halaman ini.
                                 </p>
@@ -646,21 +646,21 @@ export default function EmployerTaskApplications({
                             <div className="space-y-4">
                                 {applications.map((application) => {
                                     const isPending =
-                                        application.status === "pending";
+                                        application.status === 'pending';
                                     const isAccepted =
-                                        application.status === "accepted";
+                                        application.status === 'accepted';
                                     const isRejected =
-                                        application.status === "rejected";
+                                        application.status === 'rejected';
                                     const isProcessing =
                                         processingId === application.id;
 
                                     return (
                                         <article
                                             key={application.id}
-                                            className="rounded-2xl border border-[#DFE6ED] bg-white p-5 sm:p-6 shadow-xs transition hover:border-[#BFE7EF]"
+                                            className="rounded-2xl border border-[#DFE6ED] bg-white p-5 shadow-xs transition hover:border-[#BFE7EF] sm:p-6"
                                         >
                                             {/* BARIS ATAS: AVATAR, NAMA, BADGE STATUS */}
-                                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                                            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                                                 <div className="flex items-start gap-3.5">
                                                     <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#D8F1F6] text-sm font-extrabold text-[#173765]">
                                                         {getInitials(
@@ -691,12 +691,12 @@ export default function EmployerTaskApplications({
                                                             <span className="flex items-center gap-1 font-semibold text-[#17233A]">
                                                                 <Star className="size-3.5 fill-[#EAB308] text-[#EAB308]" />
                                                                 {application.rating ??
-                                                                    "5.0"}
+                                                                    '5.0'}
                                                             </span>
                                                             <span>•</span>
                                                             <span>
                                                                 {application.completedTasks ??
-                                                                    0}{" "}
+                                                                    0}{' '}
                                                                 tugas selesai
                                                             </span>
                                                             <span>•</span>
@@ -709,10 +709,10 @@ export default function EmployerTaskApplications({
 
                                                         {/* WAKTU PENGAJUAN */}
                                                         <p className="text-[11px] text-[#93A2B5]">
-                                                            Melamar:{" "}
+                                                            Melamar:{' '}
                                                             {application.appliedAt ||
                                                                 application.appliedAtHuman ||
-                                                                "Baru saja"}
+                                                                'Baru saja'}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -748,8 +748,8 @@ export default function EmployerTaskApplications({
                                             {application.skills &&
                                                 application.skills.length >
                                                     0 && (
-                                                    <div className="mt-4 flex flex-wrap items-center gap-1.5 pt-3 border-t border-[#DFE6ED]/60">
-                                                        <span className="text-[11px] font-semibold text-[#93A2B5] mr-1">
+                                                    <div className="mt-4 flex flex-wrap items-center gap-1.5 border-t border-[#DFE6ED]/60 pt-3">
+                                                        <span className="mr-1 text-[11px] font-semibold text-[#93A2B5]">
                                                             Keahlian:
                                                         </span>
                                                         {application.skills.map(
@@ -767,10 +767,10 @@ export default function EmployerTaskApplications({
 
                                             {/* AKSI SELEKSI / INFO PENINJAUAN */}
                                             {isPending ? (
-                                                <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-[#DFE6ED]">
+                                                <div className="mt-4 flex flex-col justify-between gap-3 border-t border-[#DFE6ED] pt-3 sm:flex-row sm:items-center">
                                                     <div>
                                                         {quotaFull && (
-                                                            <p className="text-xs text-[#D98A48] font-medium">
+                                                            <p className="text-xs font-medium text-[#D98A48]">
                                                                 * Kuota pekerja
                                                                 tugas ini sudah
                                                                 terpenuhi. Anda
@@ -789,7 +789,7 @@ export default function EmployerTaskApplications({
                                                                     application,
                                                                 )
                                                             }
-                                                            className="rounded-xl border border-[#DFE6ED] px-3.5 py-2 text-xs font-bold text-[#173765] hover:bg-[#F7F9FB] transition cursor-pointer"
+                                                            className="cursor-pointer rounded-xl border border-[#DFE6ED] px-3.5 py-2 text-xs font-bold text-[#173765] transition hover:bg-[#F7F9FB]"
                                                         >
                                                             Lihat Profil
                                                         </button>
@@ -804,13 +804,13 @@ export default function EmployerTaskApplications({
                                                                     application,
                                                                 );
                                                                 setRejectReason(
-                                                                    "Kualifikasi belum sesuai dengan kebutuhan tugas saat ini.",
+                                                                    'Kualifikasi belum sesuai dengan kebutuhan tugas saat ini.',
                                                                 );
                                                                 setRejectError(
                                                                     null,
                                                                 );
                                                             }}
-                                                            className="rounded-xl bg-[#FEE2E2] px-4 py-2 text-xs font-bold text-[#EF4444] hover:bg-red-100 transition cursor-pointer disabled:opacity-50"
+                                                            className="cursor-pointer rounded-xl bg-[#FEE2E2] px-4 py-2 text-xs font-bold text-[#EF4444] transition hover:bg-red-100 disabled:opacity-50"
                                                         >
                                                             Tolak
                                                         </button>
@@ -826,34 +826,34 @@ export default function EmployerTaskApplications({
                                                                     application,
                                                                 )
                                                             }
-                                                            className="rounded-xl bg-[#173765] px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#21477F] transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                                                            className="cursor-pointer rounded-xl bg-[#173765] px-5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-[#21477F] disabled:cursor-not-allowed disabled:opacity-50"
                                                         >
                                                             {isProcessing
-                                                                ? "Memproses..."
-                                                                : "Terima"}
+                                                                ? 'Memproses...'
+                                                                : 'Terima'}
                                                         </button>
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="mt-4 rounded-xl bg-[#F7F9FB] border border-[#DFE6ED] p-3 text-xs text-[#607087] space-y-1">
+                                                <div className="mt-4 space-y-1 rounded-xl border border-[#DFE6ED] bg-[#F7F9FB] p-3 text-xs text-[#607087]">
                                                     <div className="flex items-center justify-between">
                                                         <span className="font-semibold text-[#17233A]">
-                                                            Status Seleksi:{" "}
+                                                            Status Seleksi:{' '}
                                                             {isAccepted
-                                                                ? "Diterima"
-                                                                : "Ditolak"}
+                                                                ? 'Diterima'
+                                                                : 'Ditolak'}
                                                         </span>
                                                         <span className="text-[#93A2B5]">
-                                                            Diperiksa:{" "}
+                                                            Diperiksa:{' '}
                                                             {application.reviewedAt ||
-                                                                "-"}
+                                                                '-'}
                                                         </span>
                                                     </div>
                                                     {application.reviewNotes && (
-                                                        <p className="text-[11px] text-[#607087] pt-1 border-t border-[#DFE6ED]/60">
+                                                        <p className="border-t border-[#DFE6ED]/60 pt-1 text-[11px] text-[#607087]">
                                                             <strong className="text-[#17233A]">
                                                                 Catatan:
-                                                            </strong>{" "}
+                                                            </strong>{' '}
                                                             {
                                                                 application.reviewNotes
                                                             }
@@ -874,8 +874,8 @@ export default function EmployerTaskApplications({
                 MODAL 1: LIHAT PROFIL PEKERJA
             ======================================================== */}
             {profileTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-5 animate-in fade-in-50 zoom-in-95">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+                    <div className="w-full max-w-md animate-in space-y-5 rounded-2xl bg-white p-6 shadow-2xl fade-in-50 zoom-in-95">
                         <div className="flex items-center justify-between border-b border-[#DFE6ED] pb-3.5">
                             <h3 className="text-base font-bold text-[#17233A]">
                                 Profil Pekerja
@@ -883,7 +883,7 @@ export default function EmployerTaskApplications({
                             <button
                                 type="button"
                                 onClick={() => setProfileTarget(null)}
-                                className="rounded-lg p-1.5 text-[#607087] hover:bg-[#F7F9FB] transition"
+                                className="rounded-lg p-1.5 text-[#607087] transition hover:bg-[#F7F9FB]"
                             >
                                 <X className="size-5" />
                             </button>
@@ -904,7 +904,7 @@ export default function EmployerTaskApplications({
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-xs text-[#607087] mt-0.5">
+                                <p className="mt-0.5 text-xs text-[#607087]">
                                     {profileTarget.workerEmail}
                                 </p>
                                 {profileTarget.workerPhone && (
@@ -916,22 +916,22 @@ export default function EmployerTaskApplications({
                         </div>
 
                         {/* Metrik Pekerja */}
-                        <div className="grid grid-cols-2 gap-3 rounded-xl bg-[#F7F9FB] p-3.5 border border-[#DFE6ED]">
+                        <div className="grid grid-cols-2 gap-3 rounded-xl border border-[#DFE6ED] bg-[#F7F9FB] p-3.5">
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-[#93A2B5]">
+                                <p className="text-[10px] font-bold tracking-wider text-[#93A2B5] uppercase">
                                     Rating Platform
                                 </p>
-                                <p className="flex items-center gap-1 font-bold text-[#17233A] mt-0.5 text-sm">
+                                <p className="mt-0.5 flex items-center gap-1 text-sm font-bold text-[#17233A]">
                                     <Star className="size-4 fill-[#EAB308] text-[#EAB308]" />
-                                    <span>{profileTarget.rating ?? "5.0"}</span>
+                                    <span>{profileTarget.rating ?? '5.0'}</span>
                                 </p>
                             </div>
 
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-[#93A2B5]">
+                                <p className="text-[10px] font-bold tracking-wider text-[#93A2B5] uppercase">
                                     Tugas Diselesaikan
                                 </p>
-                                <p className="font-bold text-[#173765] mt-0.5 text-sm">
+                                <p className="mt-0.5 text-sm font-bold text-[#173765]">
                                     {profileTarget.completedTasks ?? 0} Tugas
                                 </p>
                             </div>
@@ -939,18 +939,18 @@ export default function EmployerTaskApplications({
 
                         {/* Keahlian */}
                         <div>
-                            <p className="text-xs font-semibold text-[#17233A] mb-1.5">
+                            <p className="mb-1.5 text-xs font-semibold text-[#17233A]">
                                 Keahlian & Kualifikasi:
                             </p>
                             <div className="flex flex-wrap gap-1.5">
                                 {(profileTarget.skills &&
                                 profileTarget.skills.length > 0
                                     ? profileTarget.skills
-                                    : ["Ketelitian", "Operasional", "Kerja Tim"]
+                                    : ['Ketelitian', 'Operasional', 'Kerja Tim']
                                 ).map((skill, idx) => (
                                     <span
                                         key={idx}
-                                        className="rounded-lg bg-[#F0F8FB] border border-[#D8F1F6] px-2.5 py-1 text-xs font-medium text-[#173765]"
+                                        className="rounded-lg border border-[#D8F1F6] bg-[#F0F8FB] px-2.5 py-1 text-xs font-medium text-[#173765]"
                                     >
                                         {skill}
                                     </span>
@@ -958,11 +958,11 @@ export default function EmployerTaskApplications({
                             </div>
                         </div>
 
-                        <div className="pt-3 border-t border-[#DFE6ED] flex justify-end">
+                        <div className="flex justify-end border-t border-[#DFE6ED] pt-3">
                             <button
                                 type="button"
                                 onClick={() => setProfileTarget(null)}
-                                className="rounded-xl bg-[#173765] px-4 py-2 text-xs font-bold text-white hover:bg-[#21477F] transition"
+                                className="rounded-xl bg-[#173765] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#21477F]"
                             >
                                 Tutup
                             </button>
@@ -975,8 +975,8 @@ export default function EmployerTaskApplications({
                 MODAL 2: TOLAK LAMARAN PEKERJA
             ======================================================== */}
             {rejectTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 animate-in fade-in-50 zoom-in-95">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+                    <div className="w-full max-w-md animate-in space-y-4 rounded-2xl bg-white p-6 shadow-2xl fade-in-50 zoom-in-95">
                         <div className="flex items-center justify-between border-b border-[#DFE6ED] pb-3">
                             <h3 className="text-base font-bold text-[#17233A]">
                                 Tolak Lamaran Pekerja
@@ -987,7 +987,7 @@ export default function EmployerTaskApplications({
                                     setRejectTarget(null);
                                     setRejectError(null);
                                 }}
-                                className="rounded-lg p-1.5 text-[#607087] hover:bg-[#F7F9FB] transition"
+                                className="rounded-lg p-1.5 text-[#607087] transition hover:bg-[#F7F9FB]"
                             >
                                 <X className="size-5" />
                             </button>
@@ -995,11 +995,11 @@ export default function EmployerTaskApplications({
 
                         <div>
                             <p className="text-xs text-[#607087]">
-                                Anda akan menolak lamaran dari{" "}
+                                Anda akan menolak lamaran dari{' '}
                                 <strong className="text-[#17233A]">
                                     {rejectTarget.workerName}
-                                </strong>{" "}
-                                untuk tugas{" "}
+                                </strong>{' '}
+                                untuk tugas{' '}
                                 <strong className="text-[#17233A]">
                                     {task.title}
                                 </strong>
@@ -1007,8 +1007,8 @@ export default function EmployerTaskApplications({
                             </p>
 
                             <div className="mt-3">
-                                <label className="block text-xs font-semibold text-[#17233A] mb-1">
-                                    Alasan Penolakan{" "}
+                                <label className="mb-1 block text-xs font-semibold text-[#17233A]">
+                                    Alasan Penolakan{' '}
                                     <span className="text-red-500">*</span>
                                 </label>
                                 <textarea
@@ -1029,7 +1029,7 @@ export default function EmployerTaskApplications({
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#DFE6ED]">
+                        <div className="flex items-center justify-end gap-2 border-t border-[#DFE6ED] pt-2">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -1048,8 +1048,8 @@ export default function EmployerTaskApplications({
                                 className="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50"
                             >
                                 {processingId !== null
-                                    ? "Menyimpan..."
-                                    : "Konfirmasi Tolak"}
+                                    ? 'Menyimpan...'
+                                    : 'Konfirmasi Tolak'}
                             </button>
                         </div>
                     </div>

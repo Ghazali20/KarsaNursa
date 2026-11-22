@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from "@inertiajs/react";
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     ArrowUpRight,
@@ -22,18 +22,18 @@ import {
     Users,
     WalletCards,
     X,
-} from "lucide-react";
-import React, { useState } from "react";
-import { toast } from "sonner";
+} from 'lucide-react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 
-import karsaNusaLogo from "@/assets/karsanusa-logo.png";
+import karsaNusaLogo from '@/assets/karsanusa-logo.png';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 // ==========================================
 // TIPE DATA DASHBOARD UMKM
@@ -132,18 +132,18 @@ function formatFirstName(name: string): string {
 
 function getInitials(name: string): string {
     const parts = name.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return "KN";
+    if (parts.length === 0) return 'KN';
     return parts
         .slice(0, 2)
         .map((n) => n.charAt(0))
-        .join("")
+        .join('')
         .toUpperCase();
 }
 
 function formatRupiah(value: number): string {
-    return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
         maximumFractionDigits: 0,
     }).format(value);
 }
@@ -152,12 +152,12 @@ function formatCompactRupiah(value: number): string {
     if (value >= 1_000_000_000) {
         const billions = (value / 1_000_000_000)
             .toFixed(2)
-            .replace(/\.00$/, "");
-        return `Rp ${billions.replace(".", ",")} M`;
+            .replace(/\.00$/, '');
+        return `Rp ${billions.replace('.', ',')} M`;
     }
     if (value >= 1_000_000) {
-        const millions = (value / 1_000_000).toFixed(2).replace(/\.00$/, "");
-        return `Rp ${millions.replace(".", ",")} jt`;
+        const millions = (value / 1_000_000).toFixed(2).replace(/\.00$/, '');
+        return `Rp ${millions.replace('.', ',')} jt`;
     }
     return formatRupiah(value);
 }
@@ -188,8 +188,8 @@ export default function EmployerDashboard({
     };
 
     const authUser = pageAuth?.auth?.user;
-    const userName = propUser?.name || authUser?.name || "Pemilik UMKM";
-    const userEmail = propUser?.email || authUser?.email || "";
+    const userName = propUser?.name || authUser?.name || 'Pemilik UMKM';
+    const userEmail = propUser?.email || authUser?.email || '';
     const firstName = formatFirstName(userName);
     const userInitials = getInitials(userName);
     const businessName =
@@ -197,7 +197,7 @@ export default function EmployerDashboard({
         authUser?.business?.name ||
         `${firstName} Official Store`;
     const isVerified =
-        propUser?.isVerified ?? authUser?.verification_status === "approved";
+        propUser?.isVerified ?? authUser?.verification_status === 'approved';
 
     // Metrik dari Backend
     const activeTasks = stats?.activeTasks ?? 0;
@@ -205,15 +205,15 @@ export default function EmployerDashboard({
     const completedThisMonth = stats?.completedThisMonth ?? 0;
     const completedChange = stats?.completedPercentageChange ?? 0;
     const monthlyExpenses = stats?.monthlyExpenses ?? 0;
-    const currentMonthName = stats?.currentMonthName ?? "Bulan Ini";
-    const lastMonthName = stats?.lastMonthName ?? "Bulan Lalu";
+    const currentMonthName = stats?.currentMonthName ?? 'Bulan Ini';
+    const lastMonthName = stats?.lastMonthName ?? 'Bulan Lalu';
     const expenseChange = stats?.expensePercentageChange ?? 0;
 
     // State Lokal UI
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [chartPeriod, setChartPeriod] = useState("6 Bulan");
+    const [chartPeriod, setChartPeriod] = useState('6 Bulan');
     const [applicantDecisions, setApplicantDecisions] = useState<
-        Record<number, "accepted" | "rejected">
+        Record<number, 'accepted' | 'rejected'>
     >({});
     const [processingId, setProcessingId] = useState<number | null>(null);
 
@@ -222,7 +222,7 @@ export default function EmployerDashboard({
         null,
     );
     const [rejectReason, setRejectReason] = useState(
-        "Kualifikasi belum sesuai dengan kebutuhan tugas saat ini.",
+        'Kualifikasi belum sesuai dengan kebutuhan tugas saat ini.',
     );
     const [rejectError, setRejectError] = useState<string | null>(null);
 
@@ -234,31 +234,31 @@ export default function EmployerDashboard({
         router.patch(
             `/employer/tasks/${applicant.taskId}/applications/${applicant.id}/decision`,
             {
-                decision: "accepted",
+                decision: 'accepted',
                 review_notes: null,
-                return_to: "inbox",
+                return_to: 'inbox',
             },
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     setApplicantDecisions((prev) => ({
                         ...prev,
-                        [applicant.id]: "accepted",
+                        [applicant.id]: 'accepted',
                     }));
                     toast.success(
                         `Pelamar ${applicant.name} berhasil diterima!`,
                         {
                             description:
-                                "Pemberitahuan telah diteruskan kepada pekerja.",
+                                'Pemberitahuan telah diteruskan kepada pekerja.',
                         },
                     );
                     router.reload({
                         only: [
-                            "stats",
-                            "recentApplicants",
-                            "taskDistribution",
-                            "ledgerTransactions",
-                            "recentTransactions",
+                            'stats',
+                            'recentApplicants',
+                            'taskDistribution',
+                            'ledgerTransactions',
+                            'recentTransactions',
                         ],
                     });
                 },
@@ -266,8 +266,8 @@ export default function EmployerDashboard({
                     const errorMsg =
                         errors.application ||
                         errors.review_notes ||
-                        "Gagal menerima pelamar. Silakan coba lagi.";
-                    toast.error("Gagal Memproses Lamaran", {
+                        'Gagal menerima pelamar. Silakan coba lagi.';
+                    toast.error('Gagal Memproses Lamaran', {
                         description: String(errorMsg),
                     });
                 },
@@ -283,7 +283,7 @@ export default function EmployerDashboard({
         if (!rejectTarget || processingId !== null) return;
 
         if (!rejectReason || rejectReason.trim().length < 5) {
-            setRejectError("Alasan penolakan minimal 5 karakter.");
+            setRejectError('Alasan penolakan minimal 5 karakter.');
             return;
         }
 
@@ -293,30 +293,30 @@ export default function EmployerDashboard({
         router.patch(
             `/employer/tasks/${rejectTarget.taskId}/applications/${rejectTarget.id}/decision`,
             {
-                decision: "rejected",
+                decision: 'rejected',
                 review_notes: rejectReason.trim(),
-                return_to: "inbox",
+                return_to: 'inbox',
             },
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     setApplicantDecisions((prev) => ({
                         ...prev,
-                        [rejectTarget.id]: "rejected",
+                        [rejectTarget.id]: 'rejected',
                     }));
                     toast.error(`Lamaran dari ${rejectTarget.name} ditolak.`, {
-                        description: "Status lamaran telah diperbarui.",
+                        description: 'Status lamaran telah diperbarui.',
                     });
                     setRejectTarget(null);
                     router.reload({
-                        only: ["stats", "recentApplicants", "taskDistribution"],
+                        only: ['stats', 'recentApplicants', 'taskDistribution'],
                     });
                 },
                 onError: (errors) => {
                     const errorMsg =
                         errors.application ||
                         errors.review_notes ||
-                        "Gagal menolak pelamar. Silakan coba lagi.";
+                        'Gagal menolak pelamar. Silakan coba lagi.';
                     setRejectError(String(errorMsg));
                 },
                 onFinish: () => {
@@ -329,7 +329,7 @@ export default function EmployerDashboard({
     // Data Chart 6 Bulan Terakhir dari Backend
     const chartItems = chartData?.items ?? [
         {
-            month: "Bulan Ini",
+            month: 'Bulan Ini',
             fullMonth: currentMonthName,
             amount: monthlyExpenses,
             active: true,
@@ -381,14 +381,14 @@ export default function EmployerDashboard({
 
                 <aside
                     className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-[#DFE6ED] bg-white transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
-                        mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+                        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
                     }`}
                 >
                     {/* Header Sidebar: Brand Logo */}
                     <div className="flex h-[72px] items-center justify-between border-b border-[#DFE6ED] px-6">
                         <Link
                             href="/employer/dashboard"
-                            className="flex items-center gap-2.5 cursor-pointer"
+                            className="flex cursor-pointer items-center gap-2.5"
                         >
                             <img
                                 src={karsaNusaLogo}
@@ -470,7 +470,7 @@ export default function EmployerDashboard({
                         </div>
 
                         {/* Tombol Kembali ke Beranda */}
-                        <div className="pt-4 border-t border-[#DFE6ED]">
+                        <div className="border-t border-[#DFE6ED] pt-4">
                             <Link
                                 href="/"
                                 className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-[#607087] transition-colors hover:bg-[#F7F9FB] hover:text-[#173765]"
@@ -485,7 +485,7 @@ export default function EmployerDashboard({
                 {/* ========================================================
                     KONTEN UTAMA (HEADER BAR + BODY)
                 ======================================================== */}
-                <div className="flex flex-1 flex-col min-w-0 overflow-y-auto">
+                <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
                     {/* Top Header Bar */}
                     <header className="sticky top-0 z-30 flex h-[72px] shrink-0 items-center justify-between border-b border-[#DFE6ED] bg-white px-4 sm:px-6 lg:px-8">
                         <div className="flex items-center gap-3 sm:gap-4">
@@ -502,7 +502,7 @@ export default function EmployerDashboard({
                                 <p className="text-[11px] font-medium text-[#93A2B5]">
                                     Dashboard UMKM
                                 </p>
-                                <h2 className="text-sm sm:text-base font-bold text-[#17233A]">
+                                <h2 className="text-sm font-bold text-[#17233A] sm:text-base">
                                     Kelola operasional usahamu
                                 </h2>
                             </div>
@@ -549,9 +549,9 @@ export default function EmployerDashboard({
                                 <DropdownMenuContent
                                     align="end"
                                     sideOffset={8}
-                                    className="w-56 border border-[#DFE6ED] bg-white p-1.5 shadow-lg rounded-xl"
+                                    className="w-56 rounded-xl border border-[#DFE6ED] bg-white p-1.5 shadow-lg"
                                 >
-                                    <div className="px-3 py-2 sm:hidden border-b border-[#DFE6ED] mb-1">
+                                    <div className="mb-1 border-b border-[#DFE6ED] px-3 py-2 sm:hidden">
                                         <p className="text-xs font-bold text-[#17233A]">
                                             {userName}
                                         </p>
@@ -601,7 +601,7 @@ export default function EmployerDashboard({
                     {/* ========================================================
                         KONTEN UTAMA (DASHBOARD OVERVIEW)
                     ======================================================== */}
-                    <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 space-y-6 max-w-7xl w-full mx-auto">
+                    <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
                         {/* HERO GREETING SECTION */}
                         <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                             <div>
@@ -622,17 +622,17 @@ export default function EmployerDashboard({
                                 </h1>
 
                                 <p className="mt-1 text-sm text-[#607087]">
-                                    Berikut ringkasan operasional{" "}
+                                    Berikut ringkasan operasional{' '}
                                     <strong className="font-semibold text-[#17233A]">
                                         {businessName}
-                                    </strong>{" "}
+                                    </strong>{' '}
                                     hari ini.
                                 </p>
                             </div>
 
                             <Link
                                 href="/employer/tasks/create"
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#173765] px-5 py-2.5 text-sm font-bold text-white shadow-xs transition hover:bg-[#21477F] shrink-0"
+                                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#173765] px-5 py-2.5 text-sm font-bold text-white shadow-xs transition hover:bg-[#21477F]"
                             >
                                 <ClipboardPlus className="size-4" />
                                 <span>Buat Tugas Baru +</span>
@@ -657,13 +657,13 @@ export default function EmployerDashboard({
                                 <p className="mt-2 text-3xl font-extrabold text-[#17233A]">
                                     {activeTasks}
                                 </p>
-                                <p className="mt-3 text-xs text-[#93A2B5] flex items-center gap-1">
+                                <p className="mt-3 flex items-center gap-1 text-xs text-[#93A2B5]">
                                     <span
-                                        className={`size-1.5 rounded-full ${activeTasks > 0 ? "bg-[#55BDD3]" : "bg-[#DFE6ED]"}`}
+                                        className={`size-1.5 rounded-full ${activeTasks > 0 ? 'bg-[#55BDD3]' : 'bg-[#DFE6ED]'}`}
                                     />
                                     {activeTasks > 0
-                                        ? "Sedang menerima pekerja"
-                                        : "Belum ada tugas aktif"}
+                                        ? 'Sedang menerima pekerja'
+                                        : 'Belum ada tugas aktif'}
                                 </p>
                             </div>
 
@@ -680,13 +680,13 @@ export default function EmployerDashboard({
                                 <p className="mt-2 text-3xl font-extrabold text-[#17233A]">
                                     {pendingApplicants}
                                 </p>
-                                <p className="mt-3 text-xs font-semibold text-[#D98A48] flex items-center gap-1">
+                                <p className="mt-3 flex items-center gap-1 text-xs font-semibold text-[#D98A48]">
                                     <span
-                                        className={`size-1.5 rounded-full ${pendingApplicants > 0 ? "bg-[#D98A48]" : "bg-[#DFE6ED]"}`}
+                                        className={`size-1.5 rounded-full ${pendingApplicants > 0 ? 'bg-[#D98A48]' : 'bg-[#DFE6ED]'}`}
                                     />
                                     {pendingApplicants > 0
-                                        ? "Perlu tinjauan seleksi"
-                                        : "Semua pelamar tertinjau"}
+                                        ? 'Perlu tinjauan seleksi'
+                                        : 'Semua pelamar tertinjau'}
                                 </p>
                             </div>
 
@@ -722,7 +722,7 @@ export default function EmployerDashboard({
 
                             {/* Kartu 4: Biaya Tenaga Kerja (Dark Card #0D2445) */}
                             <div className="relative overflow-hidden rounded-2xl bg-[#0D2445] p-5 text-white shadow-md">
-                                <div className="absolute -top-12 -right-12 size-32 rounded-full bg-[#21477F]/30 blur-xl pointer-events-none" />
+                                <div className="pointer-events-none absolute -top-12 -right-12 size-32 rounded-full bg-[#21477F]/30 blur-xl" />
 
                                 <div className="flex items-center justify-between">
                                     <p className="text-xs font-semibold text-white/80">
@@ -732,10 +732,10 @@ export default function EmployerDashboard({
                                         <WalletCards className="size-4.5" />
                                     </div>
                                 </div>
-                                <p className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                                <p className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
                                     {formatCompactRupiah(monthlyExpenses)}
                                 </p>
-                                <p className="mt-3 text-xs text-white/70 flex items-center gap-1.5">
+                                <p className="mt-3 flex items-center gap-1.5 text-xs text-white/70">
                                     <Clock className="size-3.5 text-white/60" />
                                     Periode {currentMonthName}
                                 </p>
@@ -745,7 +745,7 @@ export default function EmployerDashboard({
                         {/* SECTION GRAFIK & STATISTIK */}
                         <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             {/* Grafik Pengeluaran Tenaga Kerja (6 Bulan Terakhir) */}
-                            <div className="lg:col-span-2 rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-xs">
+                            <div className="rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-xs lg:col-span-2">
                                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                                     <div>
                                         <h3 className="text-base font-bold text-[#17233A]">
@@ -763,13 +763,13 @@ export default function EmployerDashboard({
                                             onChange={(e) =>
                                                 setChartPeriod(e.target.value)
                                             }
-                                            className="appearance-none rounded-lg border border-[#DFE6ED] bg-white px-3 py-1.5 pr-8 text-xs font-semibold text-[#17233A] shadow-xs cursor-pointer hover:bg-[#F7F9FB] focus:outline-none"
+                                            className="cursor-pointer appearance-none rounded-lg border border-[#DFE6ED] bg-white px-3 py-1.5 pr-8 text-xs font-semibold text-[#17233A] shadow-xs hover:bg-[#F7F9FB] focus:outline-none"
                                         >
                                             <option value="6 Bulan">
                                                 6 Bulan Terakhir
                                             </option>
                                         </select>
-                                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#607087]" />
+                                        <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2 text-[#607087]" />
                                     </div>
                                 </div>
 
@@ -797,30 +797,30 @@ export default function EmployerDashboard({
                                 </div>
 
                                 <div className="mt-6 pt-2">
-                                    <div className="flex h-52 items-end justify-between gap-2 sm:gap-6 px-2 sm:px-4">
+                                    <div className="flex h-52 items-end justify-between gap-2 px-2 sm:gap-6 sm:px-4">
                                         {chartItems.map((item) => (
                                             <div
                                                 key={item.month}
-                                                className="group relative flex flex-1 flex-col items-center h-full justify-end"
+                                                className="group relative flex h-full flex-1 flex-col items-center justify-end"
                                             >
                                                 {item.active && (
                                                     <div className="mb-2 flex flex-col items-center">
-                                                        <div className="rounded-md bg-[#0D2445] px-2.5 py-1 text-[11px] font-bold text-white shadow-md whitespace-nowrap">
+                                                        <div className="rounded-md bg-[#0D2445] px-2.5 py-1 text-[11px] font-bold whitespace-nowrap text-white shadow-md">
                                                             {item.label}
                                                         </div>
-                                                        <div className="size-1.5 -mt-0.5 rotate-45 bg-[#0D2445]" />
+                                                        <div className="-mt-0.5 size-1.5 rotate-45 bg-[#0D2445]" />
                                                     </div>
                                                 )}
 
-                                                <div className="w-full max-w-[42px] bg-[#F7F9FB] rounded-t-lg h-full flex items-end">
+                                                <div className="flex h-full w-full max-w-[42px] items-end rounded-t-lg bg-[#F7F9FB]">
                                                     <div
                                                         style={{
                                                             height: `${item.heightPercent}%`,
                                                         }}
                                                         className={`w-full rounded-t-lg transition-all duration-300 ${
                                                             item.active
-                                                                ? "bg-[#173765]"
-                                                                : "bg-[#BFE7EF] hover:bg-[#7DD3E3]"
+                                                                ? 'bg-[#173765]'
+                                                                : 'bg-[#BFE7EF] hover:bg-[#7DD3E3]'
                                                         }`}
                                                     />
                                                 </div>
@@ -828,8 +828,8 @@ export default function EmployerDashboard({
                                                 <span
                                                     className={`mt-2 text-xs font-semibold ${
                                                         item.active
-                                                            ? "text-[#173765] font-bold"
-                                                            : "text-[#93A2B5]"
+                                                            ? 'font-bold text-[#173765]'
+                                                            : 'text-[#93A2B5]'
                                                     }`}
                                                 >
                                                     {item.month}
@@ -841,7 +841,7 @@ export default function EmployerDashboard({
                             </div>
 
                             {/* Status Tugas (Donut Chart) */}
-                            <div className="rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-xs flex flex-col justify-between">
+                            <div className="flex flex-col justify-between rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-xs">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <h3 className="text-base font-bold text-[#17233A]">
@@ -947,24 +947,24 @@ export default function EmployerDashboard({
                                             <span className="text-2xl font-extrabold text-[#17233A]">
                                                 {donutTotal}
                                             </span>
-                                            <p className="text-[10px] font-bold text-[#93A2B5] tracking-wider uppercase">
+                                            <p className="text-[10px] font-bold tracking-wider text-[#93A2B5] uppercase">
                                                 Total tugas
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="space-y-2.5 pt-2 border-t border-[#DFE6ED]">
+                                <div className="space-y-2.5 border-t border-[#DFE6ED] pt-2">
                                     <div className="flex items-center justify-between text-xs">
                                         <div className="flex items-center gap-2">
                                             <span className="size-2 rounded-full bg-[#173765]" />
-                                            <span className="text-[#607087] font-medium">
+                                            <span className="font-medium text-[#607087]">
                                                 Selesai
                                             </span>
                                         </div>
                                         <span className="font-bold text-[#17233A]">
                                             {taskDistribution?.completed
-                                                .count ?? 0}{" "}
+                                                .count ?? 0}{' '}
                                             <span className="font-normal text-[#93A2B5]">
                                                 ({pCompleted}%)
                                             </span>
@@ -974,13 +974,13 @@ export default function EmployerDashboard({
                                     <div className="flex items-center justify-between text-xs">
                                         <div className="flex items-center gap-2">
                                             <span className="size-2 rounded-full bg-[#7DD3E3]" />
-                                            <span className="text-[#607087] font-medium">
+                                            <span className="font-medium text-[#607087]">
                                                 Berlangsung
                                             </span>
                                         </div>
                                         <span className="font-bold text-[#17233A]">
                                             {taskDistribution?.inProgress
-                                                .count ?? 0}{" "}
+                                                .count ?? 0}{' '}
                                             <span className="font-normal text-[#93A2B5]">
                                                 ({pInProgress}%)
                                             </span>
@@ -990,13 +990,13 @@ export default function EmployerDashboard({
                                     <div className="flex items-center justify-between text-xs">
                                         <div className="flex items-center gap-2">
                                             <span className="size-2 rounded-full bg-[#D98A48]" />
-                                            <span className="text-[#607087] font-medium">
+                                            <span className="font-medium text-[#607087]">
                                                 Menunggu pekerja
                                             </span>
                                         </div>
                                         <span className="font-bold text-[#17233A]">
                                             {taskDistribution?.waiting.count ??
-                                                0}{" "}
+                                                0}{' '}
                                             <span className="font-normal text-[#93A2B5]">
                                                 ({pWaiting}%)
                                             </span>
@@ -1006,13 +1006,13 @@ export default function EmployerDashboard({
                                     <div className="flex items-center justify-between text-xs">
                                         <div className="flex items-center gap-2">
                                             <span className="size-2 rounded-full bg-[#DFE6ED]" />
-                                            <span className="text-[#607087] font-medium">
+                                            <span className="font-medium text-[#607087]">
                                                 Dibatalkan
                                             </span>
                                         </div>
                                         <span className="font-bold text-[#17233A]">
                                             {taskDistribution?.cancelled
-                                                .count ?? 0}{" "}
+                                                .count ?? 0}{' '}
                                             <span className="font-normal text-[#93A2B5]">
                                                 ({pCancelled}%)
                                             </span>
@@ -1037,7 +1037,7 @@ export default function EmployerDashboard({
 
                                 <Link
                                     href="/employer/applications"
-                                    className="text-xs font-bold text-[#173765] hover:underline flex items-center gap-1"
+                                    className="flex items-center gap-1 text-xs font-bold text-[#173765] hover:underline"
                                 >
                                     <span>Lihat semua pelamar</span>
                                     <ArrowRight className="size-3.5" />
@@ -1047,7 +1047,7 @@ export default function EmployerDashboard({
                             <div className="mt-5 space-y-3">
                                 {recentApplicants.length === 0 ? (
                                     <div className="rounded-xl border border-dashed border-[#DFE6ED] p-8 text-center">
-                                        <div className="flex size-11 items-center justify-center rounded-xl bg-[#F0F8FB] text-[#173765] mx-auto">
+                                        <div className="mx-auto flex size-11 items-center justify-center rounded-xl bg-[#F0F8FB] text-[#173765]">
                                             <Users className="size-5" />
                                         </div>
                                         <p className="mt-3 text-sm font-bold text-[#17233A]">
@@ -1068,9 +1068,9 @@ export default function EmployerDashboard({
                                         return (
                                             <div
                                                 key={applicant.id}
-                                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-[#DFE6ED] p-4 transition hover:border-[#BFE7EF] bg-[#FFFFFF]"
+                                                className="flex flex-col justify-between gap-4 rounded-xl border border-[#DFE6ED] bg-[#FFFFFF] p-4 transition hover:border-[#BFE7EF] sm:flex-row sm:items-center"
                                             >
-                                                <div className="flex items-center gap-3.5 min-w-[240px]">
+                                                <div className="flex min-w-[240px] items-center gap-3.5">
                                                     <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#D8F1F6] text-sm font-bold text-[#173765]">
                                                         {applicant.initials}
                                                     </div>
@@ -1086,7 +1086,7 @@ export default function EmployerDashboard({
                                                         </div>
 
                                                         <div className="mt-0.5 flex items-center gap-2 text-xs text-[#607087]">
-                                                            <span className="flex items-center gap-1 text-[#D98A48] font-semibold">
+                                                            <span className="flex items-center gap-1 font-semibold text-[#D98A48]">
                                                                 <Star className="size-3 fill-[#D98A48] text-[#D98A48]" />
                                                                 {
                                                                     applicant.rating
@@ -1098,7 +1098,7 @@ export default function EmployerDashboard({
                                                             <span>
                                                                 {
                                                                     applicant.completedTasks
-                                                                }{" "}
+                                                                }{' '}
                                                                 tugas selesai
                                                             </span>
                                                         </div>
@@ -1106,28 +1106,28 @@ export default function EmployerDashboard({
                                                 </div>
 
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="text-[10px] font-bold tracking-wider uppercase text-[#93A2B5]">
+                                                    <p className="text-[10px] font-bold tracking-wider text-[#93A2B5] uppercase">
                                                         MELAMAR UNTUK
                                                     </p>
-                                                    <p className="truncate text-xs sm:text-sm font-semibold text-[#17233A] mt-0.5">
+                                                    <p className="mt-0.5 truncate text-xs font-semibold text-[#17233A] sm:text-sm">
                                                         {applicant.taskTitle}
                                                     </p>
                                                 </div>
 
-                                                <div className="flex items-center gap-2 shrink-0">
+                                                <div className="flex shrink-0 items-center gap-2">
                                                     {decision ? (
                                                         <span
                                                             className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
                                                                 decision ===
-                                                                "accepted"
-                                                                    ? "bg-[#D8F1F6] text-[#173765]"
-                                                                    : "bg-red-50 text-[#EF4444]"
+                                                                'accepted'
+                                                                    ? 'bg-[#D8F1F6] text-[#173765]'
+                                                                    : 'bg-red-50 text-[#EF4444]'
                                                             }`}
                                                         >
                                                             {decision ===
-                                                            "accepted"
-                                                                ? "Disetujui ✓"
-                                                                : "Ditolak ✕"}
+                                                            'accepted'
+                                                                ? 'Disetujui ✓'
+                                                                : 'Ditolak ✕'}
                                                         </span>
                                                     ) : (
                                                         <>
@@ -1144,7 +1144,7 @@ export default function EmployerDashboard({
                                                                         null,
                                                                     );
                                                                 }}
-                                                                className="rounded-lg px-3.5 py-1.5 text-xs font-semibold text-[#607087] hover:text-[#EF4444] hover:bg-red-50 transition cursor-pointer disabled:opacity-50"
+                                                                className="cursor-pointer rounded-lg px-3.5 py-1.5 text-xs font-semibold text-[#607087] transition hover:bg-red-50 hover:text-[#EF4444] disabled:opacity-50"
                                                             >
                                                                 Tolak
                                                             </button>
@@ -1159,11 +1159,11 @@ export default function EmployerDashboard({
                                                                         applicant,
                                                                     )
                                                                 }
-                                                                className="rounded-lg bg-[#173765] px-4 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-[#21477F] cursor-pointer disabled:opacity-50"
+                                                                className="cursor-pointer rounded-lg bg-[#173765] px-4 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-[#21477F] disabled:opacity-50"
                                                             >
                                                                 {isProcessing
-                                                                    ? "Memproses..."
-                                                                    : "Terima"}
+                                                                    ? 'Memproses...'
+                                                                    : 'Terima'}
                                                             </button>
                                                         </>
                                                     )}
@@ -1178,9 +1178,9 @@ export default function EmployerDashboard({
                         {/* SECTION BUKU PENGELUARAN OTOMATIS (RINGKAS) */}
                         <section
                             id="buku-pengeluaran"
-                            className="rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-xs scroll-mt-24"
+                            className="scroll-mt-24 rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-xs"
                         >
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                                 <div>
                                     <h3 className="text-base font-bold text-[#17233A]">
                                         Buku pengeluaran otomatis
@@ -1193,7 +1193,7 @@ export default function EmployerDashboard({
 
                                 <Link
                                     href="/employer/payments"
-                                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#DFE6ED] px-3.5 py-1.5 text-xs font-bold text-[#173765] transition hover:bg-[#F7F9FB] w-fit cursor-pointer"
+                                    className="inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-[#DFE6ED] px-3.5 py-1.5 text-xs font-bold text-[#173765] transition hover:bg-[#F7F9FB]"
                                 >
                                     <span>Lihat Buku Lengkap</span>
                                     <ArrowRight className="size-3.5" />
@@ -1203,7 +1203,7 @@ export default function EmployerDashboard({
                             <div className="mt-5 overflow-x-auto">
                                 {recentTransactions.length === 0 ? (
                                     <div className="rounded-xl border border-dashed border-[#DFE6ED] p-8 text-center">
-                                        <div className="flex size-11 items-center justify-center rounded-xl bg-[#F0F8FB] text-[#173765] mx-auto">
+                                        <div className="mx-auto flex size-11 items-center justify-center rounded-xl bg-[#F0F8FB] text-[#173765]">
                                             <Receipt className="size-5" />
                                         </div>
                                         <p className="mt-3 text-sm font-bold text-[#17233A]">
@@ -1215,25 +1215,25 @@ export default function EmployerDashboard({
                                         </p>
                                     </div>
                                 ) : (
-                                    <table className="w-full text-left border-collapse">
+                                    <table className="w-full border-collapse text-left">
                                         <thead>
                                             <tr className="border-b border-[#DFE6ED] bg-[#F7F9FB] text-[11px] font-bold tracking-wider text-[#93A2B5] uppercase">
-                                                <th className="py-3 px-4 rounded-l-lg">
+                                                <th className="rounded-l-lg px-4 py-3">
                                                     ID & TUGAS
                                                 </th>
-                                                <th className="py-3 px-4">
+                                                <th className="px-4 py-3">
                                                     PEKERJA
                                                 </th>
-                                                <th className="py-3 px-4">
+                                                <th className="px-4 py-3">
                                                     TANGGAL
                                                 </th>
-                                                <th className="py-3 px-4">
+                                                <th className="px-4 py-3">
                                                     JAM KERJA
                                                 </th>
-                                                <th className="py-3 px-4">
+                                                <th className="px-4 py-3">
                                                     UPAH
                                                 </th>
-                                                <th className="py-3 px-4 rounded-r-lg">
+                                                <th className="rounded-r-lg px-4 py-3">
                                                     STATUS
                                                 </th>
                                             </tr>
@@ -1243,10 +1243,10 @@ export default function EmployerDashboard({
                                             {recentTransactions.map((row) => (
                                                 <tr
                                                     key={row.id}
-                                                    className="hover:bg-[#F7F9FB]/60 transition-colors"
+                                                    className="transition-colors hover:bg-[#F7F9FB]/60"
                                                 >
-                                                    <td className="py-3.5 px-4">
-                                                        <span className="font-mono text-[10px] text-[#93A2B5] block">
+                                                    <td className="px-4 py-3.5">
+                                                        <span className="block font-mono text-[10px] text-[#93A2B5]">
                                                             {row.code}
                                                         </span>
                                                         <span className="font-bold text-[#17233A]">
@@ -1254,7 +1254,7 @@ export default function EmployerDashboard({
                                                         </span>
                                                     </td>
 
-                                                    <td className="py-3.5 px-4">
+                                                    <td className="px-4 py-3.5">
                                                         <div className="flex items-center gap-2">
                                                             <div className="flex size-7 items-center justify-center rounded-full bg-[#D8F1F6] text-[10px] font-bold text-[#173765]">
                                                                 {
@@ -1267,19 +1267,19 @@ export default function EmployerDashboard({
                                                         </div>
                                                     </td>
 
-                                                    <td className="py-3.5 px-4 text-[#607087]">
+                                                    <td className="px-4 py-3.5 text-[#607087]">
                                                         {row.date}
                                                     </td>
 
-                                                    <td className="py-3.5 px-4 text-[#607087]">
+                                                    <td className="px-4 py-3.5 text-[#607087]">
                                                         {row.hours}
                                                     </td>
 
-                                                    <td className="py-3.5 px-4 font-bold text-[#17233A]">
+                                                    <td className="px-4 py-3.5 font-bold text-[#17233A]">
                                                         {formatRupiah(row.wage)}
                                                     </td>
 
-                                                    <td className="py-3.5 px-4">
+                                                    <td className="px-4 py-3.5">
                                                         <span className="inline-flex items-center gap-1 rounded-full bg-[#D8F1F6] px-2.5 py-1 text-xs font-bold text-[#173765]">
                                                             <CheckCircle2 className="size-3 text-[#173765]" />
                                                             {row.status}
@@ -1298,8 +1298,8 @@ export default function EmployerDashboard({
 
             {/* MODAL PENOLAKAN PELAMAR */}
             {rejectTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+                    <div className="w-full max-w-md space-y-4 rounded-2xl bg-white p-6 shadow-xl">
                         <div className="flex items-center justify-between border-b border-[#DFE6ED] pb-3">
                             <h3 className="text-base font-bold text-[#17233A]">
                                 Tolak Lamaran Pekerja
@@ -1318,11 +1318,11 @@ export default function EmployerDashboard({
 
                         <div>
                             <p className="text-xs text-[#607087]">
-                                Anda akan menolak lamaran dari{" "}
+                                Anda akan menolak lamaran dari{' '}
                                 <strong className="text-[#17233A]">
                                     {rejectTarget.name}
-                                </strong>{" "}
-                                untuk tugas{" "}
+                                </strong>{' '}
+                                untuk tugas{' '}
                                 <strong className="text-[#17233A]">
                                     {rejectTarget.taskTitle}
                                 </strong>
@@ -1330,8 +1330,8 @@ export default function EmployerDashboard({
                             </p>
 
                             <div className="mt-3">
-                                <label className="block text-xs font-semibold text-[#17233A] mb-1">
-                                    Alasan Penolakan{" "}
+                                <label className="mb-1 block text-xs font-semibold text-[#17233A]">
+                                    Alasan Penolakan{' '}
                                     <span className="text-red-500">*</span>
                                 </label>
                                 <textarea
@@ -1352,7 +1352,7 @@ export default function EmployerDashboard({
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#DFE6ED]">
+                        <div className="flex items-center justify-end gap-2 border-t border-[#DFE6ED] pt-2">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -1371,8 +1371,8 @@ export default function EmployerDashboard({
                                 className="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50"
                             >
                                 {processingId !== null
-                                    ? "Menyimpan..."
-                                    : "Konfirmasi Tolak"}
+                                    ? 'Menyimpan...'
+                                    : 'Konfirmasi Tolak'}
                             </button>
                         </div>
                     </div>
