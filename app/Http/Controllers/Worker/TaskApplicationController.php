@@ -16,6 +16,7 @@ use Inertia\Response;
 
 class TaskApplicationController extends Controller
 {
+
     public function index(Request $request): Response
     {
         $worker = $request->user();
@@ -35,32 +36,51 @@ class TaskApplicationController extends Controller
             ->get()
             ->map(fn (TaskApplication $application): array => [
                 'id' => $application->id,
+
+                'taskId' => $application->task->id,
                 'taskTitle' => $application->task->title,
                 'businessName' => $application->task->business->name,
+
+                'locationAddress' => $application->task->location_address,
+                'startsAt' => $application->task->starts_at
+                    ?->format('d/m/Y H:i'),
+                'endsAt' => $application->task->ends_at
+                    ?->format('d/m/Y H:i'),
+
                 'wageAmount' => $application->payment->amount
                     ?? (int) $application->task->wage_amount,
+
                 'paymentStatus' => $application->payment?->status,
                 'paidAt' => $application->payment?->paid_at
                     ?->format('d/m/Y H:i'),
+
                 'status' => $application->status,
+
                 'appliedAt' => $application->created_at
                     ?->format('d/m/Y H:i'),
-                'reviewNotes' => $application->review_notes ?? null,
+
+                'reviewNotes' => $application->review_notes,
                 'reviewedAt' => $application->reviewed_at
-                    ? Carbon::parse($application->reviewed_at)->format('d/m/Y H:i')
-                    : null,
+                    ?->format('d/m/Y H:i'),
+
                 'checkedInAt' => $application->checked_in_at
                     ?->format('d/m/Y H:i'),
+
                 'checkedInIso' => $application->checked_in_at
                     ?->toIso8601String(),
+
                 'checkedOutAt' => $application->checked_out_at
                     ?->format('d/m/Y H:i'),
+
                 'checkedOutIso' => $application->checked_out_at
                     ?->toIso8601String(),
+
                 'proofPhotoUrl' => $application->proof_photo_path
                     ? Storage::url($application->proof_photo_path)
                     : null,
+
                 'activityNotes' => $application->activity_notes,
+
                 'proofSubmittedAt' => $application->proof_submitted_at
                     ?->format('d/m/Y H:i'),
             ])
@@ -71,6 +91,7 @@ class TaskApplicationController extends Controller
             'applications' => $applications,
         ]);
     }
+
 
     public function store(
         Request $request,
