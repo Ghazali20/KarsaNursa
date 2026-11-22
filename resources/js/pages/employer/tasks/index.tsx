@@ -1,16 +1,12 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    ArrowRight,
     Bell,
     Briefcase,
-    Calendar,
     ChevronDown,
     ChevronRight,
     ClipboardPlus,
     Clock,
-    FileText,
     House,
-    Info,
     LayoutGrid,
     LogOut,
     MapPin,
@@ -18,7 +14,6 @@ import {
     Pencil,
     Send,
     ShieldAlert,
-    ShieldCheck,
     UserRound,
     Users,
     WalletCards,
@@ -162,7 +157,7 @@ function getTaskBadge(statusKey?: string, statusLabel?: string) {
 // KOMPONEN UTAMA KELOLA TUGAS
 // ==========================================
 
-export default function EmployerTasksIndex({ tasks = [] }: Props) {
+export default function EmployerTasksIndex({ tasks }: Props) {
     const pageProps = usePage().props as unknown as {
         auth?: {
             user?: {

@@ -1,11 +1,8 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import {
     ArrowRight,
-    Calendar,
     ChevronDown,
-    Clock,
     FileText,
-    Info,
     ShieldCheck,
     X,
 } from 'lucide-react';

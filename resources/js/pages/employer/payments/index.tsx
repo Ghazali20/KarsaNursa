@@ -1,19 +1,15 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    ArrowRight,
     Bell,
     Briefcase,
-    Calendar,
     ChevronDown,
     ClipboardPlus,
-    Clock,
     Download,
     House,
     LayoutGrid,
     LogOut,
     Menu,
     Receipt,
-    ShieldCheck,
     UserRound,
     Users,
     WalletCards,
@@ -103,8 +99,8 @@ function formatRupiah(value: number): string {
 
 export default function EmployerPaymentsIndex({
     stats,
-    availablePeriods = [],
-    transactions = [],
+    availablePeriods,
+    transactions,
 }: EmployerPaymentsProps) {
     const pageProps = usePage().props as unknown as {
         auth?: {

@@ -189,7 +189,6 @@ export default function EmployerDashboard({
 
     const authUser = pageAuth?.auth?.user;
     const userName = propUser?.name || authUser?.name || 'Pemilik UMKM';
-    const userEmail = propUser?.email || authUser?.email || '';
     const firstName = formatFirstName(userName);
     const userInitials = getInitials(userName);
     const businessName =
@@ -206,7 +205,6 @@ export default function EmployerDashboard({
     const completedChange = stats?.completedPercentageChange ?? 0;
     const monthlyExpenses = stats?.monthlyExpenses ?? 0;
     const currentMonthName = stats?.currentMonthName ?? 'Bulan Ini';
-    const lastMonthName = stats?.lastMonthName ?? 'Bulan Lalu';
     const expenseChange = stats?.expensePercentageChange ?? 0;
 
     // State Lokal UI

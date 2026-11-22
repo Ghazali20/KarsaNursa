@@ -11,11 +11,8 @@ import {
     LayoutGrid,
     LogOut,
     Menu,
-    ShieldAlert,
     ShieldCheck,
     Star,
-    UserCheck,
-    UserRound,
     Users,
     WalletCards,
     X,
@@ -148,7 +145,7 @@ function getTaskBadge(statusKey?: string) {
 
 export default function EmployerTaskApplications({
     task,
-    applications = [],
+    applications,
 }: EmployerTaskApplicationsProps) {
     const pageProps = usePage().props as unknown as {
         auth?: {

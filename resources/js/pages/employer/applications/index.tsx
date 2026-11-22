@@ -1,10 +1,8 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    ArrowRight,
     Bell,
     Briefcase,
     Check,
-    CheckCircle2,
     ChevronDown,
     ClipboardPlus,
     Clock,
@@ -12,13 +10,10 @@ import {
     LayoutGrid,
     LogOut,
     Mail,
-    MapPin,
     Menu,
     Phone,
-    ShieldAlert,
     ShieldCheck,
     Star,
-    UserCheck,
     UserRound,
     Users,
     WalletCards,
@@ -114,7 +109,7 @@ function formatRupiah(value: number): string {
 
 export default function EmployerApplicationsIndex({
     stats,
-    applications = [],
+    applications,
 }: Props) {
     const pageProps = usePage().props as unknown as {
         auth?: {

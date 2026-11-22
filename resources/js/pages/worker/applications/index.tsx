@@ -3,11 +3,9 @@ import {
     BriefcaseBusiness,
     CalendarDays,
     CheckCircle2,
-    Clock3,
     MapPin,
     ShieldCheck,
     Upload,
-    WalletCards,
     ImagePlus,
     LoaderCircle,
 } from 'lucide-react';
