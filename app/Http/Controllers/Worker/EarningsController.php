@@ -34,20 +34,20 @@ class EarningsController extends Controller
 
         $availableEarnings = $applications
             ->filter(fn (TaskApplication $app): bool => $app->payment?->status === 'paid')
-            ->sum(fn (TaskApplication $app): int => (int) ($app->payment?->amount ?? $app->task->wage_amount ?? 0));
+            ->sum(fn (TaskApplication $app): int => (int) ($app->payment->amount ?? $app->task->wage_amount ?? 0));
 
         $monthlyEarnings = $applications
             ->filter(function (TaskApplication $app) use ($now): bool {
                 if ($app->payment?->status !== 'paid') {
                     return false;
                 }
-                $paidDate = $app->payment?->paid_at ?? $app->updated_at;
+                $paidDate = $app->payment->paid_at ?? $app->updated_at;
 
                 return $paidDate !== null
                     && $paidDate->year === $now->year
                     && $paidDate->month === $now->month;
             })
-            ->sum(fn (TaskApplication $app): int => (int) ($app->payment?->amount ?? $app->task->wage_amount ?? 0));
+            ->sum(fn (TaskApplication $app): int => (int) ($app->payment->amount ?? $app->task->wage_amount ?? 0));
 
         $totalMinutes = $applications->sum(function (TaskApplication $app): int {
             if ($app->checked_in_at !== null && $app->checked_out_at !== null) {
@@ -75,7 +75,7 @@ class EarningsController extends Controller
                 ? 'Disetujui'
                 : ($isSubmitted ? 'Diproses' : 'Berjalan');
 
-            $dateRef = $app->payment?->paid_at
+            $dateRef = $app->payment->paid_at
                 ?? $app->proof_submitted_at
                 ?? $app->updated_at;
 
@@ -96,7 +96,7 @@ class EarningsController extends Controller
                 'businessName' => $app->task->business->name ?? 'UMKM Mitra',
                 'dateLabel' => $dateRef?->translatedFormat('d M Y') ?? '-',
                 'hoursLabel' => $hoursFormatted,
-                'wageAmount' => (int) ($app->payment?->amount ?? $app->task->wage_amount ?? 0),
+                'wageAmount' => (int) ($app->payment->amount ?? $app->task->wage_amount ?? 0),
                 'statusKey' => $statusKey,
                 'statusLabel' => $statusText,
             ];

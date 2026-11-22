@@ -59,6 +59,11 @@ class TaskApplicationController extends Controller
                     ->count();
 
                 $skills = $profile?->skills;
+
+                if (is_string($skills)) {
+                    $skills = json_decode($skills, true);
+                }
+
                 if (! is_array($skills) || empty($skills)) {
                     $skills = ['Ketelitian', 'Operasional', 'Kerja Tim'];
                 }
@@ -66,15 +71,15 @@ class TaskApplicationController extends Controller
                 return [
                     'id' => $application->id,
                     'status' => $this->statusValue($application->status),
-                    'workerName' => $worker?->name ?? 'Pekerja tidak tersedia',
-                    'workerEmail' => $worker?->email ?? '-',
-                    'workerPhone' => $worker?->phone ?? '-',
+                    'workerName' => $worker->name ?? 'Pekerja tidak tersedia',
+                    'workerEmail' => $worker->email ?? '-',
+                    'workerPhone' => $worker->phone ?? '-',
                     'isVerified' => $worker?->verification_status === 'approved',
                     'rating' => $completed > 0 ? '4.9' : '5.0',
                     'completedTasks' => $completed,
                     'skills' => array_values($skills),
                     'appliedAt' => $application->created_at?->format('d/m/Y H:i'),
-                    'appliedAtHuman' => $application->created_at ? 'Diajukan ' . $application->created_at->diffForHumans() : 'Baru saja',
+                    'appliedAtHuman' => $application->created_at ? 'Diajukan '.$application->created_at->diffForHumans() : 'Baru saja',
                     'reviewNotes' => $hasReviewNotes ? $application->review_notes : null,
                     'reviewedAt' => $application->reviewed_at
                         ? Carbon::parse($application->reviewed_at)->format('d/m/Y H:i')
@@ -260,7 +265,7 @@ class TaskApplicationController extends Controller
 
             if ($validated['decision'] === 'accepted') {
 
-                if (!in_array($this->statusValue($lockedTask->status), ['published', 'in_progress'], true)) {
+                if (! in_array($this->statusValue($lockedTask->status), ['published', 'in_progress'], true)) {
                     throw ValidationException::withMessages([
                         'application' => 'Tugas ini belum dipublikasikan atau kuotanya sudah penuh.',
                     ]);

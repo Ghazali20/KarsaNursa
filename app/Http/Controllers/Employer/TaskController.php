@@ -76,9 +76,9 @@ class TaskController extends Controller
                 // Format jadwal pelaksanaan
                 $schedule = '-';
                 if ($task->starts_at) {
-                    $schedule = $task->starts_at->translatedFormat('d M Y') . ' · ' . $task->starts_at->format('H:i') . ' WIB';
+                    $schedule = $task->starts_at->translatedFormat('d M Y').' · '.$task->starts_at->format('H:i').' WIB';
                 } elseif ($task->created_at) {
-                    $schedule = 'Dibuat · ' . $task->created_at->translatedFormat('d M Y');
+                    $schedule = 'Dibuat · '.$task->created_at->translatedFormat('d M Y');
                 }
 
                 return [
@@ -94,8 +94,8 @@ class TaskController extends Controller
                     'acceptedCount' => $accepted,
                     'pendingCount' => (int) ($task->pending_count ?? 0),
                     'wageAmount' => $task->wage_amount === null ? null : (int) $task->wage_amount,
-                    'startsAt' => $task->starts_at ? $task->starts_at->translatedFormat('d M Y · H:i') . ' WIB' : null,
-                    'endsAt' => $task->ends_at ? $task->ends_at->translatedFormat('d M Y · H:i') . ' WIB' : null,
+                    'startsAt' => $task->starts_at ? $task->starts_at->translatedFormat('d M Y · H:i').' WIB' : null,
+                    'endsAt' => $task->ends_at ? $task->ends_at->translatedFormat('d M Y · H:i').' WIB' : null,
                     'scheduleDisplay' => $schedule,
                     'createdAt' => $task->created_at?->format('d/m/Y H:i'),
                     'applicationDeadline' => $task->application_deadline?->format('d/m/Y H:i'),

@@ -16,7 +16,6 @@ use Inertia\Response;
 
 class TaskApplicationController extends Controller
 {
-
     public function index(Request $request): Response
     {
         $worker = $request->user();
@@ -91,7 +90,6 @@ class TaskApplicationController extends Controller
             'applications' => $applications,
         ]);
     }
-
 
     public function store(
         Request $request,

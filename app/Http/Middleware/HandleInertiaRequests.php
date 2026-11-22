@@ -49,7 +49,7 @@ class HandleInertiaRequests extends Middleware
 
                     if ($app->payment?->status === 'paid') {
                         $amountFormatted = 'Rp '.number_format(
-                            (int) ($app->payment?->amount ?? $app->task->wage_amount ?? 0),
+                            (int) $app->payment->amount,
                             0,
                             ',',
                             '.'
@@ -59,7 +59,7 @@ class HandleInertiaRequests extends Middleware
                             'type' => 'paid',
                             'title' => 'Upah telah diberikan',
                             'description' => "Pembayaran {$amountFormatted} untuk \"{$taskTitle}\" ({$businessName}) telah tercatat.",
-                            'timeLabel' => ($app->payment?->paid_at ?? $app->updated_at)?->diffForHumans() ?? 'Baru saja',
+                            'timeLabel' => ($app->payment->paid_at ?? $app->updated_at)?->diffForHumans() ?? 'Baru saja',
                             'href' => '/worker/earnings',
                         ];
                     } elseif ($app->proof_submitted_at !== null) {

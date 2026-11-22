@@ -10,10 +10,10 @@ use App\Http\Controllers\Employer\TaskApplicationController as EmployerTaskAppli
 use App\Http\Controllers\Employer\TaskController as EmployerTaskController;
 use App\Http\Controllers\Employer\TaskPaymentController as EmployerTaskPaymentController;
 use App\Http\Controllers\Worker\DashboardController as WorkerDashboardController;
+use App\Http\Controllers\Worker\EarningsController as WorkerEarningsController;
 use App\Http\Controllers\Worker\NotificationController as WorkerNotificationController;
 use App\Http\Controllers\Worker\TaskApplicationController as WorkerTaskApplicationController;
 use App\Http\Controllers\Worker\TaskController as WorkerTaskController;
-use App\Http\Controllers\Worker\EarningsController as WorkerEarningsController;
 use App\Http\Controllers\Worker\WorkHistoryController as WorkerWorkHistoryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -336,7 +336,7 @@ Route::middleware(['auth'])->group(function () {
             // pada pengembangan berikutnya.
             Route::get(
                 '/admin/reports',
-                fn() => Inertia::render(
+                fn () => Inertia::render(
                     'admin/section-placeholder',
                     [
                         'title' => 'Sengketa & Laporan',
@@ -353,7 +353,7 @@ Route::middleware(['auth'])->group(function () {
             // Backend audit log belum tersedia.
             Route::get(
                 '/admin/logs',
-                fn() => Inertia::render(
+                fn () => Inertia::render(
                     'admin/section-placeholder',
                     [
                         'title' => 'Log Aktivitas',
@@ -370,7 +370,7 @@ Route::middleware(['auth'])->group(function () {
             // Redirect ke halaman Manajemen Akun.
             Route::get(
                 '/admin/documents',
-                fn() => redirect()->route('admin.users.index')
+                fn () => redirect()->route('admin.users.index')
             )->name('admin.documents.index');
 
             // ====================================
@@ -412,4 +412,4 @@ Route::middleware(['auth'])->group(function () {
 // SETTINGS
 // ========================================
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';
