@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from "@inertiajs/react";
+import { Head, Link, useForm } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowLeft,
@@ -13,8 +13,8 @@ import {
     WalletCards,
     X,
     XCircle,
-} from "lucide-react";
-import React, { useState } from "react";
+} from 'lucide-react';
+import React, { useState } from 'react';
 
 type Task = {
     id: number;
@@ -36,7 +36,7 @@ type Task = {
     canApply: boolean;
 };
 
-type ApplicationStatus = "pending" | "accepted" | "rejected";
+type ApplicationStatus = 'pending' | 'accepted' | 'rejected';
 
 type Props = {
     task: Task;
@@ -50,16 +50,16 @@ type ApplyFormData = {
     application?: string;
 };
 
-const rupiah = new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
+const rupiah = new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
     maximumFractionDigits: 0,
 });
 
 function statusLabel(status: ApplicationStatus): string {
-    if (status === "accepted") return "Lamaran Diterima";
-    if (status === "rejected") return "Lamaran Ditolak";
-    return "Menunggu Seleksi";
+    if (status === 'accepted') return 'Lamaran Diterima';
+    if (status === 'rejected') return 'Lamaran Ditolak';
+    return 'Menunggu Seleksi';
 }
 
 export default function WorkerTaskShow({
@@ -70,7 +70,7 @@ export default function WorkerTaskShow({
 
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm<ApplyFormData>({
-            applicant_note: "",
+            applicant_note: '',
             qualification_document: null,
             schedule_confirmed: false,
         });
@@ -82,10 +82,10 @@ export default function WorkerTaskShow({
         Number(task.remainingQuota ?? quota - accepted),
     );
     const isFull =
-        task.status === "closed" || task.isFull || quota <= 0 || remaining <= 0;
+        task.status === 'closed' || task.isFull || quota <= 0 || remaining <= 0;
     const canApply =
         task.canApply === true &&
-        task.status === "published" &&
+        task.status === 'published' &&
         applicationStatus === null &&
         !isFull;
 
@@ -119,18 +119,18 @@ export default function WorkerTaskShow({
                             <section className="rounded-2xl border border-[#dce5f1] bg-white p-6 shadow-sm sm:p-7">
                                 <div className="flex flex-wrap items-center justify-between gap-3">
                                     <span className="rounded-lg bg-[#e9effb] px-3 py-1.5 text-xs font-semibold text-[#21477f]">
-                                        {task.category || "Lainnya"}
+                                        {task.category || 'Lainnya'}
                                     </span>
                                     <span
                                         className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
                                             isFull
-                                                ? "bg-rose-50 text-rose-700"
-                                                : "bg-emerald-50 text-emerald-700"
+                                                ? 'bg-rose-50 text-rose-700'
+                                                : 'bg-emerald-50 text-emerald-700'
                                         }`}
                                     >
                                         {isFull
-                                            ? "Kuota Penuh"
-                                            : "Masih Tersedia"}
+                                            ? 'Kuota Penuh'
+                                            : 'Masih Tersedia'}
                                     </span>
                                 </div>
 
@@ -143,7 +143,7 @@ export default function WorkerTaskShow({
                                             .split(/\s+/)
                                             .slice(0, 2)
                                             .map((word) => word.charAt(0))
-                                            .join("")
+                                            .join('')
                                             .toUpperCase()}
                                     </div>
                                     <div>
@@ -166,7 +166,7 @@ export default function WorkerTaskShow({
                                             </p>
                                             <p className="mt-1 text-sm font-medium text-[#243650]">
                                                 {task.locationAddress ||
-                                                    "Alamat belum tersedia"}
+                                                    'Alamat belum tersedia'}
                                             </p>
                                         </div>
                                     </div>
@@ -178,12 +178,12 @@ export default function WorkerTaskShow({
                                             </p>
                                             <p className="mt-1 text-sm font-medium text-[#243650]">
                                                 {task.startsAt ||
-                                                    "Belum tersedia"}
+                                                    'Belum tersedia'}
                                             </p>
                                             <p className="text-xs text-[#8393aa]">
-                                                Selesai:{" "}
+                                                Selesai:{' '}
                                                 {task.endsAt ||
-                                                    "Belum tersedia"}
+                                                    'Belum tersedia'}
                                             </p>
                                         </div>
                                     </div>
@@ -223,7 +223,7 @@ export default function WorkerTaskShow({
                                 </h2>
                                 <p className="mt-4 text-sm leading-7 whitespace-pre-wrap text-[#586b85]">
                                     {task.description ||
-                                        "Belum ada deskripsi pekerjaan."}
+                                        'Belum ada deskripsi pekerjaan.'}
                                 </p>
                                 <div className="mt-6 border-t border-[#e3eaf3] pt-5">
                                     <h3 className="font-semibold text-[#172c4b]">
@@ -231,7 +231,7 @@ export default function WorkerTaskShow({
                                     </h3>
                                     <p className="mt-3 text-sm leading-7 whitespace-pre-wrap text-[#586b85]">
                                         {task.requirements ||
-                                            "Tidak ada persyaratan khusus."}
+                                            'Tidak ada persyaratan khusus.'}
                                     </p>
                                 </div>
                             </section>
@@ -252,7 +252,7 @@ export default function WorkerTaskShow({
                                 </div>
                                 <p className="mt-1 text-sm font-semibold text-[#172c4b]">
                                     {task.applicationDeadline ||
-                                        "Belum tersedia"}
+                                        'Belum tersedia'}
                                 </p>
                             </div>
                             <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#e7edf5]">
@@ -271,20 +271,20 @@ export default function WorkerTaskShow({
                                 <div className="mt-5 space-y-3">
                                     <div
                                         className={`rounded-xl border p-3 ${
-                                            applicationStatus === "accepted"
-                                                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                                            applicationStatus === 'accepted'
+                                                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
                                                 : applicationStatus ===
-                                                    "rejected"
-                                                  ? "border-red-200 bg-red-50 text-red-800"
-                                                  : "border-blue-200 bg-blue-50 text-blue-800"
+                                                    'rejected'
+                                                  ? 'border-red-200 bg-red-50 text-red-800'
+                                                  : 'border-blue-200 bg-blue-50 text-blue-800'
                                         }`}
                                     >
                                         <div className="flex items-center gap-2 text-sm font-semibold">
                                             {applicationStatus ===
-                                            "accepted" ? (
+                                            'accepted' ? (
                                                 <CheckCircle2 className="size-4" />
                                             ) : applicationStatus ===
-                                              "rejected" ? (
+                                              'rejected' ? (
                                                 <XCircle className="size-4" />
                                             ) : (
                                                 <Clock3 className="size-4" />
@@ -292,12 +292,12 @@ export default function WorkerTaskShow({
                                             {statusLabel(applicationStatus)}
                                         </div>
                                         <p className="mt-2 text-xs leading-5">
-                                            {applicationStatus === "pending"
-                                                ? "Lamaranmu sedang menunggu seleksi UMKM."
+                                            {applicationStatus === 'pending'
+                                                ? 'Lamaranmu sedang menunggu seleksi UMKM.'
                                                 : applicationStatus ===
-                                                    "accepted"
-                                                  ? "Lamaranmu telah diterima oleh UMKM."
-                                                  : "Buka Lamaran Saya untuk melihat alasan penolakan."}
+                                                    'accepted'
+                                                  ? 'Lamaranmu telah diterima oleh UMKM.'
+                                                  : 'Buka Lamaran Saya untuk melihat alasan penolakan.'}
                                         </p>
                                     </div>
                                     <Link
@@ -313,8 +313,8 @@ export default function WorkerTaskShow({
                                         <p className="mb-3 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs leading-5 text-amber-700">
                                             <AlertCircle className="size-4 shrink-0" />
                                             {isFull
-                                                ? "Kuota sudah penuh. Pendaftaran ditutup."
-                                                : "Tugas ini sedang tidak menerima lamaran."}
+                                                ? 'Kuota sudah penuh. Pendaftaran ditutup.'
+                                                : 'Tugas ini sedang tidak menerima lamaran.'}
                                         </p>
                                     )}
                                     <button
@@ -326,8 +326,8 @@ export default function WorkerTaskShow({
                                         className="w-full rounded-xl bg-[#21477f] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#163762] disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         {canApply
-                                            ? "Lamar Tugas Sekarang"
-                                            : "Lamaran Tidak Tersedia"}
+                                            ? 'Lamar Tugas Sekarang'
+                                            : 'Lamaran Tidak Tersedia'}
                                     </button>
                                 </div>
                             )}
@@ -393,7 +393,7 @@ export default function WorkerTaskShow({
                                             Jadwal:
                                         </span>
                                         <span className="font-medium text-slate-800">
-                                            {task.startsAt || "Fleksibel"}
+                                            {task.startsAt || 'Fleksibel'}
                                         </span>
                                     </div>
                                 </div>
@@ -404,7 +404,7 @@ export default function WorkerTaskShow({
                                         htmlFor="applicant_note"
                                         className="block text-xs font-bold text-slate-800"
                                     >
-                                        Pesan Pengajuan Kerja{" "}
+                                        Pesan Pengajuan Kerja{' '}
                                         <span className="text-red-500">*</span>
                                     </label>
                                     <p className="mt-0.5 text-[11px] text-slate-500">
@@ -420,17 +420,17 @@ export default function WorkerTaskShow({
                                         value={data.applicant_note}
                                         onChange={(e) => {
                                             setData(
-                                                "applicant_note",
+                                                'applicant_note',
                                                 e.target.value,
                                             );
                                             if (errors.applicant_note)
-                                                clearErrors("applicant_note");
+                                                clearErrors('applicant_note');
                                         }}
                                         placeholder="Ceritakan singkat pengalaman"
-                                        className={`mt-1.5 w-full rounded-xl border p-3 text-xs outline-none transition focus:ring-2 ${
+                                        className={`mt-1.5 w-full rounded-xl border p-3 text-xs transition outline-none focus:ring-2 ${
                                             errors.applicant_note
-                                                ? "border-red-300 bg-red-50/20 focus:border-red-500 focus:ring-red-100"
-                                                : "border-slate-300 focus:border-[#21477f] focus:ring-blue-100"
+                                                ? 'border-red-300 bg-red-50/20 focus:border-red-500 focus:ring-red-100'
+                                                : 'border-slate-300 focus:border-[#21477f] focus:ring-blue-100'
                                         }`}
                                     />
                                     <div className="mt-1 flex items-center justify-between text-[10px]">
@@ -446,8 +446,8 @@ export default function WorkerTaskShow({
                                         <span
                                             className={
                                                 data.applicant_note.length > 500
-                                                    ? "text-red-500"
-                                                    : "text-slate-400"
+                                                    ? 'text-red-500'
+                                                    : 'text-slate-400'
                                             }
                                         >
                                             {data.applicant_note.length}/500
@@ -461,7 +461,7 @@ export default function WorkerTaskShow({
                                         htmlFor="qualification_document"
                                         className="block text-xs font-bold text-slate-800"
                                     >
-                                        Dokumen Pendukung{" "}
+                                        Dokumen Pendukung{' '}
                                         <span className="font-normal text-slate-400">
                                             (Opsional)
                                         </span>
@@ -481,14 +481,14 @@ export default function WorkerTaskShow({
                                                 const file =
                                                     e.target.files?.[0] || null;
                                                 setData(
-                                                    "qualification_document",
+                                                    'qualification_document',
                                                     file,
                                                 );
                                                 if (
                                                     errors.qualification_document
                                                 )
                                                     clearErrors(
-                                                        "qualification_document",
+                                                        'qualification_document',
                                                     );
                                             }}
                                             className="block w-full text-xs text-slate-500 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-[#21477f] hover:file:bg-blue-100"
@@ -496,7 +496,7 @@ export default function WorkerTaskShow({
                                         {data.qualification_document && (
                                             <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-emerald-600">
                                                 <FileText size={13} />
-                                                File terpilih:{" "}
+                                                File terpilih:{' '}
                                                 {
                                                     data.qualification_document
                                                         .name
@@ -520,20 +520,20 @@ export default function WorkerTaskShow({
                                             checked={data.schedule_confirmed}
                                             onChange={(e) => {
                                                 setData(
-                                                    "schedule_confirmed",
+                                                    'schedule_confirmed',
                                                     e.target.checked,
                                                 );
                                                 if (errors.schedule_confirmed)
                                                     clearErrors(
-                                                        "schedule_confirmed",
+                                                        'schedule_confirmed',
                                                     );
                                             }}
                                             className="mt-0.5 size-4 rounded border-slate-300 text-[#21477f] focus:ring-[#21477f]"
                                         />
-                                        <span className="text-xs font-medium leading-relaxed text-slate-700">
+                                        <span className="text-xs leading-relaxed font-medium text-slate-700">
                                             Saya sanggup hadir sesuai jadwal
                                             pelaksanaan dan memenuhi seluruh
-                                            persyaratan pekerjaan.{" "}
+                                            persyaratan pekerjaan.{' '}
                                             <span className="text-red-500">
                                                 *
                                             </span>
@@ -573,8 +573,8 @@ export default function WorkerTaskShow({
                                     className="rounded-xl bg-[#21477f] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#163762] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {processing
-                                        ? "Mengirim Lamaran..."
-                                        : "Kirim Lamaran"}
+                                        ? 'Mengirim Lamaran...'
+                                        : 'Kirim Lamaran'}
                                 </button>
                             </div>
                         </form>

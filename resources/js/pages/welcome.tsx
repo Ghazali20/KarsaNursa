@@ -1,8 +1,8 @@
-import { KarsaLogo } from "@/components/karsa/karsa-logo";
-import { LandingSections } from "@/components/karsa/landing-sections";
-import { KarsaBadge } from "@/components/karsa/karsa-ui";
-import { dashboard, login, register } from "@/routes";
-import { Head, Link, usePage } from "@inertiajs/react";
+import { KarsaLogo } from '@/components/karsa/karsa-logo';
+import { LandingSections } from '@/components/karsa/landing-sections';
+import { KarsaBadge } from '@/components/karsa/karsa-ui';
+import { dashboard, login, register } from '@/routes';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     BriefcaseBusiness,
@@ -13,11 +13,11 @@ import {
     Star,
     WalletCards,
     X,
-} from "lucide-react";
-import { useState } from "react";
+} from 'lucide-react';
+import { useState } from 'react';
 
 const heroPhoto =
-    "https://images.unsplash.com/photo-1599549211246-7065b775aa7b?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=1200";
+    'https://images.unsplash.com/photo-1599549211246-7065b775aa7b?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=1200';
 
 export default function Welcome() {
     const { auth } = usePage().props;
@@ -83,8 +83,8 @@ export default function Welcome() {
                             className="inline-flex size-11 items-center justify-center rounded-xl border border-[var(--karsa-border)] bg-white text-[var(--karsa-primary)] lg:hidden"
                             aria-label={
                                 mobileMenuOpen
-                                    ? "Tutup menu navigasi"
-                                    : "Buka menu navigasi"
+                                    ? 'Tutup menu navigasi'
+                                    : 'Buka menu navigasi'
                             }
                             aria-expanded={mobileMenuOpen}
                             aria-controls="karsa-mobile-menu"
@@ -106,9 +106,9 @@ export default function Welcome() {
                             className="absolute top-[calc(100%-4px)] right-4 left-4 z-40 flex flex-col gap-1 rounded-2xl border border-[var(--karsa-border)] bg-white p-3 text-sm font-semibold shadow-[var(--karsa-shadow-lg)] sm:right-7 sm:left-7 lg:hidden"
                         >
                             {[
-                                { label: "Cara Kerja", href: "#cara-kerja" },
-                                { label: "Solusi", href: "#solusi" },
-                                { label: "Dampak", href: "#dampak" },
+                                { label: 'Cara Kerja', href: '#cara-kerja' },
+                                { label: 'Solusi', href: '#solusi' },
+                                { label: 'Dampak', href: '#dampak' },
                             ].map((item) => (
                                 <a
                                     key={item.href}
@@ -188,7 +188,7 @@ export default function Welcome() {
 
                         <div className="mt-9 flex items-center gap-4">
                             <div className="flex -space-x-2">
-                                {["RS", "BA", "MP"].map((initials) => (
+                                {['RS', 'BA', 'MP'].map((initials) => (
                                     <span
                                         key={initials}
                                         className="grid h-10 w-10 place-items-center rounded-full border-2 border-white bg-[var(--karsa-sky-soft)] text-[11px] font-extrabold text-[var(--karsa-primary-dark)]"

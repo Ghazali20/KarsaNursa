@@ -1,4 +1,4 @@
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link } from '@inertiajs/react';
 import {
     BriefcaseBusiness,
     Clock3,
@@ -8,8 +8,8 @@ import {
     Search,
     ShieldCheck,
     X,
-} from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 type Task = {
     id: number;
@@ -31,28 +31,28 @@ type Task = {
 };
 
 type Props = { tasks: Task[] };
-type Category = "Semua" | "Katering" | "Laundry" | "Toko" | "Bengkel";
+type Category = 'Semua' | 'Katering' | 'Laundry' | 'Toko' | 'Bengkel';
 type SortOption =
-    | "newest"
-    | "wage-high"
-    | "wage-low"
-    | "start-soon"
-    | "nearest";
+    | 'newest'
+    | 'wage-high'
+    | 'wage-low'
+    | 'start-soon'
+    | 'nearest';
 type Location = { latitude: number; longitude: number };
 
 const categories: Category[] = [
-    "Semua",
-    "Katering",
-    "Laundry",
-    "Toko",
-    "Bengkel",
+    'Semua',
+    'Katering',
+    'Laundry',
+    'Toko',
+    'Bengkel',
 ];
 
-const FAVORITES_KEY = "karsanursa:worker:favorites";
+const FAVORITES_KEY = 'karsanursa:worker:favorites';
 
-const rupiah = new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
+const rupiah = new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
     maximumFractionDigits: 0,
 });
 
@@ -78,7 +78,7 @@ function parseTaskDate(value: string | null | undefined): Date | null {
 
 function shortSchedule(value: string | null | undefined): string {
     const date = parseTaskDate(value);
-    if (!date) return "Jadwal belum tersedia";
+    if (!date) return 'Jadwal belum tersedia';
 
     const current = new Date();
     const today = new Date(
@@ -94,18 +94,18 @@ function shortSchedule(value: string | null | undefined): string {
     const dayDifference = Math.round(
         (taskDay.getTime() - today.getTime()) / 86400000,
     );
-    const time = new Intl.DateTimeFormat("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
+    const time = new Intl.DateTimeFormat('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
         hour12: false,
     }).format(date);
 
     if (dayDifference === 0) return `Hari ini · ${time}`;
     if (dayDifference === 1) return `Besok · ${time}`;
 
-    return `${new Intl.DateTimeFormat("id-ID", {
-        day: "numeric",
-        month: "short",
+    return `${new Intl.DateTimeFormat('id-ID', {
+        day: 'numeric',
+        month: 'short',
     }).format(date)} · ${time}`;
 }
 
@@ -113,42 +113,42 @@ function durationLabel(task: Task): string {
     const start = parseTaskDate(task.startsAt);
     const end = parseTaskDate(task.endsAt);
     if (!start || !end || end.getTime() <= start.getTime()) {
-        return "Durasi belum ada";
+        return 'Durasi belum ada';
     }
 
     const hours = (end.getTime() - start.getTime()) / 3600000;
-    return `${new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 }).format(hours)} jam`;
+    return `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(hours)} jam`;
 }
 
 function categoryMatches(value: string | null, selected: Category): boolean {
-    if (selected === "Semua") return true;
-    const text = (value ?? "").toLowerCase();
+    if (selected === 'Semua') return true;
+    const text = (value ?? '').toLowerCase();
 
-    const aliases: Record<Exclude<Category, "Semua">, string[]> = {
-        Katering: ["katering", "catering", "kuliner", "makanan"],
-        Laundry: ["laundry", "binatu"],
-        Toko: ["toko", "retail", "kelontong"],
-        Bengkel: ["bengkel", "otomotif"],
+    const aliases: Record<Exclude<Category, 'Semua'>, string[]> = {
+        Katering: ['katering', 'catering', 'kuliner', 'makanan'],
+        Laundry: ['laundry', 'binatu'],
+        Toko: ['toko', 'retail', 'kelontong'],
+        Bengkel: ['bengkel', 'otomotif'],
     };
 
     return aliases[selected].some((name) => text.includes(name));
 }
 
 function cardTone(category: string | null): string {
-    const text = (category ?? "").toLowerCase();
-    if (text.includes("laundry") || text.includes("binatu"))
-        return "bg-[#e3efff]";
-    if (text.includes("toko") || text.includes("retail")) return "bg-[#eeedff]";
-    if (text.includes("bengkel") || text.includes("otomotif"))
-        return "bg-[#e5f4ed]";
+    const text = (category ?? '').toLowerCase();
+    if (text.includes('laundry') || text.includes('binatu'))
+        return 'bg-[#e3efff]';
+    if (text.includes('toko') || text.includes('retail')) return 'bg-[#eeedff]';
+    if (text.includes('bengkel') || text.includes('otomotif'))
+        return 'bg-[#e5f4ed]';
     if (
-        text.includes("katering") ||
-        text.includes("kuliner") ||
-        text.includes("makanan")
+        text.includes('katering') ||
+        text.includes('kuliner') ||
+        text.includes('makanan')
     ) {
-        return "bg-[#fff6d5]";
+        return 'bg-[#fff6d5]';
     }
-    return "bg-[#eff3fc]";
+    return 'bg-[#eff3fc]';
 }
 
 function coordinatesOf(task: Task): Location | null {
@@ -156,13 +156,13 @@ function coordinatesOf(task: Task): Location | null {
     if (
         task.latitude === null ||
         task.latitude === undefined ||
-        task.latitude === ""
+        task.latitude === ''
     )
         return null;
     if (
         task.longitude === null ||
         task.longitude === undefined ||
-        task.longitude === ""
+        task.longitude === ''
     )
         return null;
 
@@ -194,9 +194,9 @@ function distanceKm(from: Location, to: Location): number {
 }
 
 export default function WorkerTasksIndex({ tasks }: Props) {
-    const [query, setQuery] = useState("");
-    const [category, setCategory] = useState<Category>("Semua");
-    const [sort, setSort] = useState<SortOption>("newest");
+    const [query, setQuery] = useState('');
+    const [category, setCategory] = useState<Category>('Semua');
+    const [sort, setSort] = useState<SortOption>('newest');
     const [showFilters, setShowFilters] = useState(false);
     const [savedIds, setSavedIds] = useState<number[]>([]);
     const [location, setLocation] = useState<Location | null>(null);
@@ -208,11 +208,11 @@ export default function WorkerTasksIndex({ tasks }: Props) {
     useEffect(() => {
         try {
             const stored = JSON.parse(
-                localStorage.getItem(FAVORITES_KEY) ?? "[]",
+                localStorage.getItem(FAVORITES_KEY) ?? '[]',
             ) as unknown;
             if (Array.isArray(stored)) {
                 setSavedIds(
-                    stored.filter((id): id is number => typeof id === "number"),
+                    stored.filter((id): id is number => typeof id === 'number'),
                 );
             }
         } catch {
@@ -241,12 +241,12 @@ export default function WorkerTasksIndex({ tasks }: Props) {
     function enableRadius() {
         if (!coordinatesAvailable) {
             setLocationError(
-                "Koordinat tugas belum dikirim oleh Laravel. Tambahkan latitude dan longitude pada TaskController.",
+                'Koordinat tugas belum dikirim oleh Laravel. Tambahkan latitude dan longitude pada TaskController.',
             );
             return;
         }
         if (!navigator.geolocation) {
-            setLocationError("Browser ini tidak mendukung akses lokasi.");
+            setLocationError('Browser ini tidak mendukung akses lokasi.');
             return;
         }
 
@@ -269,7 +269,7 @@ export default function WorkerTasksIndex({ tasks }: Props) {
             },
             () => {
                 setLocationError(
-                    "Izin lokasi belum diberikan. Aktifkan izin lokasi di browser untuk memakai radius.",
+                    'Izin lokasi belum diberikan. Aktifkan izin lokasi di browser untuk memakai radius.',
                 );
                 setRequestingLocation(false);
             },
@@ -287,18 +287,18 @@ export default function WorkerTasksIndex({ tasks }: Props) {
     }, [tasks]);
 
     const filteredTasks = useMemo(() => {
-        const needle = query.trim().toLocaleLowerCase("id-ID");
+        const needle = query.trim().toLocaleLowerCase('id-ID');
         const result = availableTasks.filter((task) => {
             const matchesQuery = [
                 String(task.id),
                 task.title,
                 task.businessName,
-                task.category ?? "",
-                task.description ?? "",
-                task.locationAddress ?? "",
+                task.category ?? '',
+                task.description ?? '',
+                task.locationAddress ?? '',
             ]
-                .join(" ")
-                .toLocaleLowerCase("id-ID")
+                .join(' ')
+                .toLocaleLowerCase('id-ID')
                 .includes(needle);
 
             if (!matchesQuery || !categoryMatches(task.category, category))
@@ -312,17 +312,17 @@ export default function WorkerTasksIndex({ tasks }: Props) {
         });
 
         result.sort((a, b) => {
-            if (sort === "wage-high")
+            if (sort === 'wage-high')
                 return (b.wageAmount ?? 0) - (a.wageAmount ?? 0);
-            if (sort === "wage-low")
+            if (sort === 'wage-low')
                 return (a.wageAmount ?? 0) - (b.wageAmount ?? 0);
-            if (sort === "start-soon") {
+            if (sort === 'start-soon') {
                 return (
                     (parseTaskDate(a.startsAt)?.getTime() ?? Infinity) -
                     (parseTaskDate(b.startsAt)?.getTime() ?? Infinity)
                 );
             }
-            if (sort === "nearest" && location) {
+            if (sort === 'nearest' && location) {
                 return (
                     distanceKm(location, coordinatesOf(a) ?? location) -
                     distanceKm(location, coordinatesOf(b) ?? location)
@@ -344,9 +344,9 @@ export default function WorkerTasksIndex({ tasks }: Props) {
     ]);
 
     function clearFilters() {
-        setQuery("");
-        setCategory("Semua");
-        setSort("newest");
+        setQuery('');
+        setCategory('Semua');
+        setSort('newest');
         setRadiusEnabled(false);
         setLocationError(null);
     }
@@ -409,8 +409,8 @@ export default function WorkerTasksIndex({ tasks }: Props) {
                                         aria-pressed={category === option}
                                         className={`rounded-lg border px-3 py-2.5 text-xs font-medium transition ${
                                             category === option
-                                                ? "border-[#13294b] bg-[#13294b] text-white"
-                                                : "border-[#e0e8f2] bg-white text-[#7586a1] hover:border-[#21477f] hover:text-[#21477f]"
+                                                ? 'border-[#13294b] bg-[#13294b] text-white'
+                                                : 'border-[#e0e8f2] bg-white text-[#7586a1] hover:border-[#21477f] hover:text-[#21477f]'
                                         }`}
                                     >
                                         {option}
@@ -425,11 +425,11 @@ export default function WorkerTasksIndex({ tasks }: Props) {
                                 className="inline-flex items-center gap-1.5 px-1 text-xs text-[#7083a0] hover:text-[#21477f]"
                             >
                                 <MapPin className="size-4" />
-                                Radius{" "}
+                                Radius{' '}
                                 <strong className="text-[#21477f]">
                                     {radiusEnabled
                                         ? `${radius} km`
-                                        : "nonaktif"}
+                                        : 'nonaktif'}
                                 </strong>
                             </button>
                         </div>
@@ -465,8 +465,8 @@ export default function WorkerTasksIndex({ tasks }: Props) {
                                         aria-pressed={radius === option}
                                         className={`rounded-lg border px-4 py-2 text-xs font-semibold ${
                                             radius === option
-                                                ? "border-[#21477f] bg-[#eaf1fb] text-[#21477f]"
-                                                : "border-slate-200 text-slate-600"
+                                                ? 'border-[#21477f] bg-[#eaf1fb] text-[#21477f]'
+                                                : 'border-slate-200 text-slate-600'
                                         }`}
                                     >
                                         {option} km
@@ -480,16 +480,16 @@ export default function WorkerTasksIndex({ tasks }: Props) {
                                         className="ml-auto rounded-lg bg-[#21477f] px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
                                     >
                                         {requestingLocation
-                                            ? "Memeriksa lokasi..."
-                                            : "Aktifkan radius"}
+                                            ? 'Memeriksa lokasi...'
+                                            : 'Aktifkan radius'}
                                     </button>
                                 ) : (
                                     <button
                                         type="button"
                                         onClick={() => {
                                             setRadiusEnabled(false);
-                                            if (sort === "nearest")
-                                                setSort("newest");
+                                            if (sort === 'nearest')
+                                                setSort('newest');
                                         }}
                                         className="ml-auto rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700"
                                     >
@@ -510,7 +510,7 @@ export default function WorkerTasksIndex({ tasks }: Props) {
 
                     <div className="flex flex-wrap items-center justify-between gap-4">
                         <p className="text-sm text-[#172c4b]">
-                            <strong>{filteredTasks.length}</strong>{" "}
+                            <strong>{filteredTasks.length}</strong>{' '}
                             <span className="text-[#8393aa]">
                                 tugas ditemukan
                             </span>
@@ -549,13 +549,13 @@ export default function WorkerTasksIndex({ tasks }: Props) {
                             <BriefcaseBusiness className="mx-auto size-11 text-[#96a8c2]" />
                             <h2 className="mt-4 text-base font-semibold text-[#172c4b]">
                                 {availableTasks.length === 0
-                                    ? "Belum ada tugas tersedia"
-                                    : "Tidak ada tugas sesuai pencarian atau filter"}
+                                    ? 'Belum ada tugas tersedia'
+                                    : 'Tidak ada tugas sesuai pencarian atau filter'}
                             </h2>
                             <p className="mt-2 text-sm text-[#8495b0]">
                                 {availableTasks.length === 0
-                                    ? "Tugas yang telah disetujui Admin dan masih memiliki kuota akan muncul di sini."
-                                    : "Coba kategori, kata kunci, atau radius yang berbeda."}
+                                    ? 'Tugas yang telah disetujui Admin dan masih memiliki kuota akan muncul di sini.'
+                                    : 'Coba kategori, kata kunci, atau radius yang berbeda.'}
                             </p>
                             {availableTasks.length > 0 && (
                                 <button
@@ -594,8 +594,8 @@ export default function WorkerTasksIndex({ tasks }: Props) {
                                     .trim()
                                     .split(/\s+/)
                                     .slice(0, 2)
-                                    .map((part) => part[0] ?? "")
-                                    .join("")
+                                    .map((part) => part[0] ?? '')
+                                    .join('')
                                     .toUpperCase();
 
                                 return (
@@ -607,7 +607,7 @@ export default function WorkerTasksIndex({ tasks }: Props) {
                                             className={`flex h-[70px] items-start justify-between px-3 py-3 ${cardTone(task.category)}`}
                                         >
                                             <span className="rounded-lg bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-[#263852]">
-                                                {task.category || "Lainnya"}
+                                                {task.category || 'Lainnya'}
                                             </span>
                                             <button
                                                 type="button"
@@ -616,15 +616,15 @@ export default function WorkerTasksIndex({ tasks }: Props) {
                                                 }
                                                 aria-label={
                                                     favorite
-                                                        ? "Hapus dari favorit"
-                                                        : "Simpan tugas ke favorit"
+                                                        ? 'Hapus dari favorit'
+                                                        : 'Simpan tugas ke favorit'
                                                 }
                                                 aria-pressed={favorite}
                                                 title="Favorit disimpan di browser ini"
                                                 className="rounded-full border border-white/80 bg-white/90 p-1.5 text-[#7890b2] transition hover:text-[#21477f]"
                                             >
                                                 <Heart
-                                                    className={`size-[18px] ${favorite ? "fill-rose-500 text-rose-500" : ""}`}
+                                                    className={`size-[18px] ${favorite ? 'fill-rose-500 text-rose-500' : ''}`}
                                                 />
                                             </button>
                                         </div>
@@ -632,7 +632,7 @@ export default function WorkerTasksIndex({ tasks }: Props) {
                                         <div className="flex flex-1 flex-col px-4 pt-4 pb-3">
                                             <div className="flex items-center gap-2.5">
                                                 <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#102747] text-[11px] font-bold text-white">
-                                                    {initials || "U"}
+                                                    {initials || 'U'}
                                                 </span>
                                                 <div className="min-w-0">
                                                     <p className="line-clamp-2 text-xs font-bold text-[#172c4b]">
@@ -659,13 +659,13 @@ export default function WorkerTasksIndex({ tasks }: Props) {
                                                 >
                                                     <MapPin className="size-3.5 shrink-0" />
                                                     {distance !== null
-                                                        ? `${distance.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`
+                                                        ? `${distance.toLocaleString('id-ID', { maximumFractionDigits: 1 })} km`
                                                         : task.locationAddress
                                                           ? task.locationAddress
                                                                 .length > 22
                                                               ? `${task.locationAddress.slice(0, 20)}…`
                                                               : task.locationAddress
-                                                          : "Alamat belum ada"}
+                                                          : 'Alamat belum ada'}
                                                 </span>
                                                 <span className="inline-flex items-center gap-1">
                                                     <Clock3 className="size-3.5 shrink-0" />
@@ -687,7 +687,7 @@ export default function WorkerTasksIndex({ tasks }: Props) {
                                                     <p className="text-[18px] font-bold tracking-tight text-[#21477f]">
                                                         {task.wageAmount ===
                                                         null
-                                                            ? "Belum ditentukan"
+                                                            ? 'Belum ditentukan'
                                                             : rupiah.format(
                                                                   task.wageAmount,
                                                               )}
@@ -696,7 +696,7 @@ export default function WorkerTasksIndex({ tasks }: Props) {
                                                         </span>
                                                     </p>
                                                     <p className="text-[10px] text-[#7f90aa]">
-                                                        {remaining} dari {quota}{" "}
+                                                        {remaining} dari {quota}{' '}
                                                         slot
                                                     </p>
                                                 </div>

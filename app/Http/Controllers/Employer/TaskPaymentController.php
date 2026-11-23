@@ -181,6 +181,7 @@ class TaskPaymentController extends Controller
         // Daftar Periode untuk Opsi Dropdown
         $availablePeriods = collect($allMonthKeys)->map(function ($dateKey) {
             $carbon = Carbon::createFromFormat('Y-m', $dateKey);
+
             return [
                 'key' => $dateKey,
                 'label' => $carbon->translatedFormat('F Y'),
@@ -290,6 +291,7 @@ class TaskPaymentController extends Controller
         foreach (array_slice($words, 0, 2) as $w) {
             $initials .= mb_substr($w, 0, 1);
         }
+
         return mb_strtoupper($initials ?: 'PK');
     }
 }

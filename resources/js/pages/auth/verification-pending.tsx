@@ -141,7 +141,7 @@ export default function VerificationPending({
                                 <h4 className="text-xs font-bold text-red-900">
                                     Catatan / Alasan Penolakan:
                                 </h4>
-                                <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-red-700">
+                                <p className="mt-1 text-xs leading-relaxed whitespace-pre-wrap text-red-700">
                                     {reviewNotes ||
                                         'Dokumen atau identitas yang diunggah tidak memenuhi ketentuan verifikasi KarsaNursa. Silakan periksa kembali berkas Anda atau hubungi administrator.'}
                                 </p>

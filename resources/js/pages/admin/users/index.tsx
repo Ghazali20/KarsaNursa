@@ -744,7 +744,8 @@ export default function AdminUsers({ stats, queue, filters }: Props) {
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                     <h3 className="truncate text-base font-bold text-slate-900">
-                                        Pratinjau Dokumen {previewUser.documentType}
+                                        Pratinjau Dokumen{' '}
+                                        {previewUser.documentType}
                                     </h3>
                                     <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600">
                                         {previewUser.role === 'employer'

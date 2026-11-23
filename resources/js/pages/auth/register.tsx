@@ -1,82 +1,82 @@
-import GoogleLoginButton from "@/components/google-login-button";
-import InputError from "@/components/input-error";
-import PasswordInput from "@/components/password-input";
-import TextLink from "@/components/text-link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { login } from "@/routes";
-import { store } from "@/routes/register";
-import { Form, Head } from "@inertiajs/react";
-import { BriefcaseBusiness, FileUp, ShieldCheck, Users } from "lucide-react";
-import { useState } from "react";
+import GoogleLoginButton from '@/components/google-login-button';
+import InputError from '@/components/input-error';
+import PasswordInput from '@/components/password-input';
+import TextLink from '@/components/text-link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
+import { login } from '@/routes';
+import { store } from '@/routes/register';
+import { Form, Head } from '@inertiajs/react';
+import { BriefcaseBusiness, FileUp, ShieldCheck, Users } from 'lucide-react';
+import { useState } from 'react';
 
 type Props = {
     passwordRules: string;
 };
 
-type RegistrationRole = "worker" | "employer";
+type RegistrationRole = 'worker' | 'employer';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-const inputGridClass = "grid grid-cols-1 gap-3 sm:grid-cols-2";
+const inputGridClass = 'grid grid-cols-1 gap-3 sm:grid-cols-2';
 
-const fieldClass = "grid min-w-0 content-start gap-1.5";
+const fieldClass = 'grid min-w-0 content-start gap-1.5';
 
 const selectClass =
-    "h-10 w-full min-w-0 rounded-lg border " +
-    "border-[(--karsa-border)] bg-white px-3 " +
-    "text-sm text-[(--karsa-slate)] outline-none " +
-    "focus:border-[(--karsa-sky)]";
+    'h-10 w-full min-w-0 rounded-lg border ' +
+    'border-[(--karsa-border)] bg-white px-3 ' +
+    'text-sm text-[(--karsa-slate)] outline-none ' +
+    'focus:border-[(--karsa-sky)]';
 
 export default function Register({ passwordRules }: Props) {
-    const [role, setRole] = useState<RegistrationRole>("worker");
+    const [role, setRole] = useState<RegistrationRole>('worker');
 
-    const [selectedFileName, setSelectedFileName] = useState("");
+    const [selectedFileName, setSelectedFileName] = useState('');
 
-    const [fileError, setFileError] = useState("");
+    const [fileError, setFileError] = useState('');
 
-    const isWorker = role === "worker";
+    const isWorker = role === 'worker';
 
     function changeRole(nextRole: RegistrationRole) {
         setRole(nextRole);
-        setSelectedFileName("");
-        setFileError("");
+        setSelectedFileName('');
+        setFileError('');
     }
 
     function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
         const file = event.currentTarget.files?.[0];
 
         if (!file) {
-            setSelectedFileName("");
-            setFileError("");
+            setSelectedFileName('');
+            setFileError('');
             return;
         }
 
         const validExtension = /\.(pdf|jpg|jpeg|png)$/i.test(file.name);
 
         const validMimeType =
-            file.type === "application/pdf" ||
-            file.type === "image/jpeg" ||
-            file.type === "image/png";
+            file.type === 'application/pdf' ||
+            file.type === 'image/jpeg' ||
+            file.type === 'image/png';
 
         if (!validExtension || !validMimeType) {
-            event.currentTarget.value = "";
-            setSelectedFileName("");
-            setFileError("Dokumen harus berupa PDF, JPG, atau PNG.");
+            event.currentTarget.value = '';
+            setSelectedFileName('');
+            setFileError('Dokumen harus berupa PDF, JPG, atau PNG.');
             return;
         }
 
         if (file.size > MAX_FILE_SIZE) {
-            event.currentTarget.value = "";
-            setSelectedFileName("");
-            setFileError("Ukuran dokumen maksimal 5 MB.");
+            event.currentTarget.value = '';
+            setSelectedFileName('');
+            setFileError('Ukuran dokumen maksimal 5 MB.');
             return;
         }
 
         setSelectedFileName(file.name);
-        setFileError("");
+        setFileError('');
     }
 
     return (
@@ -114,7 +114,7 @@ export default function Register({ passwordRules }: Props) {
 
                 <Form
                     {...store.form()}
-                    resetOnSuccess={["password", "password_confirmation"]}
+                    resetOnSuccess={['password', 'password_confirmation']}
                     disableWhileProcessing
                     className="flex flex-col gap-3.5"
                 >
@@ -127,17 +127,17 @@ export default function Register({ passwordRules }: Props) {
                             <div className="grid grid-cols-2 gap-1 rounded-xl bg-[(--karsa-background)] p-1">
                                 <button
                                     type="button"
-                                    onClick={() => changeRole("worker")}
+                                    onClick={() => changeRole('worker')}
                                     aria-pressed={isWorker}
                                     className={[
-                                        "flex min-h-11 items-center",
-                                        "justify-center gap-2 rounded-lg",
-                                        "px-2 text-xs font-semibold",
-                                        "transition-colors",
+                                        'flex min-h-11 items-center',
+                                        'justify-center gap-2 rounded-lg',
+                                        'px-2 text-xs font-semibold',
+                                        'transition-colors',
                                         isWorker
-                                            ? "bg-white text-[(--karsa-primary)] shadow-sm"
-                                            : "text-[(--karsa-muted)] hover:text-[(--karsa-primary)]",
-                                    ].join(" ")}
+                                            ? 'bg-white text-[(--karsa-primary)] shadow-sm'
+                                            : 'text-[(--karsa-muted)] hover:text-[(--karsa-primary)]',
+                                    ].join(' ')}
                                 >
                                     <Users size={17} className="shrink-0" />
 
@@ -146,17 +146,17 @@ export default function Register({ passwordRules }: Props) {
 
                                 <button
                                     type="button"
-                                    onClick={() => changeRole("employer")}
+                                    onClick={() => changeRole('employer')}
                                     aria-pressed={!isWorker}
                                     className={[
-                                        "flex min-h-11 items-center",
-                                        "justify-center gap-2 rounded-lg",
-                                        "px-2 text-xs font-semibold",
-                                        "transition-colors",
+                                        'flex min-h-11 items-center',
+                                        'justify-center gap-2 rounded-lg',
+                                        'px-2 text-xs font-semibold',
+                                        'transition-colors',
                                         !isWorker
-                                            ? "bg-white text-[(--karsa-primary)] shadow-sm"
-                                            : "text-[(--karsa-muted)] hover:text-[(--karsa-primary)]",
-                                    ].join(" ")}
+                                            ? 'bg-white text-[(--karsa-primary)] shadow-sm'
+                                            : 'text-[(--karsa-muted)] hover:text-[(--karsa-primary)]',
+                                    ].join(' ')}
                                 >
                                     <BriefcaseBusiness
                                         size={17}
@@ -179,8 +179,8 @@ export default function Register({ passwordRules }: Props) {
                                 <div className={fieldClass}>
                                     <Label htmlFor="name">
                                         {isWorker
-                                            ? "Nama lengkap"
-                                            : "Nama pemilik"}
+                                            ? 'Nama lengkap'
+                                            : 'Nama pemilik'}
                                     </Label>
 
                                     <Input
@@ -193,8 +193,8 @@ export default function Register({ passwordRules }: Props) {
                                         autoComplete="name"
                                         placeholder={
                                             isWorker
-                                                ? "Sesuai KTP atau KTM"
-                                                : "Nama pemilik usaha"
+                                                ? 'Sesuai KTP atau KTM'
+                                                : 'Nama pemilik usaha'
                                         }
                                     />
 
@@ -314,8 +314,8 @@ export default function Register({ passwordRules }: Props) {
                                     <Label
                                         htmlFor={
                                             isWorker
-                                                ? "identity_type"
-                                                : "business_document_type"
+                                                ? 'identity_type'
+                                                : 'business_document_type'
                                         }
                                     >
                                         Jenis dokumen
@@ -375,8 +375,8 @@ export default function Register({ passwordRules }: Props) {
                                             <strong className="block truncate text-xs font-medium text-[(--karsa-slate)]">
                                                 {selectedFileName ||
                                                     (isWorker
-                                                        ? "Pilih KTP atau KTM"
-                                                        : "Pilih NIB atau Surat Usaha")}
+                                                        ? 'Pilih KTP atau KTM'
+                                                        : 'Pilih NIB atau Surat Usaha')}
                                             </strong>
 
                                             <small className="mt-0.5 block text-[10px] text-[(--karsa-subtle)]">
@@ -441,14 +441,14 @@ export default function Register({ passwordRules }: Props) {
                                 {processing && <Spinner />}
 
                                 {processing
-                                    ? "Membuat akun..."
-                                    : "Daftar dan Lanjutkan"}
+                                    ? 'Membuat akun...'
+                                    : 'Daftar dan Lanjutkan'}
                             </Button>
 
                             {/* LINK LOGIN */}
 
                             <p className="text-center text-sm text-[(--karsa-muted)]">
-                                Sudah memiliki akun?{" "}
+                                Sudah memiliki akun?{' '}
                                 <TextLink href={login()} tabIndex={8}>
                                     Masuk di sini
                                 </TextLink>
@@ -466,6 +466,6 @@ export default function Register({ passwordRules }: Props) {
 // ========================================
 
 Register.layout = {
-    title: "Buat akun KarsaNusa",
-    description: "Pilih peran dan lengkapi data pendaftaran untuk memulai.",
+    title: 'Buat akun KarsaNusa',
+    description: 'Pilih peran dan lengkapi data pendaftaran untuk memulai.',
 };

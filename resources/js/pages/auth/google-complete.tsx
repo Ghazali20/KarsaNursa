@@ -1,6 +1,6 @@
-import { Head, useForm } from "@inertiajs/react";
-import { useState } from "react";
-import type { ChangeEvent, FormEvent } from "react";
+import { Head, useForm } from '@inertiajs/react';
+import { useState } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
 
 // ========================================
 // TIPE DATA
@@ -11,9 +11,9 @@ type Props = {
     googleEmail: string;
 };
 
-type Role = "worker" | "employer";
+type Role = 'worker' | 'employer';
 
-type UploadField = "worker_identity_document" | "business_document";
+type UploadField = 'worker_identity_document' | 'business_document';
 
 // ========================================
 // KONFIGURASI UPLOAD
@@ -21,10 +21,10 @@ type UploadField = "worker_identity_document" | "business_document";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-const ALLOWED_MIME_TYPES = ["application/pdf", "image/jpeg", "image/png"];
+const ALLOWED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 
 const FILE_ERROR =
-    "Format file harus PDF, JPG, atau PNG dengan ukuran maksimal 5 MB.";
+    'Format file harus PDF, JPG, atau PNG dengan ukuran maksimal 5 MB.';
 
 // ========================================
 // CSS RESPONSIVE
@@ -33,15 +33,15 @@ const FILE_ERROR =
 const inputClass = (hasError?: boolean) =>
     `mt-1.5 w-full min-w-0 rounded-lg border ${
         hasError
-            ? "border-red-300 bg-red-50/30 text-slate-900 focus:border-red-500 focus:ring-red-100"
-            : "border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:ring-blue-100"
+            ? 'border-red-300 bg-red-50/30 text-slate-900 focus:border-red-500 focus:ring-red-100'
+            : 'border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:ring-blue-100'
     } px-3 py-2.5 text-sm outline-none transition focus:ring-2`;
 
-const labelClass = "block text-sm font-medium text-slate-700";
+const labelClass = 'block text-sm font-medium text-slate-700';
 
 const uploadClass = (hasError?: boolean) =>
     `mt-1.5 block w-full min-w-0 cursor-pointer overflow-hidden rounded-lg border ${
-        hasError ? "border-red-300 bg-red-50/20" : "border-slate-300 bg-white"
+        hasError ? 'border-red-300 bg-red-50/20' : 'border-slate-300 bg-white'
     } text-xs text-slate-600 file:mr-3 file:cursor-pointer file:border-0 file:border-r file:border-slate-200 file:bg-slate-50 file:px-3 file:py-3 file:text-xs file:font-semibold file:text-blue-700 hover:file:bg-blue-50 focus:outline-none`;
 
 // ========================================
@@ -109,25 +109,25 @@ function DocumentUpload({
 
 export default function GoogleComplete({ googleName, googleEmail }: Props) {
     const { data, setData, post, processing, errors, clearErrors } = useForm({
-        role: "worker" as Role,
-        phone: "",
+        role: 'worker' as Role,
+        phone: '',
 
         // Data Pencari Kerja
-        worker_identity_type: "ktp",
+        worker_identity_type: 'ktp',
         worker_identity_document: null as File | null,
-        worker_address: "",
+        worker_address: '',
 
         // Data Pemilik UMKM
-        business_name: "",
-        business_document_type: "nib",
+        business_name: '',
+        business_document_type: 'nib',
         business_document: null as File | null,
-        business_category: "",
-        business_address: "",
+        business_category: '',
+        business_address: '',
     });
 
     // Error file dari validasi browser
-    const [workerFileError, setWorkerFileError] = useState("");
-    const [businessFileError, setBusinessFileError] = useState("");
+    const [workerFileError, setWorkerFileError] = useState('');
+    const [businessFileError, setBusinessFileError] = useState('');
 
     const errMap = errors as Record<string, string | undefined>;
 
@@ -160,31 +160,31 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
 
     // Kumpulan field yang sedang aktif di layar formulir
     const activeFieldKeys = new Set(
-        data.role === "worker"
+        data.role === 'worker'
             ? [
-                  "phone",
-                  "role",
-                  "worker_identity_type",
-                  "identity_type",
-                  "worker_identity_document",
-                  "document",
-                  "verification_document",
-                  "worker_address",
-                  "address",
+                  'phone',
+                  'role',
+                  'worker_identity_type',
+                  'identity_type',
+                  'worker_identity_document',
+                  'document',
+                  'verification_document',
+                  'worker_address',
+                  'address',
               ]
             : [
-                  "phone",
-                  "role",
-                  "business_name",
-                  "business_category",
-                  "business_document_type",
-                  "document_type",
-                  "identity_type",
-                  "business_document",
-                  "document",
-                  "verification_document",
-                  "business_address",
-                  "address",
+                  'phone',
+                  'role',
+                  'business_name',
+                  'business_category',
+                  'business_document_type',
+                  'document_type',
+                  'identity_type',
+                  'business_document',
+                  'document',
+                  'verification_document',
+                  'business_address',
+                  'address',
               ],
     );
 
@@ -198,11 +198,11 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
     // ========================================
 
     function changeRole(role: Role) {
-        setData("role", role);
+        setData('role', role);
 
         clearErrors();
-        setWorkerFileError("");
-        setBusinessFileError("");
+        setWorkerFileError('');
+        setBusinessFileError('');
     }
 
     // ========================================
@@ -216,13 +216,13 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
         const file = event.currentTarget.files?.[0] ?? null;
 
         const setFileError =
-            field === "worker_identity_document"
+            field === 'worker_identity_document'
                 ? setWorkerFileError
                 : setBusinessFileError;
 
         if (!file) {
             setData(field, null);
-            setFileError("");
+            setFileError('');
             return;
         }
 
@@ -230,26 +230,26 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
         const extensionValid = /\.(pdf|jpe?g|png)$/i.test(file.name);
 
         const mimeValid =
-            file.type === "" || ALLOWED_MIME_TYPES.includes(file.type);
+            file.type === '' || ALLOWED_MIME_TYPES.includes(file.type);
 
         if (!extensionValid || !mimeValid) {
             setData(field, null);
             setFileError(FILE_ERROR);
-            event.currentTarget.value = "";
+            event.currentTarget.value = '';
             return;
         }
 
         // Maksimal 5 MB
         if (file.size > MAX_FILE_SIZE) {
             setData(field, null);
-            setFileError("Ukuran dokumen tidak boleh melebihi 5 MB.");
-            event.currentTarget.value = "";
+            setFileError('Ukuran dokumen tidak boleh melebihi 5 MB.');
+            event.currentTarget.value = '';
             return;
         }
 
         // File valid
         setData(field, file);
-        setFileError("");
+        setFileError('');
         clearErrors(field);
     }
 
@@ -260,19 +260,19 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        if (data.role === "worker" && !data.worker_identity_document) {
-            setWorkerFileError("Dokumen KTP atau KTM wajib diunggah.");
+        if (data.role === 'worker' && !data.worker_identity_document) {
+            setWorkerFileError('Dokumen KTP atau KTM wajib diunggah.');
             return;
         }
 
-        if (data.role === "employer" && !data.business_document) {
+        if (data.role === 'employer' && !data.business_document) {
             setBusinessFileError(
-                "Dokumen NIB atau Surat Usaha wajib diunggah.",
+                'Dokumen NIB atau Surat Usaha wajib diunggah.',
             );
             return;
         }
 
-        post("/auth/google/complete", {
+        post('/auth/google/complete', {
             forceFormData: true,
             preserveScroll: true,
         });
@@ -363,8 +363,8 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                                 maxLength={20}
                                 value={data.phone}
                                 onChange={(event) => {
-                                    setData("phone", event.target.value);
-                                    if (errors.phone) clearErrors("phone");
+                                    setData('phone', event.target.value);
+                                    if (errors.phone) clearErrors('phone');
                                 }}
                                 placeholder="08xxxxxxxxxx"
                                 className={inputClass(Boolean(phoneError))}
@@ -378,7 +378,7 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                         PROFIL PENCARI KERJA
                     ===================================== */}
 
-                    {data.role === "worker" && (
+                    {data.role === 'worker' && (
                         <section className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
                             <div className="mb-3">
                                 <h2 className="text-base font-semibold text-slate-900">
@@ -408,19 +408,21 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                                             value={data.worker_identity_type}
                                             onChange={(event) => {
                                                 setData(
-                                                    "worker_identity_type",
+                                                    'worker_identity_type',
                                                     event.target.value,
                                                 );
                                                 if (
                                                     errors.worker_identity_type
                                                 ) {
                                                     clearErrors(
-                                                        "worker_identity_type",
+                                                        'worker_identity_type',
                                                     );
                                                 }
                                             }}
                                             className={inputClass(
-                                                Boolean(workerIdentityTypeError),
+                                                Boolean(
+                                                    workerIdentityTypeError,
+                                                ),
                                             )}
                                         >
                                             <option value="ktp">KTP</option>
@@ -440,7 +442,7 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                                         onChange={(event) =>
                                             handleFileChange(
                                                 event,
-                                                "worker_identity_document",
+                                                'worker_identity_document',
                                             )
                                         }
                                     />
@@ -464,11 +466,11 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                                         value={data.worker_address}
                                         onChange={(event) => {
                                             setData(
-                                                "worker_address",
+                                                'worker_address',
                                                 event.target.value,
                                             );
                                             if (errors.worker_address) {
-                                                clearErrors("worker_address");
+                                                clearErrors('worker_address');
                                             }
                                         }}
                                         placeholder="Alamat tempat tinggal"
@@ -477,9 +479,7 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                                         )}
                                     />
 
-                                    <FieldError
-                                        message={workerAddressError}
-                                    />
+                                    <FieldError message={workerAddressError} />
                                 </div>
                             </div>
                         </section>
@@ -489,7 +489,7 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                         PROFIL PEMILIK UMKM
                     ===================================== */}
 
-                    {data.role === "employer" && (
+                    {data.role === 'employer' && (
                         <section className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
                             <div className="mb-3">
                                 <h2 className="text-base font-semibold text-slate-900">
@@ -521,12 +521,12 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                                             value={data.business_name}
                                             onChange={(event) => {
                                                 setData(
-                                                    "business_name",
+                                                    'business_name',
                                                     event.target.value,
                                                 );
                                                 if (errors.business_name) {
                                                     clearErrors(
-                                                        "business_name",
+                                                        'business_name',
                                                     );
                                                 }
                                             }}
@@ -557,12 +557,12 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                                             value={data.business_category}
                                             onChange={(event) => {
                                                 setData(
-                                                    "business_category",
+                                                    'business_category',
                                                     event.target.value,
                                                 );
                                                 if (errors.business_category) {
                                                     clearErrors(
-                                                        "business_category",
+                                                        'business_category',
                                                     );
                                                 }
                                             }}
@@ -595,14 +595,14 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                                             value={data.business_document_type}
                                             onChange={(event) => {
                                                 setData(
-                                                    "business_document_type",
+                                                    'business_document_type',
                                                     event.target.value,
                                                 );
                                                 if (
                                                     errors.business_document_type
                                                 ) {
                                                     clearErrors(
-                                                        "business_document_type",
+                                                        'business_document_type',
                                                     );
                                                 }
                                             }}
@@ -631,7 +631,7 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                                         onChange={(event) =>
                                             handleFileChange(
                                                 event,
-                                                "business_document",
+                                                'business_document',
                                             )
                                         }
                                     />
@@ -655,11 +655,11 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                                         value={data.business_address}
                                         onChange={(event) => {
                                             setData(
-                                                "business_address",
+                                                'business_address',
                                                 event.target.value,
                                             );
                                             if (errors.business_address) {
-                                                clearErrors("business_address");
+                                                clearErrors('business_address');
                                             }
                                         }}
                                         placeholder="Alamat lokasi usaha"
@@ -700,12 +700,12 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                                 <div className="flex-1 space-y-1.5">
                                     <p className="font-semibold text-red-800">
                                         {unboundErrors.length > 0
-                                            ? "Pendaftaran belum dapat diproses:"
-                                            : "Periksa kembali data pendaftaran:"}
+                                            ? 'Pendaftaran belum dapat diproses:'
+                                            : 'Periksa kembali data pendaftaran:'}
                                     </p>
 
                                     {unboundErrors.length > 0 && (
-                                        <ul className="list-disc pl-4 space-y-1 text-xs text-red-700">
+                                        <ul className="list-disc space-y-1 pl-4 text-xs text-red-700">
                                             {unboundErrors.map(([key, msg]) => (
                                                 <li
                                                     key={key}
@@ -722,8 +722,8 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                                     ) && (
                                         <p className="text-xs text-red-600">
                                             {unboundErrors.length > 0
-                                                ? "Silakan periksa juga kolom input yang ditandai merah di bawah."
-                                                : "Terdapat kesalahan pada isian formulir di bawah. Silakan periksa pesan error pada kolom yang bersangkutan."}
+                                                ? 'Silakan periksa juga kolom input yang ditandai merah di bawah.'
+                                                : 'Terdapat kesalahan pada isian formulir di bawah. Silakan periksa pesan error pada kolom yang bersangkutan.'}
                                         </p>
                                     )}
                                 </div>
@@ -739,8 +739,8 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
                         className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {processing
-                            ? "Memproses Pendaftaran..."
-                            : "Selesaikan Pendaftaran"}
+                            ? 'Memproses Pendaftaran...'
+                            : 'Selesaikan Pendaftaran'}
                     </button>
 
                     <p className="text-center text-xs text-slate-500">
@@ -757,7 +757,7 @@ export default function GoogleComplete({ googleName, googleEmail }: Props) {
 // ========================================
 
 GoogleComplete.layout = {
-    title: "Lengkapi Pendaftaran Google",
+    title: 'Lengkapi Pendaftaran Google',
     description:
-        "Pilih peran dan lengkapi profil untuk melanjutkan ke KarsaNursa.",
+        'Pilih peran dan lengkapi profil untuk melanjutkan ke KarsaNursa.',
 };

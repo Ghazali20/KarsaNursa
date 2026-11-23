@@ -1,10 +1,8 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    ArrowRight,
     Bell,
     Briefcase,
     Check,
-    CheckCircle2,
     ChevronDown,
     ClipboardPlus,
     Clock,
@@ -14,14 +12,11 @@ import {
     LayoutGrid,
     LogOut,
     Mail,
-    MapPin,
     Menu,
     MessageSquare,
     Phone,
-    ShieldAlert,
     ShieldCheck,
     Star,
-    UserCheck,
     UserRound,
     Users,
     WalletCards,
@@ -119,7 +114,7 @@ function formatRupiah(value: number): string {
 
 export default function EmployerApplicationsIndex({
     stats,
-    applications = [],
+    applications,
 }: Props) {
     const pageProps = usePage().props as unknown as {
         auth?: {
@@ -147,17 +142,23 @@ export default function EmployerApplicationsIndex({
     const [processingId, setProcessingId] = useState<number | null>(null);
 
     // Modal Tolak State
-    const [rejectTarget, setRejectTarget] = useState<ApplicationItem | null>(null);
+    const [rejectTarget, setRejectTarget] = useState<ApplicationItem | null>(
+        null,
+    );
     const [rejectReason, setRejectReason] = useState(
         'Kualifikasi pelamar belum sesuai dengan kebutuhan tugas saat ini.',
     );
     const [rejectError, setRejectError] = useState<string | null>(null);
 
     // Modal Profil Detail State
-    const [profileTarget, setProfileTarget] = useState<ApplicationItem | null>(null);
+    const [profileTarget, setProfileTarget] = useState<ApplicationItem | null>(
+        null,
+    );
 
     // Filter Status Aktif: default 'pending' (hanya pelamar yang perlu ditinjau)
-    const [statusFilter, setStatusFilter] = useState<'pending' | 'all'>('pending');
+    const [statusFilter, setStatusFilter] = useState<'pending' | 'all'>(
+        'pending',
+    );
 
     const pendingCount = stats?.pending ?? 0;
 
@@ -192,14 +193,19 @@ export default function EmployerApplicationsIndex({
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    toast.success(`Pelamar ${application.workerName} diterima!`, {
-                        description: `Kuota tugas "${application.taskTitle}" telah diperbarui.`,
-                    });
+                    toast.success(
+                        `Pelamar ${application.workerName} diterima!`,
+                        {
+                            description: `Kuota tugas "${application.taskTitle}" telah diperbarui.`,
+                        },
+                    );
                     router.reload({ only: ['applications', 'stats'] });
                 },
                 onError: (responseErrors) => {
                     toast.error(
-                        responseErrors.application || responseErrors.review_notes || 'Gagal menerima pelamar.',
+                        responseErrors.application ||
+                            responseErrors.review_notes ||
+                            'Gagal menerima pelamar.',
                     );
                 },
                 onFinish: () => setProcessingId(null),
@@ -230,9 +236,13 @@ export default function EmployerApplicationsIndex({
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    toast.error(`Lamaran dari ${rejectTarget.workerName} ditolak.`, {
-                        description: 'Catatan penolakan telah diteruskan ke pekerja.',
-                    });
+                    toast.error(
+                        `Lamaran dari ${rejectTarget.workerName} ditolak.`,
+                        {
+                            description:
+                                'Catatan penolakan telah diteruskan ke pekerja.',
+                        },
+                    );
                     setRejectTarget(null);
                     router.reload({ only: ['applications', 'stats'] });
                 },
@@ -370,7 +380,7 @@ export default function EmployerApplicationsIndex({
                         </div>
 
                         {/* Tombol Kembali ke Beranda di Bagian Bawah */}
-                        <div className="pt-4 border-t border-[#DFE6ED]">
+                        <div className="border-t border-[#DFE6ED] pt-4">
                             <Link
                                 href="/"
                                 className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-[#607087] transition-colors hover:bg-[#F7F9FB] hover:text-[#173765]"
@@ -385,7 +395,7 @@ export default function EmployerApplicationsIndex({
                 {/* ========================================================
                     KONTEN UTAMA (HEADER BAR + DAFTAR KELOLA PELAMAR)
                 ======================================================== */}
-                <div className="flex flex-1 flex-col min-w-0 overflow-y-auto">
+                <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
                     {/* Top Header Bar */}
                     <header className="sticky top-0 z-30 flex h-[72px] shrink-0 items-center justify-between border-b border-[#DFE6ED] bg-white px-4 sm:px-6 lg:px-8">
                         {/* Kiri: Toggle Mobile & Subtitle/Title */}
@@ -403,7 +413,7 @@ export default function EmployerApplicationsIndex({
                                 <p className="text-[11px] font-medium text-[#93A2B5]">
                                     Dashboard UMKM
                                 </p>
-                                <h2 className="text-sm sm:text-base font-bold text-[#17233A]">
+                                <h2 className="text-sm font-bold text-[#17233A] sm:text-base">
                                     Kelola operasional usahamu
                                 </h2>
                             </div>
@@ -451,9 +461,9 @@ export default function EmployerApplicationsIndex({
                                 <DropdownMenuContent
                                     align="end"
                                     sideOffset={8}
-                                    className="w-56 border border-[#DFE6ED] bg-white p-1.5 shadow-lg rounded-xl"
+                                    className="w-56 rounded-xl border border-[#DFE6ED] bg-white p-1.5 shadow-lg"
                                 >
-                                    <div className="px-3 py-2 sm:hidden border-b border-[#DFE6ED] mb-1">
+                                    <div className="mb-1 border-b border-[#DFE6ED] px-3 py-2 sm:hidden">
                                         <p className="text-xs font-bold text-[#17233A]">
                                             {user.name}
                                         </p>
@@ -503,29 +513,30 @@ export default function EmployerApplicationsIndex({
                     {/* ========================================================
                         AREA KONTEN: HALAMAN KELOLA PELAMAR
                     ======================================================== */}
-                    <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 space-y-6 max-w-7xl w-full mx-auto">
+                    <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
                         {/* ========================================================
                             2. HEADER HALAMAN
                         ======================================================== */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                             <div>
-                                <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#173765]">
+                                <p className="text-[10px] font-bold tracking-[0.14em] text-[#173765] uppercase">
                                     APPLICANT MANAGEMENT
                                 </p>
 
-                                <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-[#17233A]">
+                                <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#17233A] sm:text-3xl">
                                     Kelola pelamar
                                 </h1>
 
-                                <p className="mt-1 text-xs sm:text-sm text-[#607087]">
+                                <p className="mt-1 text-xs text-[#607087] sm:text-sm">
                                     Bandingkan profil, riwayat kerja, dan
-                                    reputasi pekerja sebelum mengambil keputusan.
+                                    reputasi pekerja sebelum mengambil
+                                    keputusan.
                                 </p>
                             </div>
 
                             {/* Kanan: Badge Pill Status Antrean */}
                             <div className="flex items-center gap-3">
-                                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF4E8] px-3.5 py-1.5 text-xs font-bold text-[#D98A48] border border-[#D98A48]/20">
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D98A48]/20 bg-[#FFF4E8] px-3.5 py-1.5 text-xs font-bold text-[#D98A48]">
                                     <span className="size-1.5 rounded-full bg-[#D98A48]" />
                                     <span>{pendingCount} Perlu Ditinjau</span>
                                 </span>
@@ -537,7 +548,7 @@ export default function EmployerApplicationsIndex({
                             <button
                                 type="button"
                                 onClick={() => setStatusFilter('pending')}
-                                className={`rounded-lg px-3.5 py-1.5 transition cursor-pointer ${
+                                className={`cursor-pointer rounded-lg px-3.5 py-1.5 transition ${
                                     statusFilter === 'pending'
                                         ? 'bg-[#173765] text-white shadow-xs'
                                         : 'text-[#607087] hover:bg-white hover:text-[#17233A]'
@@ -548,7 +559,7 @@ export default function EmployerApplicationsIndex({
                             <button
                                 type="button"
                                 onClick={() => setStatusFilter('all')}
-                                className={`rounded-lg px-3.5 py-1.5 transition cursor-pointer ${
+                                className={`cursor-pointer rounded-lg px-3.5 py-1.5 transition ${
                                     statusFilter === 'all'
                                         ? 'bg-[#173765] text-white shadow-xs'
                                         : 'text-[#607087] hover:bg-white hover:text-[#17233A]'
@@ -586,7 +597,7 @@ export default function EmployerApplicationsIndex({
                             </div>
                         ) : (
                             /* KARTU DAFTAR PELAMAR */
-                            <div className="overflow-hidden rounded-2xl border border-[#DFE6ED] bg-white shadow-xs divide-y divide-[#DFE6ED]">
+                            <div className="divide-y divide-[#DFE6ED] overflow-hidden rounded-2xl border border-[#DFE6ED] bg-white shadow-xs">
                                 {filteredApplications.map((application) => {
                                     const isPending =
                                         application.status === 'pending';
@@ -600,7 +611,11 @@ export default function EmployerApplicationsIndex({
                                         application.skills &&
                                         application.skills.length > 0
                                             ? application.skills
-                                            : ['Ketelitian', 'Operasional', 'Kerja Tim'];
+                                            : [
+                                                  'Ketelitian',
+                                                  'Operasional',
+                                                  'Kerja Tim',
+                                              ];
                                     const appliedTime =
                                         application.appliedAtHuman ||
                                         (application.appliedAt
@@ -610,12 +625,12 @@ export default function EmployerApplicationsIndex({
                                     return (
                                         <div
                                             key={application.id}
-                                            className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 p-5 sm:p-6 transition hover:bg-[#F7F9FB]/40"
+                                            className="flex flex-col justify-between gap-5 p-5 transition hover:bg-[#F7F9FB]/40 sm:p-6 lg:flex-row lg:items-center"
                                         >
                                             {/* ========================================
                                                 BAGIAN KIRI: IDENTITAS & REPUTASI
                                             ======================================== */}
-                                            <div className="flex items-start gap-4 min-w-[280px]">
+                                            <div className="flex min-w-[280px] items-start gap-4">
                                                 {/* Avatar Inisial Lingkaran Soft Cyan */}
                                                 <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#D8F1F6] text-sm font-bold text-[#173765]">
                                                     {application.workerInitials ||
@@ -627,7 +642,7 @@ export default function EmployerApplicationsIndex({
                                                 <div className="space-y-1">
                                                     {/* Baris 1: Nama Lengkap + Ikon Centang Perisai */}
                                                     <div className="flex items-center gap-1.5">
-                                                        <h3 className="text-sm sm:text-base font-bold text-[#17233A]">
+                                                        <h3 className="text-sm font-bold text-[#17233A] sm:text-base">
                                                             {
                                                                 application.workerName
                                                             }
@@ -647,13 +662,13 @@ export default function EmployerApplicationsIndex({
                                                             •
                                                         </span>
                                                         <span>
-                                                            {completed}{' '}
-                                                            tugas selesai
+                                                            {completed} tugas
+                                                            selesai
                                                         </span>
                                                     </div>
 
                                                     {/* Baris 3: Daftar Keahlian */}
-                                                    <p className="text-xs text-[#93A2B5] font-medium">
+                                                    <p className="text-xs font-medium text-[#93A2B5]">
                                                         Keahlian:{' '}
                                                         <span className="text-[#607087]">
                                                             {skills.join(' · ')}
@@ -665,34 +680,44 @@ export default function EmployerApplicationsIndex({
                                             {/* ========================================
                                                 BAGIAN TENGAH: INFO TUGAS YANG DILAMAR
                                             ======================================== */}
-                                            <div className="flex-1 lg:border-l lg:border-[#DFE6ED] lg:pl-6 space-y-1">
-                                                <p className="text-[10px] font-bold tracking-wider uppercase text-[#93A2B5]">
+                                            <div className="flex-1 space-y-1 lg:border-l lg:border-[#DFE6ED] lg:pl-6">
+                                                <p className="text-[10px] font-bold tracking-wider text-[#93A2B5] uppercase">
                                                     MELAMAR UNTUK
                                                 </p>
-                                                <h4 className="text-xs sm:text-sm font-semibold text-[#17233A] line-clamp-1">
+                                                <h4 className="line-clamp-1 text-xs font-semibold text-[#17233A] sm:text-sm">
                                                     {application.taskTitle}
                                                 </h4>
-                                                <p className="text-xs text-[#93A2B5] flex items-center gap-1">
+                                                <p className="flex items-center gap-1 text-xs text-[#93A2B5]">
                                                     <Clock className="size-3 text-[#93A2B5]" />
                                                     {appliedTime}
                                                 </p>
 
                                                 {/* Catatan / Pesan Pengajuan jika ada */}
-                                                {(application.applicantNote || application.message) && (
-                                                    <p className="text-xs text-[#21477F] italic bg-[#F0F8FB] border border-[#D8F1F6] px-2.5 py-1.5 rounded-lg line-clamp-2">
-                                                        "{application.applicantNote || application.message}"
+                                                {(application.applicantNote ||
+                                                    application.message) && (
+                                                    <p className="line-clamp-2 rounded-lg border border-[#D8F1F6] bg-[#F0F8FB] px-2.5 py-1.5 text-xs text-[#21477F] italic">
+                                                        "
+                                                        {application.applicantNote ||
+                                                            application.message}
+                                                        "
                                                     </p>
                                                 )}
                                                 {application.qualificationDocumentUrl && (
                                                     <div className="pt-0.5">
                                                         <a
-                                                            href={application.qualificationDocumentUrl}
+                                                            href={
+                                                                application.qualificationDocumentUrl
+                                                            }
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="inline-flex items-center gap-1 text-[11px] font-bold text-[#173765] hover:underline"
                                                         >
                                                             <FileCheck className="size-3 text-[#173765]" />
-                                                            <span>Dokumen Kualifikasi Terlampir</span>
+                                                            <span>
+                                                                Dokumen
+                                                                Kualifikasi
+                                                                Terlampir
+                                                            </span>
                                                         </a>
                                                     </div>
                                                 )}
@@ -701,7 +726,7 @@ export default function EmployerApplicationsIndex({
                                             {/* ========================================
                                                 BAGIAN KANAN: 3 TOMBOL AKSI HORIZONTAL
                                             ======================================== */}
-                                            <div className="flex flex-wrap items-center gap-2.5 shrink-0 pt-2 lg:pt-0">
+                                            <div className="flex shrink-0 flex-wrap items-center gap-2.5 pt-2 lg:pt-0">
                                                 {/* Tombol Lihat Profil */}
                                                 <button
                                                     type="button"
@@ -710,7 +735,7 @@ export default function EmployerApplicationsIndex({
                                                             application,
                                                         )
                                                     }
-                                                    className="rounded-xl px-3.5 py-2 text-xs font-semibold text-[#607087] transition hover:bg-[#F7F9FB] hover:text-[#17233A] cursor-pointer"
+                                                    className="cursor-pointer rounded-xl px-3.5 py-2 text-xs font-semibold text-[#607087] transition hover:bg-[#F7F9FB] hover:text-[#17233A]"
                                                 >
                                                     Lihat Profil
                                                 </button>
@@ -731,7 +756,7 @@ export default function EmployerApplicationsIndex({
                                                                     null,
                                                                 );
                                                             }}
-                                                            className="rounded-xl bg-[#FFF1F2] px-4 py-2 text-xs font-bold text-[#EF4444] transition hover:bg-[#FEE2E2] disabled:opacity-50 cursor-pointer"
+                                                            className="cursor-pointer rounded-xl bg-[#FFF1F2] px-4 py-2 text-xs font-bold text-[#EF4444] transition hover:bg-[#FEE2E2] disabled:opacity-50"
                                                         >
                                                             Tolak
                                                         </button>
@@ -747,7 +772,7 @@ export default function EmployerApplicationsIndex({
                                                                     application,
                                                                 )
                                                             }
-                                                            className="inline-flex items-center gap-1.5 rounded-xl bg-[#173765] px-4.5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-[#21477F] disabled:opacity-50 cursor-pointer"
+                                                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#173765] px-4.5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-[#21477F] disabled:opacity-50"
                                                         >
                                                             <Check className="size-3.5" />
                                                             <span>
@@ -787,7 +812,7 @@ export default function EmployerApplicationsIndex({
             ======================================================== */}
             {profileTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-                    <div className="w-full max-w-md rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-2xl space-y-4">
+                    <div className="w-full max-w-md space-y-4 rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-2xl">
                         <div className="flex items-center justify-between border-b border-[#DFE6ED] pb-3">
                             <h3 className="text-base font-bold text-[#17233A]">
                                 Detail Profil Pelamar
@@ -824,7 +849,9 @@ export default function EmployerApplicationsIndex({
                                     {profileTarget.workerPhone && (
                                         <p className="flex items-center gap-1">
                                             <Phone className="size-3 text-[#93A2B5]" />
-                                            <span>{profileTarget.workerPhone}</span>
+                                            <span>
+                                                {profileTarget.workerPhone}
+                                            </span>
                                         </p>
                                     )}
                                 </div>
@@ -832,24 +859,30 @@ export default function EmployerApplicationsIndex({
                         </div>
 
                         {/* Kotak Rincian Profil */}
-                        <div className="rounded-xl border border-[#DFE6ED] bg-[#F7F9FB] p-4 space-y-2.5 text-xs">
-                            <div className="flex justify-between items-center">
-                                <span className="text-[#93A2B5]">Reputasi Pekerja:</span>
-                                <span className="font-bold text-[#17233A] flex items-center gap-1">
+                        <div className="space-y-2.5 rounded-xl border border-[#DFE6ED] bg-[#F7F9FB] p-4 text-xs">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[#93A2B5]">
+                                    Reputasi Pekerja:
+                                </span>
+                                <span className="flex items-center gap-1 font-bold text-[#17233A]">
                                     <Star className="size-3.5 fill-[#D98A48] text-[#D98A48]" />
                                     {profileTarget.rating || '4.9'}
                                 </span>
                             </div>
 
-                            <div className="flex justify-between items-center">
-                                <span className="text-[#93A2B5]">Tugas Terselesaikan:</span>
+                            <div className="flex items-center justify-between">
+                                <span className="text-[#93A2B5]">
+                                    Tugas Terselesaikan:
+                                </span>
                                 <span className="font-bold text-[#17233A]">
                                     {profileTarget.completedTasks ?? 0} tugas
                                 </span>
                             </div>
 
-                            <div className="flex justify-between items-center">
-                                <span className="text-[#93A2B5]">Status Akun:</span>
+                            <div className="flex items-center justify-between">
+                                <span className="text-[#93A2B5]">
+                                    Status Akun:
+                                </span>
                                 <span className="font-semibold text-[#173765]">
                                     {profileTarget.isVerified
                                         ? 'Terverifikasi'
@@ -857,9 +890,11 @@ export default function EmployerApplicationsIndex({
                                 </span>
                             </div>
 
-                            <div className="flex justify-between items-start gap-2">
-                                <span className="text-[#93A2B5] shrink-0">Keahlian:</span>
-                                <span className="font-bold text-[#17233A] text-right">
+                            <div className="flex items-start justify-between gap-2">
+                                <span className="shrink-0 text-[#93A2B5]">
+                                    Keahlian:
+                                </span>
+                                <span className="text-right font-bold text-[#17233A]">
                                     {profileTarget.skills &&
                                     profileTarget.skills.length > 0
                                         ? profileTarget.skills.join(', ')
@@ -868,23 +903,29 @@ export default function EmployerApplicationsIndex({
                             </div>
 
                             {profileTarget.workerAddress && (
-                                <div className="flex justify-between items-start gap-2">
-                                    <span className="text-[#93A2B5] shrink-0">Alamat:</span>
-                                    <span className="font-medium text-[#17233A] text-right line-clamp-2">
+                                <div className="flex items-start justify-between gap-2">
+                                    <span className="shrink-0 text-[#93A2B5]">
+                                        Alamat:
+                                    </span>
+                                    <span className="line-clamp-2 text-right font-medium text-[#17233A]">
                                         {profileTarget.workerAddress}
                                     </span>
                                 </div>
                             )}
 
-                            <div className="border-t border-[#DFE6ED] pt-2 flex justify-between items-center">
-                                <span className="text-[#93A2B5]">Tugas yang Dilamar:</span>
-                                <span className="font-bold text-[#17233A] text-right max-w-[200px] truncate">
+                            <div className="flex items-center justify-between border-t border-[#DFE6ED] pt-2">
+                                <span className="text-[#93A2B5]">
+                                    Tugas yang Dilamar:
+                                </span>
+                                <span className="max-w-[200px] truncate text-right font-bold text-[#17233A]">
                                     {profileTarget.taskTitle}
                                 </span>
                             </div>
 
-                            <div className="flex justify-between items-center">
-                                <span className="text-[#93A2B5]">Upah Bersih:</span>
+                            <div className="flex items-center justify-between">
+                                <span className="text-[#93A2B5]">
+                                    Upah Bersih:
+                                </span>
                                 <span className="font-bold text-[#173765]">
                                     {formatRupiah(profileTarget.wageAmount)}
                                 </span>
@@ -892,29 +933,35 @@ export default function EmployerApplicationsIndex({
                         </div>
 
                         {/* Pesan Lamaran dari Pekerja jika ada */}
-                        {(profileTarget.applicantNote || profileTarget.message) && (
+                        {(profileTarget.applicantNote ||
+                            profileTarget.message) && (
                             <div>
-                                <p className="text-[11px] font-bold text-[#173765] mb-1 flex items-center gap-1.5">
+                                <p className="mb-1 flex items-center gap-1.5 text-[11px] font-bold text-[#173765]">
                                     <MessageSquare className="size-3.5 text-[#173765]" />
                                     <span>Catatan Pengajuan Pelamar:</span>
                                 </p>
-                                <p className="text-xs text-[#21477F] italic bg-[#F0F8FB] border border-[#D8F1F6] p-2.5 rounded-xl whitespace-pre-line leading-relaxed">
-                                    "{profileTarget.applicantNote || profileTarget.message}"
+                                <p className="rounded-xl border border-[#D8F1F6] bg-[#F0F8FB] p-2.5 text-xs leading-relaxed whitespace-pre-line text-[#21477F] italic">
+                                    "
+                                    {profileTarget.applicantNote ||
+                                        profileTarget.message}
+                                    "
                                 </p>
                             </div>
                         )}
 
                         {profileTarget.qualificationDocumentUrl && (
-                            <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-[#D8F1F6] bg-[#F0F8FB]">
-                                <span className="text-xs font-semibold text-[#607087] flex items-center gap-1.5">
+                            <div className="flex items-center justify-between gap-2 rounded-xl border border-[#D8F1F6] bg-[#F0F8FB] p-2.5">
+                                <span className="flex items-center gap-1.5 text-xs font-semibold text-[#607087]">
                                     <FileCheck className="size-4 text-[#173765]" />
                                     <span>Dokumen / Portofolio Pendukung</span>
                                 </span>
                                 <a
-                                    href={profileTarget.qualificationDocumentUrl}
+                                    href={
+                                        profileTarget.qualificationDocumentUrl
+                                    }
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#173765] bg-white px-2.5 py-1 text-xs font-bold text-[#173765] hover:bg-[#173765] hover:text-white transition"
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#173765] bg-white px-2.5 py-1 text-xs font-bold text-[#173765] transition hover:bg-[#173765] hover:text-white"
                                 >
                                     <Eye className="size-3.5" />
                                     <span>Lihat Dokumen</span>
@@ -922,7 +969,7 @@ export default function EmployerApplicationsIndex({
                             </div>
                         )}
 
-                        <div className="flex justify-end gap-2 pt-2 border-t border-[#DFE6ED]">
+                        <div className="flex justify-end gap-2 border-t border-[#DFE6ED] pt-2">
                             <button
                                 type="button"
                                 onClick={() => setProfileTarget(null)}
@@ -938,7 +985,7 @@ export default function EmployerApplicationsIndex({
                                         setProfileTarget(null);
                                         handleAccept(target);
                                     }}
-                                    className="rounded-xl bg-[#173765] px-4 py-2 text-xs font-bold text-white hover:bg-[#21477F] shadow-xs cursor-pointer"
+                                    className="cursor-pointer rounded-xl bg-[#173765] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#21477F]"
                                 >
                                     Terima Pekerja
                                 </button>
@@ -953,7 +1000,7 @@ export default function EmployerApplicationsIndex({
             ======================================================== */}
             {rejectTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-                    <div className="w-full max-w-md rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-2xl space-y-4">
+                    <div className="w-full max-w-md space-y-4 rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-2xl">
                         <div className="flex items-center justify-between border-b border-[#DFE6ED] pb-3">
                             <h3 className="text-base font-bold text-[#17233A]">
                                 Tolak Lamaran Pekerja
@@ -979,12 +1026,14 @@ export default function EmployerApplicationsIndex({
                                 untuk tugas{' '}
                                 <strong className="text-[#17233A]">
                                     {rejectTarget.taskTitle}
-                                </strong>.
+                                </strong>
+                                .
                             </p>
 
                             <div className="mt-3">
-                                <label className="block text-xs font-semibold text-[#17233A] mb-1">
-                                    Alasan Penolakan <span className="text-red-500">*</span>
+                                <label className="mb-1 block text-xs font-semibold text-[#17233A]">
+                                    Alasan Penolakan{' '}
+                                    <span className="text-red-500">*</span>
                                 </label>
                                 <textarea
                                     value={rejectReason}
@@ -1004,7 +1053,7 @@ export default function EmployerApplicationsIndex({
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#DFE6ED]">
+                        <div className="flex items-center justify-end gap-2 border-t border-[#DFE6ED] pt-2">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -1020,7 +1069,7 @@ export default function EmployerApplicationsIndex({
                                 type="button"
                                 disabled={processingId !== null}
                                 onClick={confirmReject}
-                                className="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50 cursor-pointer"
+                                className="cursor-pointer rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50"
                             >
                                 {processingId !== null
                                     ? 'Menyimpan...'
@@ -1037,7 +1086,11 @@ export default function EmployerApplicationsIndex({
 // ==========================================
 // MENGISOLASI LAYOUT KHUSUS
 // ==========================================
-function EmployerApplicationsLayout({ children }: { children: React.ReactNode }) {
+function EmployerApplicationsLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
     return <>{children}</>;
 }
 

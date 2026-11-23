@@ -1,35 +1,31 @@
-import { Head, Link, router, usePage } from "@inertiajs/react";
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    ArrowRight,
     Bell,
     Briefcase,
-    Calendar,
     ChevronDown,
     ClipboardPlus,
-    Clock,
     Download,
     House,
     LayoutGrid,
     LogOut,
     Menu,
     Receipt,
-    ShieldCheck,
     UserRound,
     Users,
     WalletCards,
     X,
-} from "lucide-react";
-import React, { useState } from "react";
-import { toast } from "sonner";
+} from 'lucide-react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 
-import karsaNusaLogo from "@/assets/karsanusa-logo.png";
+import karsaNusaLogo from '@/assets/karsanusa-logo.png';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 // ==========================================
 // TIPE DATA BUKU PENGELUARAN
@@ -81,18 +77,18 @@ function formatFirstName(name: string): string {
 
 function getInitials(name: string): string {
     const parts = name.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return "KN";
+    if (parts.length === 0) return 'KN';
     return parts
         .slice(0, 2)
         .map((n) => n.charAt(0))
-        .join("")
+        .join('')
         .toUpperCase();
 }
 
 function formatRupiah(value: number): string {
-    return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
         maximumFractionDigits: 0,
     }).format(value);
 }
@@ -103,8 +99,8 @@ function formatRupiah(value: number): string {
 
 export default function EmployerPaymentsIndex({
     stats,
-    availablePeriods = [],
-    transactions = [],
+    availablePeriods,
+    transactions,
 }: EmployerPaymentsProps) {
     const pageProps = usePage().props as unknown as {
         auth?: {
@@ -118,7 +114,7 @@ export default function EmployerPaymentsIndex({
         };
     };
 
-    const user = pageProps.auth?.user ?? { name: "Pemilik UMKM", email: "" };
+    const user = pageProps.auth?.user ?? { name: 'Pemilik UMKM', email: '' };
     const firstName = formatFirstName(user.name);
     const userInitials = getInitials(user.name);
     const businessName = user.business?.name || `${firstName} Official Store`;
@@ -128,18 +124,18 @@ export default function EmployerPaymentsIndex({
     // Fungsi Export CSV
     function exportToCSV() {
         if (transactions.length === 0) {
-            toast.error("Tidak ada data transaksi untuk diunduh.");
+            toast.error('Tidak ada data transaksi untuk diunduh.');
             return;
         }
 
         const headers = [
-            "ID",
-            "Tugas",
-            "Pekerja",
-            "Tanggal",
-            "Jam Kerja",
-            "Upah",
-            "Status",
+            'ID',
+            'Tugas',
+            'Pekerja',
+            'Tanggal',
+            'Jam Kerja',
+            'Upah',
+            'Status',
         ];
         const rows = transactions.map((item) => [
             item.code,
@@ -152,14 +148,14 @@ export default function EmployerPaymentsIndex({
         ]);
 
         const csvContent =
-            "data:text/csv;charset=utf-8,\uFEFF" +
-            [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+            'data:text/csv;charset=utf-8,\uFEFF' +
+            [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
 
         const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
         link.setAttribute(
-            "download",
+            'download',
             `buku-pengeluaran-${stats.selectedMonthKey}.csv`,
         );
         document.body.appendChild(link);
@@ -174,7 +170,7 @@ export default function EmployerPaymentsIndex({
     // Filter Periode Bulan via Inertia
     function handlePeriodChange(monthKey: string) {
         router.get(
-            "/employer/payments",
+            '/employer/payments',
             { month: monthKey },
             {
                 preserveState: true,
@@ -218,14 +214,14 @@ export default function EmployerPaymentsIndex({
 
                 <aside
                     className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-[#DFE6ED] bg-white transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
-                        mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+                        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
                     }`}
                 >
                     {/* Header Sidebar: Brand Logo */}
                     <div className="flex h-[72px] items-center justify-between border-b border-[#DFE6ED] px-6">
                         <Link
                             href="/employer/dashboard"
-                            className="flex items-center gap-2.5 cursor-pointer"
+                            className="flex cursor-pointer items-center gap-2.5"
                         >
                             <img
                                 src={karsaNusaLogo}
@@ -307,7 +303,7 @@ export default function EmployerPaymentsIndex({
                         </div>
 
                         {/* Tombol Kembali ke Beranda di Bagian Bawah */}
-                        <div className="pt-4 border-t border-[#DFE6ED]">
+                        <div className="border-t border-[#DFE6ED] pt-4">
                             <Link
                                 href="/"
                                 className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-[#607087] transition-colors hover:bg-[#F7F9FB] hover:text-[#173765]"
@@ -322,7 +318,7 @@ export default function EmployerPaymentsIndex({
                 {/* ========================================================
                     KONTEN UTAMA (HEADER BAR + HALAMAN BUKU PENGELUARAN)
                 ======================================================== */}
-                <div className="flex flex-1 flex-col min-w-0 overflow-y-auto">
+                <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
                     {/* Top Header Bar */}
                     <header className="sticky top-0 z-30 flex h-[72px] shrink-0 items-center justify-between border-b border-[#DFE6ED] bg-white px-4 sm:px-6 lg:px-8">
                         <div className="flex items-center gap-3 sm:gap-4">
@@ -339,7 +335,7 @@ export default function EmployerPaymentsIndex({
                                 <p className="text-[11px] font-medium text-[#93A2B5]">
                                     Dashboard UMKM
                                 </p>
-                                <h2 className="text-sm sm:text-base font-bold text-[#17233A]">
+                                <h2 className="text-sm font-bold text-[#17233A] sm:text-base">
                                     Kelola operasional usahamu
                                 </h2>
                             </div>
@@ -386,9 +382,9 @@ export default function EmployerPaymentsIndex({
                                 <DropdownMenuContent
                                     align="end"
                                     sideOffset={8}
-                                    className="w-56 border border-[#DFE6ED] bg-white p-1.5 shadow-lg rounded-xl"
+                                    className="w-56 rounded-xl border border-[#DFE6ED] bg-white p-1.5 shadow-lg"
                                 >
-                                    <div className="px-3 py-2 sm:hidden border-b border-[#DFE6ED] mb-1">
+                                    <div className="mb-1 border-b border-[#DFE6ED] px-3 py-2 sm:hidden">
                                         <p className="text-xs font-bold text-[#17233A]">
                                             {user.name}
                                         </p>
@@ -438,17 +434,17 @@ export default function EmployerPaymentsIndex({
                     {/* ========================================================
                         KONTEN BUKU PENGELUARAN
                     ======================================================== */}
-                    <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 space-y-6 max-w-7xl w-full mx-auto">
+                    <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
                         {/* HEADER HALAMAN */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                             <div>
-                                <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-[#173765]">
+                                <p className="text-[10px] font-bold tracking-[0.14em] text-[#173765] uppercase">
                                     OPERATIONAL EXPENSE LEDGER
                                 </p>
-                                <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-[#17233A]">
+                                <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#17233A] sm:text-3xl">
                                     Buku pengeluaran tenaga kerja
                                 </h1>
-                                <p className="mt-1 text-xs sm:text-sm text-[#607087]">
+                                <p className="mt-1 text-xs text-[#607087] sm:text-sm">
                                     Rekap biaya harian dan bulanan untuk
                                     pembukuan internal usaha.
                                 </p>
@@ -458,7 +454,7 @@ export default function EmployerPaymentsIndex({
                             <button
                                 type="button"
                                 onClick={exportToCSV}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#DFE6ED] bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-[#17233A] shadow-xs transition hover:bg-[#F7F9FB] shrink-0 cursor-pointer"
+                                className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#DFE6ED] bg-white px-4 py-2.5 text-xs font-bold text-[#17233A] shadow-xs transition hover:bg-[#F7F9FB] sm:text-sm"
                             >
                                 <span>Unduh CSV</span>
                                 <Download className="size-4 text-[#173765]" />
@@ -466,9 +462,9 @@ export default function EmployerPaymentsIndex({
                         </div>
 
                         {/* 3 KARTU RINGKASAN KPI */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             {/* Kartu 1 — Biaya bulan ini (Dark Card #0D2445) */}
-                            <div className="rounded-2xl bg-[#0D2445] p-5 text-white shadow-sm flex items-center gap-4">
+                            <div className="flex items-center gap-4 rounded-2xl bg-[#0D2445] p-5 text-white shadow-sm">
                                 <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/[0.08] text-[#7DD3E3]">
                                     <WalletCards className="size-6" />
                                 </div>
@@ -476,20 +472,20 @@ export default function EmployerPaymentsIndex({
                                     <p className="text-xs font-medium text-[#93A2B5]">
                                         Biaya bulan terpilih
                                     </p>
-                                    <p className="text-2xl font-bold tracking-tight text-white mt-0.5">
+                                    <p className="mt-0.5 text-2xl font-bold tracking-tight text-white">
                                         {formatRupiah(stats.monthlyExpense)}
                                     </p>
-                                    <p className="text-[11px] text-[#93A2B5] mt-0.5">
+                                    <p className="mt-0.5 text-[11px] text-[#93A2B5]">
                                         {stats.expensePercentageChange >= 0
                                             ? `+${stats.expensePercentageChange}%`
-                                            : `${stats.expensePercentageChange}%`}{" "}
+                                            : `${stats.expensePercentageChange}%`}{' '}
                                         dari {stats.prevMonthLabel}
                                     </p>
                                 </div>
                             </div>
 
                             {/* Kartu 2 — Tugas dibayarkan (White Card) */}
-                            <div className="rounded-2xl border border-[#DFE6ED] bg-white p-5 shadow-xs flex items-center gap-4">
+                            <div className="flex items-center gap-4 rounded-2xl border border-[#DFE6ED] bg-white p-5 shadow-xs">
                                 <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#F0F8FB] text-[#173765]">
                                     <Briefcase className="size-6" />
                                 </div>
@@ -497,17 +493,17 @@ export default function EmployerPaymentsIndex({
                                     <p className="text-xs font-semibold text-[#607087]">
                                         Tugas dibayarkan
                                     </p>
-                                    <p className="text-2xl font-bold text-[#17233A] mt-0.5">
+                                    <p className="mt-0.5 text-2xl font-bold text-[#17233A]">
                                         {stats.paidTasksCount}
                                     </p>
-                                    <p className="text-[11px] text-[#93A2B5] mt-0.5">
+                                    <p className="mt-0.5 text-[11px] text-[#93A2B5]">
                                         {stats.totalTasksCount} total tugas
                                     </p>
                                 </div>
                             </div>
 
                             {/* Kartu 3 — Pekerja unik (White Card) */}
-                            <div className="rounded-2xl border border-[#DFE6ED] bg-white p-5 shadow-xs flex items-center gap-4">
+                            <div className="flex items-center gap-4 rounded-2xl border border-[#DFE6ED] bg-white p-5 shadow-xs">
                                 <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#F0F8FB] text-[#173765]">
                                     <Users className="size-6" />
                                 </div>
@@ -515,11 +511,11 @@ export default function EmployerPaymentsIndex({
                                     <p className="text-xs font-semibold text-[#607087]">
                                         Pekerja unik
                                     </p>
-                                    <p className="text-2xl font-bold text-[#17233A] mt-0.5">
+                                    <p className="mt-0.5 text-2xl font-bold text-[#17233A]">
                                         {stats.uniqueWorkersCount}
                                     </p>
-                                    <p className="text-[11px] text-[#93A2B5] mt-0.5">
-                                        Rata-rata {stats.averageRating || "4.8"}{" "}
+                                    <p className="mt-0.5 text-[11px] text-[#93A2B5]">
+                                        Rata-rata {stats.averageRating || '4.8'}{' '}
                                         bintang
                                     </p>
                                 </div>
@@ -527,15 +523,15 @@ export default function EmployerPaymentsIndex({
                         </div>
 
                         {/* SECTION TABEL "TRANSAKSI UPAH" */}
-                        <div className="rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-xs space-y-5">
+                        <div className="space-y-5 rounded-2xl border border-[#DFE6ED] bg-white p-6 shadow-xs">
                             {/* Header Card dengan Dropdown Filter Periode */}
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                                 <div>
                                     <h3 className="text-base font-bold text-[#17233A]">
                                         Transaksi upah
                                     </h3>
-                                    <p className="text-xs text-[#93A2B5] mt-0.5">
-                                        Semua pencatatan{" "}
+                                    <p className="mt-0.5 text-xs text-[#93A2B5]">
+                                        Semua pencatatan{' '}
                                         {stats.selectedMonthLabel}
                                     </p>
                                 </div>
@@ -547,7 +543,7 @@ export default function EmployerPaymentsIndex({
                                         onChange={(e) =>
                                             handlePeriodChange(e.target.value)
                                         }
-                                        className="appearance-none rounded-xl border border-[#DFE6ED] bg-white px-3.5 py-2 pr-9 text-xs font-bold text-[#17233A] shadow-xs cursor-pointer hover:bg-[#F7F9FB] focus:outline-none"
+                                        className="cursor-pointer appearance-none rounded-xl border border-[#DFE6ED] bg-white px-3.5 py-2 pr-9 text-xs font-bold text-[#17233A] shadow-xs hover:bg-[#F7F9FB] focus:outline-none"
                                     >
                                         {availablePeriods.map((period) => (
                                             <option
@@ -561,13 +557,13 @@ export default function EmployerPaymentsIndex({
                                             Semua Periode
                                         </option>
                                     </select>
-                                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-4 text-[#607087]" />
+                                    <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-[#607087]" />
                                 </div>
                             </div>
 
                             {/* Tabel Transaksi Upah */}
                             {transactions.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center p-12 text-center border-t border-[#DFE6ED]">
+                                <div className="flex flex-col items-center justify-center border-t border-[#DFE6ED] p-12 text-center">
                                     <div className="flex size-14 items-center justify-center rounded-2xl bg-[#F0F8FB] text-[#173765]">
                                         <Receipt className="size-7" />
                                     </div>
@@ -578,13 +574,13 @@ export default function EmployerPaymentsIndex({
                                         Tidak ditemukan catatan pembayaran upah
                                         pada periode {stats.selectedMonthLabel}.
                                     </p>
-                                    {stats.selectedMonthKey !== "all" && (
+                                    {stats.selectedMonthKey !== 'all' && (
                                         <button
                                             type="button"
                                             onClick={() =>
-                                                handlePeriodChange("all")
+                                                handlePeriodChange('all')
                                             }
-                                            className="mt-4 rounded-xl bg-[#173765] px-4 py-2 text-xs font-bold text-white hover:bg-[#21477F] cursor-pointer"
+                                            className="mt-4 cursor-pointer rounded-xl bg-[#173765] px-4 py-2 text-xs font-bold text-white hover:bg-[#21477F]"
                                         >
                                             Tampilkan Semua Periode
                                         </button>
@@ -592,22 +588,22 @@ export default function EmployerPaymentsIndex({
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
+                                    <table className="w-full border-collapse text-left">
                                         <thead>
                                             <tr className="border-b border-[#DFE6ED] bg-[#F7F9FB] text-[11px] font-bold tracking-wider text-[#93A2B5] uppercase">
-                                                <th className="py-3 px-4 rounded-l-lg">
+                                                <th className="rounded-l-lg px-4 py-3">
                                                     ID & TUGAS
                                                 </th>
-                                                <th className="py-3 px-4">
+                                                <th className="px-4 py-3">
                                                     PEKERJA
                                                 </th>
-                                                <th className="py-3 px-4">
+                                                <th className="px-4 py-3">
                                                     TANGGAL
                                                 </th>
-                                                <th className="py-3 px-4">
+                                                <th className="px-4 py-3">
                                                     JAM
                                                 </th>
-                                                <th className="py-3 px-4 rounded-r-lg text-right">
+                                                <th className="rounded-r-lg px-4 py-3 text-right">
                                                     UPAH
                                                 </th>
                                             </tr>
@@ -617,10 +613,10 @@ export default function EmployerPaymentsIndex({
                                             {transactions.map((row) => (
                                                 <tr
                                                     key={row.id}
-                                                    className="hover:bg-[#F7F9FB]/60 transition-colors"
+                                                    className="transition-colors hover:bg-[#F7F9FB]/60"
                                                 >
-                                                    <td className="py-3.5 px-4 font-bold text-[#17233A]">
-                                                        <span className="font-mono text-[10px] text-[#93A2B5] block font-normal">
+                                                    <td className="px-4 py-3.5 font-bold text-[#17233A]">
+                                                        <span className="block font-mono text-[10px] font-normal text-[#93A2B5]">
                                                             {row.code}
                                                         </span>
                                                         <span>
@@ -628,7 +624,7 @@ export default function EmployerPaymentsIndex({
                                                         </span>
                                                     </td>
 
-                                                    <td className="py-3.5 px-4 text-[#607087]">
+                                                    <td className="px-4 py-3.5 text-[#607087]">
                                                         <div className="flex items-center gap-2">
                                                             <div className="flex size-6 items-center justify-center rounded-full bg-[#D8F1F6] text-[10px] font-bold text-[#173765]">
                                                                 {
@@ -641,15 +637,15 @@ export default function EmployerPaymentsIndex({
                                                         </div>
                                                     </td>
 
-                                                    <td className="py-3.5 px-4 text-[#607087]">
+                                                    <td className="px-4 py-3.5 text-[#607087]">
                                                         {row.date}
                                                     </td>
 
-                                                    <td className="py-3.5 px-4 text-[#607087]">
+                                                    <td className="px-4 py-3.5 text-[#607087]">
                                                         {row.hours}
                                                     </td>
 
-                                                    <td className="py-3.5 px-4 font-bold text-[#17233A] text-right">
+                                                    <td className="px-4 py-3.5 text-right font-bold text-[#17233A]">
                                                         {formatRupiah(row.wage)}
                                                     </td>
                                                 </tr>

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Employer;
 use App\Enums\TaskPaymentStatus;
 use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
-use App\Models\Business;
 use App\Models\Task;
 use App\Models\TaskApplication;
 use App\Models\TaskPayment;
@@ -281,7 +280,7 @@ class DashboardController extends Controller
                 $completedTasks = TaskApplication::query()
                     ->where('worker_id', $application->worker_id)
                     ->where('status', 'accepted')
-                    ->whereHas('payment', fn($q) => $q->where('status', TaskPaymentStatus::Paid->value))
+                    ->whereHas('payment', fn ($q) => $q->where('status', TaskPaymentStatus::Paid->value))
                     ->count();
 
                 return [
@@ -350,7 +349,7 @@ class DashboardController extends Controller
             ->latest('id')
             ->limit(5)
             ->get()
-            ->map(fn(Task $task): array => [
+            ->map(fn (Task $task): array => [
                 'id' => $task->id,
                 'title' => $task->title,
                 'category' => $task->category,
@@ -402,17 +401,19 @@ class DashboardController extends Controller
         foreach (array_slice($words, 0, 2) as $w) {
             $initials .= mb_substr($w, 0, 1);
         }
+
         return mb_strtoupper($initials ?: 'KN');
     }
 
     private function formatCompactRupiah(int $amount): string
     {
         if ($amount >= 1_000_000_000) {
-            return 'Rp ' . rtrim(rtrim(number_format($amount / 1_000_000_000, 2, ',', '.'), '0'), ',') . ' M';
+            return 'Rp '.rtrim(rtrim(number_format($amount / 1_000_000_000, 2, ',', '.'), '0'), ',').' M';
         }
         if ($amount >= 1_000_000) {
-            return 'Rp ' . rtrim(rtrim(number_format($amount / 1_000_000, 2, ',', '.'), '0'), ',') . ' jt';
+            return 'Rp '.rtrim(rtrim(number_format($amount / 1_000_000, 2, ',', '.'), '0'), ',').' jt';
         }
-        return 'Rp ' . number_format($amount, 0, ',', '.');
+
+        return 'Rp '.number_format($amount, 0, ',', '.');
     }
 }

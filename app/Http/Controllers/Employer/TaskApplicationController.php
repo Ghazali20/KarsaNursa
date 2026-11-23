@@ -76,7 +76,7 @@ class TaskApplicationController extends Controller
                     'completedTasks' => $completed,
                     'skills' => array_values($skills),
                     'appliedAt' => $application->created_at?->format('d/m/Y H:i'),
-                    'appliedAtHuman' => $application->created_at ? 'Diajukan ' . $application->created_at->diffForHumans() : 'Baru saja',
+                    'appliedAtHuman' => $application->created_at ? 'Diajukan '.$application->created_at->diffForHumans() : 'Baru saja',
                     'applicantNote' => $application->applicant_note ?? $application->message ?? null,
                     'qualificationDocumentUrl' => $application->qualification_document_path
                         ? Storage::url($application->qualification_document_path)
@@ -281,7 +281,7 @@ class TaskApplicationController extends Controller
 
             if ($validated['decision'] === 'accepted') {
 
-                if (!in_array($this->statusValue($lockedTask->status), ['published', 'in_progress'], true)) {
+                if (! in_array($this->statusValue($lockedTask->status), ['published', 'in_progress'], true)) {
                     throw ValidationException::withMessages([
                         'application' => 'Tugas ini belum dipublikasikan atau kuotanya sudah penuh.',
                     ]);
@@ -520,7 +520,7 @@ class TaskApplicationController extends Controller
                 ->where('task_payments.status', TaskPaymentStatus::Paid->value)
                 ->whereHas('application', function ($q) use ($task) {
                     $q->where('task_id', $task->id)
-                      ->where('status', 'accepted');
+                        ->where('status', 'accepted');
                 })
                 ->count();
 

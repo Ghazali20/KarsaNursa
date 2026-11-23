@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from "@inertiajs/react";
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     Briefcase,
@@ -11,10 +11,10 @@ import {
     ShieldCheck,
     Star,
     Wallet,
-} from "lucide-react";
-import { useMemo, useState } from "react";
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
 
-type ApplicationStatus = "pending" | "accepted" | "rejected" | null;
+type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | null;
 
 type RecommendedTask = {
     id: number;
@@ -61,13 +61,13 @@ type WorkerDashboardProps = {
 };
 
 const CATEGORIES = [
-    "Semua",
-    "Katering",
-    "Kuliner",
-    "Retail",
-    "Administrasi",
-    "Logistik",
-    "Lainnya",
+    'Semua',
+    'Katering',
+    'Kuliner',
+    'Retail',
+    'Administrasi',
+    'Logistik',
+    'Lainnya',
 ];
 
 function formatFirstName(name: string): string {
@@ -75,45 +75,45 @@ function formatFirstName(name: string): string {
 }
 
 function formatRupiah(value: number): string {
-    return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
         maximumFractionDigits: 0,
     }).format(value);
 }
 
 function getGreeting(): string {
     const hour = new Date().getHours();
-    if (hour < 11) return "Selamat pagi";
-    if (hour < 15) return "Selamat siang";
-    if (hour < 18) return "Selamat sore";
-    return "Selamat malam";
+    if (hour < 11) return 'Selamat pagi';
+    if (hour < 15) return 'Selamat siang';
+    if (hour < 18) return 'Selamat sore';
+    return 'Selamat malam';
 }
 
 function getCategoryHeaderColor(category: string | null): string {
-    const normalized = (category ?? "").trim().toLowerCase();
+    const normalized = (category ?? '').trim().toLowerCase();
 
     switch (normalized) {
-        case "katering":
-            return "bg-[#FEF6DC]";
+        case 'katering':
+            return 'bg-[#FEF6DC]';
 
-        case "kuliner":
-            return "bg-[#FCE8E6]";
+        case 'kuliner':
+            return 'bg-[#FCE8E6]';
 
-        case "retail":
-            return "bg-[#ECEBFE]";
+        case 'retail':
+            return 'bg-[#ECEBFE]';
 
-        case "administrasi":
-            return "bg-[#E5F0FF]";
+        case 'administrasi':
+            return 'bg-[#E5F0FF]';
 
-        case "logistik":
-            return "bg-[#E6F7F1]";
+        case 'logistik':
+            return 'bg-[#E6F7F1]';
 
-        case "lainnya":
-            return "bg-[#EEF3FA]";
+        case 'lainnya':
+            return 'bg-[#EEF3FA]';
 
         default:
-            return "bg-[#EEF3FA]";
+            return 'bg-[#EEF3FA]';
     }
 }
 
@@ -122,36 +122,36 @@ function getTaskAction(task: RecommendedTask): {
     href: string;
     className: string;
 } {
-    if (task.applicationStatus === "accepted") {
+    if (task.applicationStatus === 'accepted') {
         return {
-            label: "Lihat Tugas",
-            href: "/worker/applications",
-            className: "bg-[#1E4479] text-white hover:bg-[#163561]",
+            label: 'Lihat Tugas',
+            href: '/worker/applications',
+            className: 'bg-[#1E4479] text-white hover:bg-[#163561]',
         };
     }
 
-    if (task.applicationStatus === "pending") {
+    if (task.applicationStatus === 'pending') {
         return {
-            label: "Menunggu Seleksi",
-            href: "/worker/applications",
+            label: 'Menunggu Seleksi',
+            href: '/worker/applications',
             className:
-                "border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100",
+                'border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100',
         };
     }
 
-    if (task.applicationStatus === "rejected") {
+    if (task.applicationStatus === 'rejected') {
         return {
-            label: "Lihat Detail",
+            label: 'Lihat Detail',
             href: `/worker/tasks/${task.id}`,
             className:
-                "border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200",
+                'border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200',
         };
     }
 
     return {
-        label: "Lamar Tugas",
+        label: 'Lamar Tugas',
         href: `/worker/tasks/${task.id}`,
-        className: "bg-[#21477F] text-white hover:bg-[#163561]",
+        className: 'bg-[#21477F] text-white hover:bg-[#163561]',
     };
 }
 
@@ -171,8 +171,8 @@ export default function WorkerDashboard({
     const user = auth.user;
 
     const [isAvailable, setIsAvailable] = useState(true);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState("Semua");
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('Semua');
     const [savedTaskIds, setSavedTaskIds] = useState<number[]>([]);
 
     const toggleSaveTask = (id: number) => {
@@ -186,16 +186,16 @@ export default function WorkerDashboard({
     const filteredTasks = useMemo(() => {
         return recommendedTasks.filter((task) => {
             const matchesCategory =
-                selectedCategory === "Semua" ||
-                (task.category ?? "").toLowerCase() ===
+                selectedCategory === 'Semua' ||
+                (task.category ?? '').toLowerCase() ===
                     selectedCategory.toLowerCase();
 
             const q = searchQuery.trim().toLowerCase();
             const matchesSearch =
-                q === "" ||
+                q === '' ||
                 task.title.toLowerCase().includes(q) ||
                 task.businessName.toLowerCase().includes(q) ||
-                (task.category ?? "").toLowerCase().includes(q);
+                (task.category ?? '').toLowerCase().includes(q);
 
             return matchesCategory && matchesSearch;
         });
@@ -219,10 +219,10 @@ export default function WorkerDashboard({
                         </h1>
 
                         <p className="mt-1.5 text-[13px] text-[#6E829F]">
-                            Ada{" "}
+                            Ada{' '}
                             <span className="font-bold text-slate-900">
                                 {recommendedTasks.length} tugas baru
-                            </span>{" "}
+                            </span>{' '}
                             di sekitar Anda hari ini.
                         </p>
                     </div>
@@ -233,8 +233,8 @@ export default function WorkerDashboard({
                             <span
                                 className={`size-2.5 rounded-full ${
                                     isAvailable
-                                        ? "bg-emerald-500 ring-4 ring-emerald-500/15"
-                                        : "bg-slate-300"
+                                        ? 'bg-emerald-500 ring-4 ring-emerald-500/15'
+                                        : 'bg-slate-300'
                                 }`}
                             />
                             <div>
@@ -243,8 +243,8 @@ export default function WorkerDashboard({
                                 </p>
                                 <p className="text-[11px] text-slate-400">
                                     {isAvailable
-                                        ? "Profilmu terlihat oleh UMKM"
-                                        : "Profilmu sedang disembunyikan"}
+                                        ? 'Profilmu terlihat oleh UMKM'
+                                        : 'Profilmu sedang disembunyikan'}
                                 </p>
                             </div>
                         </div>
@@ -255,14 +255,14 @@ export default function WorkerDashboard({
                             aria-checked={isAvailable}
                             onClick={() => setIsAvailable((prev) => !prev)}
                             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
-                                isAvailable ? "bg-[#1E4479]" : "bg-slate-200"
+                                isAvailable ? 'bg-[#1E4479]' : 'bg-slate-200'
                             }`}
                         >
                             <span
                                 className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow-xs transition duration-200 ${
                                     isAvailable
-                                        ? "translate-x-5"
-                                        : "translate-x-0"
+                                        ? 'translate-x-5'
+                                        : 'translate-x-0'
                                 }`}
                             />
                         </button>
@@ -281,12 +281,12 @@ export default function WorkerDashboard({
                                 Jam kerja bulan ini
                             </p>
                             <p className="mt-1 text-[22px] font-bold tracking-tight text-slate-900">
-                                {monthlyHours.toLocaleString("id-ID")} Jam
+                                {monthlyHours.toLocaleString('id-ID')} Jam
                             </p>
                             <p className="mt-1 text-[11px] text-slate-400">
                                 {activeAssignments > 0
                                     ? `${activeAssignments} tugas sedang berjalan`
-                                    : "Akumulasi jam kerja terverifikasi"}
+                                    : 'Akumulasi jam kerja terverifikasi'}
                             </p>
                         </div>
                     </div>
@@ -319,16 +319,16 @@ export default function WorkerDashboard({
                                 Rating performa
                             </p>
                             <p className="mt-1 text-[22px] font-bold tracking-tight text-slate-900">
-                                {ratingScore.toLocaleString("id-ID", {
+                                {ratingScore.toLocaleString('id-ID', {
                                     minimumFractionDigits: 1,
                                     maximumFractionDigits: 1,
-                                })}{" "}
+                                })}{' '}
                                 / 5
                             </p>
                             <p className="mt-1 text-[11px] text-slate-400">
                                 {ratingCount > 0
                                     ? `dari ${ratingCount} ulasan UMKM`
-                                    : "Performa mitra lokal KarsaNusa"}
+                                    : 'Performa mitra lokal KarsaNusa'}
                             </p>
                         </div>
                     </div>
@@ -371,7 +371,7 @@ export default function WorkerDashboard({
                                     <p className="mt-1 text-xs text-slate-500">
                                         <span className="font-semibold text-slate-700">
                                             {activeTask.businessName}
-                                        </span>{" "}
+                                        </span>{' '}
                                         • {activeTask.locationAddress}
                                     </p>
                                 </div>
@@ -458,8 +458,8 @@ export default function WorkerDashboard({
                                         }
                                         className={`rounded-xl px-3 py-2 text-[11px] font-semibold transition ${
                                             active
-                                                ? "bg-[#0D254C] text-white shadow-2xs"
-                                                : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                                                ? 'bg-[#0D254C] text-white shadow-2xs'
+                                                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                                         }`}
                                     >
                                         {category}
@@ -470,7 +470,7 @@ export default function WorkerDashboard({
                             <div className="ml-1 inline-flex items-center gap-1.5 px-2 text-xs text-slate-500">
                                 <MapPin className="size-3.5 text-slate-400" />
                                 <span>
-                                    Radius{" "}
+                                    Radius{' '}
                                     <strong className="text-slate-800">
                                         5 km
                                     </strong>
@@ -501,7 +501,7 @@ export default function WorkerDashboard({
                                 const initialLetter =
                                     task.businessName
                                         .trim()[0]
-                                        ?.toUpperCase() ?? "U";
+                                        ?.toUpperCase() ?? 'U';
                                 const action = getTaskAction(task);
 
                                 return (
@@ -516,7 +516,7 @@ export default function WorkerDashboard({
                                             )}`}
                                         >
                                             <span className="rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs">
-                                                {task.category || "Umum"}
+                                                {task.category || 'Umum'}
                                             </span>
 
                                             <button
@@ -530,8 +530,8 @@ export default function WorkerDashboard({
                                                 <Heart
                                                     className={`size-4 ${
                                                         isSaved
-                                                            ? "fill-rose-500 text-rose-500"
-                                                            : ""
+                                                            ? 'fill-rose-500 text-rose-500'
+                                                            : ''
                                                     }`}
                                                 />
                                             </button>
@@ -566,7 +566,7 @@ export default function WorkerDashboard({
                                                     <MapPin className="size-3.5 text-slate-400" />
                                                     <span className="line-clamp-1 max-w-[140px]">
                                                         {task.locationAddress ||
-                                                            "Lokasi dekat Anda"}
+                                                            'Lokasi dekat Anda'}
                                                     </span>
                                                 </span>
                                                 <span className="inline-flex items-center gap-1">
@@ -585,10 +585,10 @@ export default function WorkerDashboard({
                                                         <p className="mt-0.5 text-base font-bold text-[#21477F]">
                                                             {task.wageAmount ===
                                                             null
-                                                                ? "Kesepakatan"
+                                                                ? 'Kesepakatan'
                                                                 : formatRupiah(
                                                                       task.wageAmount,
-                                                                  )}{" "}
+                                                                  )}{' '}
                                                             <span className="text-xs font-normal text-slate-400">
                                                                 / tugas
                                                             </span>
@@ -596,7 +596,7 @@ export default function WorkerDashboard({
                                                     </div>
 
                                                     <span className="text-xs font-medium text-slate-400">
-                                                        {task.workerQuota ?? 1}{" "}
+                                                        {task.workerQuota ?? 1}{' '}
                                                         slot
                                                     </span>
                                                 </div>

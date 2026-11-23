@@ -54,7 +54,9 @@ export default function WorkerEarningsIndex({
     completedCount = 0,
     items = [],
 }: Props) {
-    const [statusFilter, setStatusFilter] = useState<'all' | EarningRow['statusKey']>('all');
+    const [statusFilter, setStatusFilter] = useState<
+        'all' | EarningRow['statusKey']
+    >('all');
 
     const filteredItems = useMemo(() => {
         if (statusFilter === 'all') return items;
@@ -63,7 +65,14 @@ export default function WorkerEarningsIndex({
     }, [items, statusFilter]);
 
     const handleDownloadRecap = () => {
-        const headers = ['Tugas', 'UMKM', 'Tanggal', 'Jam', 'Upah (IDR)', 'Status'];
+        const headers = [
+            'Tugas',
+            'UMKM',
+            'Tanggal',
+            'Jam',
+            'Upah (IDR)',
+            'Status',
+        ];
         const csvLines = [
             headers.join(','),
             ...filteredItems.map((row) =>
@@ -84,7 +93,10 @@ export default function WorkerEarningsIndex({
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', `rekap-pendapatan-${periodLabel.toLowerCase().replace(/\s+/g, '-')}.csv`);
+        link.setAttribute(
+            'download',
+            `rekap-pendapatan-${periodLabel.toLowerCase().replace(/\s+/g, '-')}.csv`,
+        );
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

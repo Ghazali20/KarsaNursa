@@ -567,9 +567,9 @@ class GoogleAuthController extends Controller
         $cleaned = preg_replace('/\D+/', '', $phone) ?? '';
 
         if (str_starts_with($cleaned, '62')) {
-            $cleaned = '0' . substr($cleaned, 2);
+            $cleaned = '0'.substr($cleaned, 2);
         } elseif (str_starts_with($cleaned, '8')) {
-            $cleaned = '0' . $cleaned;
+            $cleaned = '0'.$cleaned;
         }
 
         return $cleaned;
