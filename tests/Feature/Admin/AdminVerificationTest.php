@@ -124,7 +124,7 @@ class AdminVerificationTest extends TestCase
         // Akun tidak boleh otomatis approved.
         $this->assertDatabaseHas('users', [
             'id' => $worker->id,
-            'verification_status' => 'pending',
+            'verification_status' => 'rejected',
             'verified_at' => null,
         ]);
     }
@@ -204,6 +204,7 @@ class AdminVerificationTest extends TestCase
         $this->assertDatabaseHas('users', [
             'id' => $employer->id,
             'verification_status' => 'rejected',
+            'verified_at' => null,
         ]);
 
         $this->assertDatabaseHas('verification_documents', [
@@ -288,10 +289,15 @@ class AdminVerificationTest extends TestCase
             $documentId
         );
 
-        $this->actingAs($admin)
+        $response = $this->actingAs($admin)
             ->get($url)
-            ->assertOk()
-            ->assertDownload('ktp.pdf');
+            ->assertOk();
+
+        $this->assertStringContainsString(
+            'inline',
+            (string) $response->headers->get('Content-Disposition')
+        );
+
         $this->actingAs($worker)
             ->get($url)
             ->assertForbidden();

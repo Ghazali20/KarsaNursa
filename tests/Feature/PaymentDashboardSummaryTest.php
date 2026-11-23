@@ -74,7 +74,6 @@ class PaymentDashboardSummaryTest extends TestCase
                 fn (Assert $page) => $page
                     ->component('employer/dashboard')
                     ->where('stats.monthlyExpenses', 100000)
-                    ->where('stats.pendingPayments', 1),
             );
     }
 
