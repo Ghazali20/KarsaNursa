@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\TaskApplication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -43,7 +44,7 @@ class ApplicationInboxController extends Controller
         $completedCounts = TaskApplication::query()
             ->whereIn('worker_id', $workerIds)
             ->where('status', 'accepted')
-            ->whereHas('payment', fn ($q) => $q->where('status', TaskPaymentStatus::Paid->value))
+            ->whereHas('payment', fn($q) => $q->where('status', TaskPaymentStatus::Paid->value))
             ->groupBy('worker_id')
             ->selectRaw('worker_id, count(*) as count')
             ->pluck('count', 'worker_id');
@@ -51,7 +52,7 @@ class ApplicationInboxController extends Controller
         $acceptedByTask = $applications
             ->where('status', 'accepted')
             ->groupBy('task_id')
-            ->map(fn ($items) => $items->count());
+            ->map(fn($items) => $items->count());
 
         $stats = [
             'total' => $applications->count(),
@@ -66,7 +67,7 @@ class ApplicationInboxController extends Controller
                 ->count(),
             'pendingPayments' => $applications
                 ->filter(
-                    fn (TaskApplication $application): bool => $application
+                    fn(TaskApplication $application): bool => $application
                         ->payment?->status
                         === TaskPaymentStatus::Pending->value
                 )
@@ -74,7 +75,7 @@ class ApplicationInboxController extends Controller
         ];
 
         $applicationList = $applications
-            ->map(fn (TaskApplication $application): array => [
+            ->map(fn(TaskApplication $application): array => [
                 'id' => $application->id,
                 'taskId' => $application->task->id,
                 'taskTitle' => $application->task->title,
@@ -86,6 +87,10 @@ class ApplicationInboxController extends Controller
                 'status' => $application->status,
                 'appliedAt' => $application->created_at
                     ?->format('d/m/Y H:i'),
+                'applicantNote' => $application->applicant_note ?? $application->message ?? null,
+                'qualificationDocumentUrl' => $application->qualification_document_path
+                    ? Storage::url($application->qualification_document_path)
+                    : null,
                 'reviewedAt' => $application->reviewed_at
                     ?->format('d/m/Y H:i'),
                 'reviewNotes' => $application->review_notes,
@@ -107,5 +112,15 @@ class ApplicationInboxController extends Controller
             'stats' => $stats,
             'applications' => $applicationList,
         ]);
+    }
+
+    private function getInitials(string $name): string
+    {
+        $words = preg_split('/\s+/', trim($name));
+        $initials = '';
+        foreach (array_slice($words, 0, 2) as $w) {
+            $initials .= mb_substr($w, 0, 1);
+        }
+        return mb_strtoupper($initials ?: 'PK');
     }
 }

@@ -16,14 +16,13 @@ class DashboardController extends Controller
 {
     public function __invoke(Request $request): Response
     {
-        $worker = $request->user();
+        $worker =$request->user();
 
         $tasksCollection = Task::query()
             ->where('status', 'published')
             ->whereNotNull('published_at')
             ->where('application_deadline', '>', now())
-            ->whereHas('business.user', function ($query) {
-                $query->where(
+            ->whereHas('business.user', function ($query) {$query->where(
                     'verification_status',
                     'approved'
                 );
@@ -39,10 +38,12 @@ class DashboardController extends Controller
             ->get()
             ->keyBy('task_id');
 
-        $recommendedTasks = $tasksCollection
-            ->map(function (Task $task) use ($applicationsByTaskId): array {
-                $application = $applicationsByTaskId->get($task->id);
-                $applicationStatus = $application?->status;
+        $recommendedTasks =$tasksCollection
+            ->map(function (Task $task) use ($applicationsByTaskId): array {$application = $applicationsByTaskId->get($task->id);
+                $rawStatus =$application?->status;
+                $applicationStatus =$rawStatus instanceof TaskApplicationStatus
+                    ? $rawStatus->value
+                    : $rawStatus;
 
                 return [
                     'id' => $task->id,
@@ -68,8 +69,7 @@ class DashboardController extends Controller
         $activeAssignments = TaskApplication::query()
             ->where('worker_id', $worker->id)
             ->where('status', TaskApplicationStatus::Accepted->value)
-            ->whereHas('payment', function ($query) {
-                $query->where(
+            ->whereHas('payment', function ($query) {$query->where(
                     'status',
                     TaskPaymentStatus::Pending->value
                 );
@@ -81,7 +81,7 @@ class DashboardController extends Controller
             ->whereHas(
                 'application',
                 function ($query) use ($worker) {
-                    $query->where('worker_id', $worker->id);
+                    $query->where('worker_id',$worker->id);
                 }
             )
             ->sum('amount');
@@ -95,7 +95,7 @@ class DashboardController extends Controller
             ->whereHas(
                 'application',
                 function ($query) use ($worker) {
-                    $query->where('worker_id', $worker->id);
+                    $query->where('worker_id',$worker->id);
                 }
             )
             ->sum('amount');

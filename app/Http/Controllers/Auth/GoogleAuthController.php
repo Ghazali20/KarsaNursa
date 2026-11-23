@@ -80,6 +80,10 @@ class GoogleAuthController extends Controller
 
             $request->session()->regenerate();
 
+            if ($user->role !== 'admin' && $user->verification_status !== 'approved') {
+                return redirect()->route('verification.pending');
+            }
+
             return redirect('/dashboard');
         }
 
@@ -168,6 +172,17 @@ class GoogleAuthController extends Controller
         // 2. VALIDASI FORM PENDAFTARAN
         // ========================================
 
+        $existingUser = $request->user() ?? User::query()
+            ->where('google_id', $pending['id'])
+            ->orWhere('email', $pending['email'])
+            ->first();
+
+        if ($request->has('phone')) {
+            $request->merge([
+                'phone' => $this->normalizePhone((string) $request->input('phone')),
+            ]);
+        }
+
         $validated = $request->validate([
             // ------------------------------------
             // DATA UMUM
@@ -182,6 +197,7 @@ class GoogleAuthController extends Controller
                 'required',
                 'string',
                 'max:20',
+                Rule::unique('users', 'phone')->ignore($existingUser?->id),
             ],
 
             // ------------------------------------
@@ -205,7 +221,7 @@ class GoogleAuthController extends Controller
 
             'worker_date_of_birth' => [
                 'exclude_unless:role,worker',
-                'required',
+                'nullable',
                 'date',
                 'before:today',
             ],
@@ -264,9 +280,27 @@ class GoogleAuthController extends Controller
                 'max:1000',
             ],
         ], [
+            'phone.required' => 'Nomor telepon wajib diisi.',
+
+            'phone.unique' => 'Nomor telepon ini sudah terdaftar.',
+
+            'role.required' => 'Peran (Role) wajib dipilih.',
+
+            'worker_identity_type.required' => 'Jenis identitas wajib dipilih.',
+
             'worker_identity_document.required' => 'Dokumen KTP atau KTM wajib diunggah.',
 
             'business_document.required' => 'Dokumen NIB atau Surat Usaha wajib diunggah.',
+
+            'worker_address.required' => 'Alamat lengkap wajib diisi.',
+
+            'business_name.required' => 'Nama usaha wajib diisi.',
+
+            'business_category.required' => 'Kategori usaha wajib diisi.',
+
+            'business_document_type.required' => 'Jenis dokumen usaha wajib dipilih.',
+
+            'business_address.required' => 'Alamat usaha wajib diisi.',
 
             'worker_identity_document.mimes' => 'Dokumen harus berupa PDF, JPG, atau PNG.',
 
@@ -328,51 +362,78 @@ class GoogleAuthController extends Controller
                 $file,
                 $documentType,
                 $checksum,
+                $existingUser,
                 &$storedDocumentPath
             ): User {
                 // --------------------------------
                 // CEGAH AKUN GOOGLE GANDA
                 // --------------------------------
 
-                if (
-                    User::query()
-                        ->where('google_id', $pending['id'])
-                        ->exists() ||
-                    User::query()
-                        ->where('email', $pending['email'])
-                        ->exists()
-                ) {
-                    throw ValidationException::withMessages([
-                        'google' => 'Akun sudah terdaftar. Silakan login kembali.',
-                    ]);
+                if ($existingUser !== null) {
+                    $otherUser = User::query()
+                        ->where('id', '!=', $existingUser->id)
+                        ->where(function ($query) use ($pending) {
+                            $query->where('google_id', $pending['id'])
+                                ->orWhere('email', $pending['email']);
+                        })
+                        ->exists();
+
+                    if ($otherUser) {
+                        throw ValidationException::withMessages([
+                            'google' => 'Akun sudah terdaftar. Silakan login kembali.',
+                        ]);
+                    }
+                } else {
+                    if (
+                        User::query()
+                            ->where('google_id', $pending['id'])
+                            ->orWhere('email', $pending['email'])
+                            ->exists()
+                    ) {
+                        throw ValidationException::withMessages([
+                            'google' => 'Akun sudah terdaftar. Silakan login kembali.',
+                        ]);
+                    }
                 }
 
                 // --------------------------------
-                // BUAT AKUN PENGGUNA
+                // BUAT ATAU UPDATE AKUN PENGGUNA
                 // --------------------------------
 
-                $user = User::query()->create([
-                    'name' => Str::limit($pending['name'], 255, ''),
-                    'email' => $pending['email'],
-                    'google_id' => $pending['id'],
-                    'role' => $validated['role'],
-                    'phone' => $validated['phone'],
+                if ($existingUser !== null) {
+                    $user = $existingUser;
+                    $user->name = Str::limit($pending['name'], 255, '');
+                    $user->email = $pending['email'];
+                    $user->google_id = $pending['id'];
+                    $user->role = $validated['role'];
+                    $user->phone = $validated['phone'];
+                    $user->verification_status = 'pending';
 
-                    // Akun langsung aktif.
-                    'verification_status' => 'approved',
+                    if (empty($user->password)) {
+                        $user->password = Hash::make(Str::random(64));
+                    }
 
-                    // Password acak untuk akun Google.
-                    'password' => Hash::make(
-                        Str::random(64)
-                    ),
-                ]);
+                    $user->email_verified_at = now();
+                    $user->save();
+                } else {
+                    $user = User::query()->create([
+                        'name' => Str::limit($pending['name'], 255, ''),
+                        'email' => $pending['email'],
+                        'google_id' => $pending['id'],
+                        'role' => $validated['role'],
+                        'phone' => $validated['phone'],
+                        'verification_status' => 'pending',
+                        'password' => Hash::make(
+                            Str::random(64)
+                        ),
+                    ]);
 
-                // Email sudah diverifikasi oleh Google.
-                $user->email_verified_at = now();
-                $user->save();
+                    $user->email_verified_at = now();
+                    $user->save();
+                }
 
                 // --------------------------------
-                // BUAT PROFIL PEN CARI KERJA
+                // BUAT PROFIL PENCARI KERJA
                 // --------------------------------
 
                 if ($isWorker) {
@@ -388,15 +449,15 @@ class GoogleAuthController extends Controller
                         )
                     );
 
-                    $user->workerProfile()->create([
-                        'identity_type' => $validated['worker_identity_type'],
-
-                        'date_of_birth' => $validated['worker_date_of_birth'],
-
-                        'address' => $validated['worker_address'],
-
-                        'skills' => $skills,
-                    ]);
+                    $user->workerProfile()->updateOrCreate(
+                        ['user_id' => $user->id],
+                        [
+                            'identity_type' => $validated['worker_identity_type'],
+                            'date_of_birth' => $validated['worker_date_of_birth'] ?? null,
+                            'address' => $validated['worker_address'],
+                            'skills' => $skills,
+                        ]
+                    );
                 }
 
                 // --------------------------------
@@ -404,15 +465,15 @@ class GoogleAuthController extends Controller
                 // --------------------------------
 
                 if (! $isWorker) {
-                    $user->business()->create([
-                        'name' => $validated['business_name'],
-
-                        'document_type' => $validated['business_document_type'],
-
-                        'category' => $validated['business_category'],
-
-                        'address' => $validated['business_address'],
-                    ]);
+                    $user->business()->updateOrCreate(
+                        ['user_id' => $user->id],
+                        [
+                            'name' => $validated['business_name'],
+                            'document_type' => $validated['business_document_type'],
+                            'category' => $validated['business_category'],
+                            'address' => $validated['business_address'],
+                        ]
+                    );
                 }
 
                 // --------------------------------
@@ -488,9 +549,29 @@ class GoogleAuthController extends Controller
         $request->session()->regenerate();
 
         // ========================================
-        // 7. REDIRECT SESUAI ROLE
+        // 7. REDIRECT KE HALAMAN MENUNGGU VERIFIKASI
         // ========================================
 
-        return redirect('/dashboard');
+        return redirect()->route('verification.pending');
+    }
+
+    /**
+     * Normalisasi nomor telepon ke format standar (08...).
+     */
+    private function normalizePhone(?string $phone): string
+    {
+        if ($phone === null) {
+            return '';
+        }
+
+        $cleaned = preg_replace('/\D+/', '', $phone) ?? '';
+
+        if (str_starts_with($cleaned, '62')) {
+            $cleaned = '0' . substr($cleaned, 2);
+        } elseif (str_starts_with($cleaned, '8')) {
+            $cleaned = '0' . $cleaned;
+        }
+
+        return $cleaned;
     }
 }

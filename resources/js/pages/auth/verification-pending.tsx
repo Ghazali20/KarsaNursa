@@ -3,6 +3,7 @@ import { home, logout } from '@/routes';
 import type { Auth } from '@/types/auth';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
+    AlertCircle,
     Clock,
     FileCheck,
     Home,
@@ -13,12 +14,20 @@ import {
 } from 'lucide-react';
 import { useEffect } from 'react';
 
-export default function VerificationPending() {
+type Props = {
+    status?: 'pending' | 'under_review' | 'approved' | 'rejected';
+    reviewNotes?: string | null;
+};
+
+export default function VerificationPending({
+    status: propStatus,
+    reviewNotes,
+}: Props) {
     const { auth } = usePage<{ auth: Auth }>().props;
 
-    const user = auth.user;
+    const user = auth?.user;
 
-    const status = user.verification_status;
+    const status = propStatus || user?.verification_status || 'pending';
 
     const approved = status === 'approved';
     const rejected = status === 'rejected';
@@ -35,7 +44,12 @@ export default function VerificationPending() {
             return;
         }
 
-        // Pemeriksaan otomatis setiap 10 detik.
+        // Jika status rejected, tidak perlu reload otomatis berulang-ulang
+        if (rejected) {
+            return;
+        }
+
+        // Pemeriksaan otomatis setiap 10 detik saat pending.
         const interval = window.setInterval(() => {
             router.reload();
         }, 10000);
@@ -43,7 +57,7 @@ export default function VerificationPending() {
         return () => {
             window.clearInterval(interval);
         };
-    }, [approved]);
+    }, [approved, rejected]);
 
     // ========================================
     // PEMERIKSAAN STATUS MANUAL
@@ -60,7 +74,7 @@ export default function VerificationPending() {
                     approved
                         ? 'Verifikasi Berhasil'
                         : rejected
-                          ? 'Verifikasi Ditolak'
+                          ? 'Pendaftaran Akun Ditolak'
                           : 'Menunggu Verifikasi'
                 }
             />
@@ -73,7 +87,7 @@ export default function VerificationPending() {
                 <span
                     className={
                         rejected
-                            ? 'mx-auto grid h-16 w-16 place-items-center rounded-[18px] bg-[#fef2f2] text-[#b91c1c]'
+                            ? 'mx-auto grid h-16 w-16 place-items-center rounded-[18px] border border-red-100 bg-red-50 text-red-600 shadow-sm'
                             : approved
                               ? 'mx-auto grid h-16 w-16 place-items-center rounded-[18px] bg-[#ecfdf5] text-[#047857]'
                               : 'mx-auto grid h-16 w-16 place-items-center rounded-[18px] bg-[var(--karsa-sky-pale)] text-[var(--karsa-primary)]'
@@ -93,7 +107,7 @@ export default function VerificationPending() {
                     className="mt-5"
                 >
                     {rejected
-                        ? 'PERLU PERBAIKAN'
+                        ? 'DITOLAK'
                         : approved
                           ? 'AKUN DISETUJUI'
                           : 'SEDANG DITINJAU'}
@@ -101,19 +115,40 @@ export default function VerificationPending() {
 
                 <h3 className="mt-4 text-[22px] font-extrabold tracking-[-0.03em] text-[var(--karsa-deep-navy)]">
                     {rejected
-                        ? 'Dokumen belum dapat disetujui'
+                        ? 'Pendaftaran Akun Ditolak'
                         : approved
                           ? 'Verifikasi akun berhasil!'
                           : 'Dokumen Anda sedang diverifikasi'}
                 </h3>
 
-                <p className="mx-auto mt-3 max-w-[370px] text-[9px] leading-[1.8] text-[var(--karsa-muted)]">
+                <p className="mx-auto mt-3 max-w-[420px] text-[12px] leading-[1.8] text-[var(--karsa-muted)]">
                     {rejected
-                        ? 'Silakan hubungi tim KarsaNursa untuk mengetahui dokumen yang perlu diperbaiki.'
+                        ? 'Dokumen atau data pendaftaran Anda tidak memenuhi syarat verifikasi administrator.'
                         : approved
                           ? 'Akun Anda sudah disetujui. Anda akan diarahkan ke Dashboard sesuai role yang didaftarkan.'
                           : 'Tim KarsaNursa sedang memeriksa dokumen Anda. Setelah seluruh dokumen disetujui, akun akan aktif dan dapat mengakses Dashboard.'}
                 </p>
+
+                {/* ALASAN PENOLAKAN DARI ADMIN */}
+                {rejected && (
+                    <div className="mx-auto mt-5 max-w-[480px] rounded-xl border border-red-200 bg-red-50/80 p-4 text-left">
+                        <div className="flex items-start gap-2.5">
+                            <AlertCircle
+                                size={18}
+                                className="mt-0.5 shrink-0 text-red-600"
+                            />
+                            <div className="flex-1">
+                                <h4 className="text-xs font-bold text-red-900">
+                                    Catatan / Alasan Penolakan:
+                                </h4>
+                                <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-red-700">
+                                    {reviewNotes ||
+                                        'Dokumen atau identitas yang diunggah tidak memenuhi ketentuan verifikasi KarsaNursa. Silakan periksa kembali berkas Anda atau hubungi administrator.'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* ====================================
@@ -129,17 +164,23 @@ export default function VerificationPending() {
                 />
 
                 <StatusItem
-                    icon={<ShieldCheck size={17} />}
+                    icon={
+                        rejected ? (
+                            <ShieldAlert size={17} />
+                        ) : (
+                            <ShieldCheck size={17} />
+                        )
+                    }
                     title="Pemeriksaan administrator"
                     description={
                         rejected
-                            ? 'Dokumen memerlukan perbaikan.'
+                            ? 'Dokumen pendaftaran ditolak oleh administrator.'
                             : approved
                               ? 'Dokumen telah disetujui.'
                               : 'Sedang menunggu keputusan administrator.'
                     }
                     done={approved}
-                    warning={rejected}
+                    error={rejected}
                 />
             </div>
 
@@ -202,33 +243,51 @@ function StatusItem({
     description,
     done = false,
     warning = false,
+    error = false,
 }: {
     icon: React.ReactNode;
     title: string;
     description: string;
     done?: boolean;
     warning?: boolean;
+    error?: boolean;
 }) {
     return (
-        <div className="flex items-start gap-3 rounded-[11px] border border-[var(--karsa-border)] p-4 text-left">
+        <div
+            className={`flex items-start gap-3 rounded-[11px] border p-4 text-left ${
+                error
+                    ? 'border-red-200 bg-red-50/40'
+                    : 'border-[var(--karsa-border)] bg-white'
+            }`}
+        >
             <span
                 className={
-                    warning
-                        ? 'grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-[#fef2f2] text-[#b91c1c]'
-                        : done
-                          ? 'grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-[#ecfdf5] text-[#047857]'
-                          : 'grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-[var(--karsa-background)] text-[var(--karsa-subtle)]'
+                    error
+                        ? 'grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-red-100 text-red-600'
+                        : warning
+                          ? 'grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-[#fef2f2] text-[#b91c1c]'
+                          : done
+                            ? 'grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-[#ecfdf5] text-[#047857]'
+                            : 'grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-[var(--karsa-background)] text-[var(--karsa-subtle)]'
                 }
             >
                 {icon}
             </span>
 
             <div>
-                <strong className="block text-[9px] text-[var(--karsa-slate)]">
+                <strong
+                    className={`block text-[11px] ${
+                        error ? 'text-red-900' : 'text-[var(--karsa-slate)]'
+                    }`}
+                >
                     {title}
                 </strong>
 
-                <span className="mt-1 block text-[7px] leading-[1.6] text-[var(--karsa-muted)]">
+                <span
+                    className={`mt-1 block text-[10px] leading-[1.6] ${
+                        error ? 'text-red-600' : 'text-[var(--karsa-muted)]'
+                    }`}
+                >
                     {description}
                 </span>
             </div>

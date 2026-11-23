@@ -25,10 +25,19 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
+        if (isset($input['phone'])) {
+            $input['phone'] = $this->normalizePhone((string) $input['phone']);
+        }
+
         $validated = Validator::make($input, [
             ...$this->profileRules(),
             'role' => ['required', Rule::in(['worker', 'employer'])],
-            'phone' => ['required', 'string', 'max:30'],
+            'phone' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('users', 'phone'),
+            ],
 
             'identity_type' => [
                 'nullable',
@@ -58,6 +67,8 @@ class CreateNewUser implements CreatesNewUsers
 
             'password' => $this->passwordRules(),
         ], [
+            'phone.required' => 'Nomor telepon wajib diisi.',
+            'phone.unique' => 'Nomor telepon ini sudah terdaftar. Gunakan nomor lain.',
             'password.min' => 'Kata sandi minimal harus terdiri dari 8 karakter.',
             'password.required' => 'Kata sandi wajib diisi.',
             'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
@@ -121,5 +132,25 @@ class CreateNewUser implements CreatesNewUsers
 
             return $user;
         });
+    }
+
+    /**
+     * Normalisasi nomor telepon ke format standar (08...).
+     */
+    private function normalizePhone(?string $phone): string
+    {
+        if ($phone === null) {
+            return '';
+        }
+
+        $cleaned = preg_replace('/\D+/', '', $phone) ?? '';
+
+        if (str_starts_with($cleaned, '62')) {
+            $cleaned = '0' . substr($cleaned, 2);
+        } elseif (str_starts_with($cleaned, '8')) {
+            $cleaned = '0' . $cleaned;
+        }
+
+        return $cleaned;
     }
 }

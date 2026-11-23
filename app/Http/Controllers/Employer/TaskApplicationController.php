@@ -6,6 +6,7 @@ use App\Enums\TaskPaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Task;
 use App\Models\TaskApplication;
+use App\Models\TaskPayment;
 use App\Notifications\TaskApplicationRejected;
 use BackedEnum;
 use Illuminate\Http\RedirectResponse;
@@ -13,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -46,10 +48,10 @@ class TaskApplicationController extends Controller
         );
 
         $applications = $task->applications()
-            ->with(['worker:id,name,email,phone,verification_status', 'worker.workerProfile'])
+            ->with(['worker:id,name,email,phone,verification_status', 'worker.workerProfile', 'payment'])
             ->latest('id')
             ->get()
-            ->map(function (TaskApplication $application) use ($hasReviewNotes): array {
+            ->map(function (TaskApplication $application) use ($hasReviewNotes, $task): array {
                 $worker = $application->worker;
                 $profile = $worker?->workerProfile;
                 $completed = TaskApplication::query()
@@ -59,11 +61,6 @@ class TaskApplicationController extends Controller
                     ->count();
 
                 $skills = $profile?->skills;
-
-                if (is_string($skills)) {
-                    $skills = json_decode($skills, true);
-                }
-
                 if (! is_array($skills) || empty($skills)) {
                     $skills = ['Ketelitian', 'Operasional', 'Kerja Tim'];
                 }
@@ -71,19 +68,37 @@ class TaskApplicationController extends Controller
                 return [
                     'id' => $application->id,
                     'status' => $this->statusValue($application->status),
-                    'workerName' => $worker->name ?? 'Pekerja tidak tersedia',
-                    'workerEmail' => $worker->email ?? '-',
-                    'workerPhone' => $worker->phone ?? '-',
+                    'workerName' => $worker?->name ?? 'Pekerja tidak tersedia',
+                    'workerEmail' => $worker?->email ?? '-',
+                    'workerPhone' => $worker?->phone ?? '-',
                     'isVerified' => $worker?->verification_status === 'approved',
                     'rating' => $completed > 0 ? '4.9' : '5.0',
                     'completedTasks' => $completed,
                     'skills' => array_values($skills),
                     'appliedAt' => $application->created_at?->format('d/m/Y H:i'),
-                    'appliedAtHuman' => $application->created_at ? 'Diajukan '.$application->created_at->diffForHumans() : 'Baru saja',
+                    'appliedAtHuman' => $application->created_at ? 'Diajukan ' . $application->created_at->diffForHumans() : 'Baru saja',
+                    'applicantNote' => $application->applicant_note ?? $application->message ?? null,
+                    'qualificationDocumentUrl' => $application->qualification_document_path
+                        ? Storage::url($application->qualification_document_path)
+                        : null,
                     'reviewNotes' => $hasReviewNotes ? $application->review_notes : null,
                     'reviewedAt' => $application->reviewed_at
                         ? Carbon::parse($application->reviewed_at)->format('d/m/Y H:i')
                         : null,
+                    'checkedInAt' => $application->checked_in_at?->format('d/m/Y H:i'),
+                    'checkedOutAt' => $application->checked_out_at?->format('d/m/Y H:i'),
+                    'proofPhotoUrl' => $application->proof_photo_path
+                        ? Storage::url($application->proof_photo_path)
+                        : null,
+                    'activityNotes' => $application->activity_notes,
+                    'proofSubmittedAt' => $application->proof_submitted_at?->format('d/m/Y H:i'),
+                    'payment' => [
+                        'status' => $application->payment?->status ?? 'pending',
+                        'amount' => $application->payment?->amount !== null
+                            ? (int) $application->payment->amount
+                            : (int) ($task->wage_amount ?? 0),
+                        'paidAt' => $application->payment?->paid_at?->format('d/m/Y H:i'),
+                    ],
                 ];
             })
             ->values()
@@ -109,6 +124,7 @@ class TaskApplicationController extends Controller
                     'title' => $task->title,
                     'status' => $this->statusValue($task->status),
                     'workerQuota' => $task->worker_quota,
+                    'wageAmount' => $task->wage_amount === null ? null : (int) $task->wage_amount,
                     'acceptedCount' => $acceptedCount,
                     'pendingCount' => $pendingCount,
 
@@ -265,7 +281,7 @@ class TaskApplicationController extends Controller
 
             if ($validated['decision'] === 'accepted') {
 
-                if (! in_array($this->statusValue($lockedTask->status), ['published', 'in_progress'], true)) {
+                if (!in_array($this->statusValue($lockedTask->status), ['published', 'in_progress'], true)) {
                     throw ValidationException::withMessages([
                         'application' => 'Tugas ini belum dipublikasikan atau kuotanya sudah penuh.',
                     ]);
@@ -426,6 +442,144 @@ class TaskApplicationController extends Controller
             'success',
             'Keputusan seleksi pelamar berhasil disimpan.'
         );
+    }
+
+    /**
+     * Menyetujui hasil pekerjaan dan mencatat pencairan upah.
+     */
+    public function approveWork(
+        Request $request,
+        Task $task,
+        TaskApplication $application
+    ): RedirectResponse {
+        $business = $request->user()->business;
+
+        abort_if(
+            $business === null,
+            403,
+            'Profil usaha belum tersedia.'
+        );
+
+        abort_unless(
+            (int) $task->business_id === (int) $business->id,
+            403
+        );
+
+        abort_unless(
+            (int) $application->task_id === (int) $task->id,
+            404
+        );
+
+        DB::transaction(function () use ($application, $task, $request): void {
+            $lockedApp = TaskApplication::query()
+                ->lockForUpdate()
+                ->findOrFail($application->id);
+
+            abort_unless(
+                $this->statusValue($lockedApp->status) === 'accepted',
+                422,
+                'Upah hanya dapat disetujui untuk pelamar yang telah diterima.'
+            );
+
+            // Cari atau buat TaskPayment jika belum ada
+            $payment = TaskPayment::query()
+                ->where('task_application_id', $lockedApp->id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($payment === null) {
+                TaskPayment::query()->create([
+                    'task_application_id' => $lockedApp->id,
+                    'amount' => (int) $task->wage_amount,
+                    'status' => TaskPaymentStatus::Paid->value,
+                    'paid_at' => now(),
+                ]);
+            } else {
+                $payment->update([
+                    'status' => TaskPaymentStatus::Paid->value,
+                    'paid_at' => now(),
+                ]);
+            }
+
+            // Catatan atau apresiasi opsional jika diisi
+            if ($request->filled('review_notes') && Schema::hasColumn('task_applications', 'review_notes')) {
+                $lockedApp->update([
+                    'review_notes' => $request->string('review_notes')->trim(),
+                    'reviewed_by' => $request->user()->id,
+                    'reviewed_at' => now(),
+                ]);
+            }
+
+            // Cek apakah seluruh pelamar yang diterima (accepted) pada tugas ini sudah dibayar (paid)
+            $totalAccepted = TaskApplication::query()
+                ->where('task_id', $task->id)
+                ->where('status', 'accepted')
+                ->count();
+
+            $totalPaid = TaskPayment::query()
+                ->where('task_payments.status', TaskPaymentStatus::Paid->value)
+                ->whereHas('application', function ($q) use ($task) {
+                    $q->where('task_id', $task->id)
+                      ->where('status', 'accepted');
+                })
+                ->count();
+
+            // Jika semua pelamar diterima sudah dibayar, otomatis perbarui status Task menjadi completed
+            if ($totalAccepted > 0 && $totalPaid >= $totalAccepted) {
+                Task::query()
+                    ->where('id', $task->id)
+                    ->update([
+                        'status' => 'completed',
+                    ]);
+            }
+        }, 3);
+
+        return back()->with('success', 'Hasil pekerjaan disetujui dan pembayaran upah berhasil dicatat!');
+    }
+
+    /**
+     * Mengirimkan catatan atau saran perbaikan hasil kerja ke pekerja.
+     */
+    public function giveFeedback(
+        Request $request,
+        Task $task,
+        TaskApplication $application
+    ): RedirectResponse {
+        $business = $request->user()->business;
+
+        abort_if(
+            $business === null,
+            403,
+            'Profil usaha belum tersedia.'
+        );
+
+        abort_unless(
+            (int) $task->business_id === (int) $business->id,
+            403
+        );
+
+        abort_unless(
+            (int) $application->task_id === (int) $task->id,
+            404
+        );
+
+        $validated = $request->validate([
+            'notes' => ['required', 'string', 'min:5', 'max:1000'],
+        ], [
+            'notes.required' => 'Saran atau catatan wajib diisi.',
+            'notes.min' => 'Saran perbaikan minimal 5 karakter.',
+            'notes.max' => 'Saran perbaikan maksimal 1000 karakter.',
+        ]);
+
+        if (Schema::hasColumn('task_applications', 'review_notes')) {
+            $application->update([
+                'review_notes' => $validated['notes'],
+                'reviewed_by' => $request->user()->id,
+                'reviewed_at' => now(),
+            ]);
+        }
+
+        return back()->with('success', 'Saran perbaikan berhasil dikirimkan kepada pekerja.');
     }
 
     /**

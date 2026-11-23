@@ -50,10 +50,6 @@ use Illuminate\Notifications\Notifiable;
     // dalam respons data pengguna.
     'google_id',
 
-    // Tetap disembunyikan untuk keamanan
-    // selama kolom 2FA lama masih ada.
-    'two_factor_secret',
-    'two_factor_recovery_codes',
 ])]
 class User extends Authenticatable
 {

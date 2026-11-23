@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class VerificationController extends Controller
@@ -99,6 +100,8 @@ class VerificationController extends Controller
                             'admin.verifications.document',
                             $document
                         ),
+                        'documentFileName' => $document->original_name,
+                        'documentMimeType' => $document->mime_type,
                     ];
                 }
             )
@@ -351,6 +354,8 @@ class VerificationController extends Controller
                             'admin.verifications.document',
                             $document
                         ),
+                    'documentFileName' => $document?->original_name,
+                    'documentMimeType' => $document?->mime_type,
                 ];
             });
 
@@ -461,7 +466,13 @@ class VerificationController extends Controller
 
             $target->save();
 
-            // 6. Aktifkan akun jika semua dokumen sudah disetujui.
+            // 6. Jika ditolak, tandai juga status akun pengguna menjadi rejected.
+            if ($decision === 'rejected') {
+                $owner->verification_status = 'rejected';
+                $owner->save();
+            }
+
+            // 7. Aktifkan akun jika semua dokumen sudah disetujui.
             if (
                 $decision === 'approved'
                 && $owner->verification_status === 'pending'
@@ -534,11 +545,12 @@ class VerificationController extends Controller
     }
 
     /**
-     * Download dokumen verifikasi secara privat.
+     * Tampilkan pratinjau (inline) atau unduh dokumen verifikasi secara privat.
      */
     public function download(
+        Request $request,
         VerificationDocument $document
-    ): StreamedResponse {
+    ): StreamedResponse|BinaryFileResponse {
         abort_unless(
             $document->disk === 'local'
                 && str_starts_with(
@@ -554,10 +566,20 @@ class VerificationController extends Controller
         /** @var FilesystemAdapter $disk */
         $disk = Storage::disk('local');
 
-        return $disk->download(
-            $document->storage_path,
-            $document->original_name
-        );
+        if ($request->boolean('download')) {
+            return $disk->download(
+                $document->storage_path,
+                $document->original_name
+            );
+        }
+
+        $fullPath = $disk->path($document->storage_path);
+        $mimeType = $document->mime_type ?: ($disk->mimeType($document->storage_path) ?: 'application/octet-stream');
+
+        return response()->file($fullPath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="'.$document->original_name.'"',
+        ]);
     }
 
     /**

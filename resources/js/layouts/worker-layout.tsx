@@ -136,17 +136,15 @@ export default function WorkerLayout({
 
     useEffect(() => {
         try {
-            window.localStorage.setItem(
-                readStorageKey,
-                JSON.stringify(readIds),
-            );
+            window.localStorage.setItem(readStorageKey, JSON.stringify(readIds));
         } catch {
             // Abaikan error penyimpanan browser
         }
     }, [readIds, readStorageKey]);
 
     const unreadCount = useMemo(
-        () => notifications.filter((item) => !readIds.includes(item.id)).length,
+        () =>
+            notifications.filter((item) => !readIds.includes(item.id)).length,
         [notifications, readIds],
     );
 

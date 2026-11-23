@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Employer;
 use App\Enums\TaskPaymentStatus;
 use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Business;
 use App\Models\Task;
 use App\Models\TaskApplication;
 use App\Models\TaskPayment;
@@ -112,13 +113,6 @@ class DashboardController extends Controller
                 }
             )
             ->sum('amount');
-
-        $pendingPayments = TaskPayment::query()
-            ->where('status', TaskPaymentStatus::Pending->value)
-            ->whereHas('application.task', function ($query) use ($business) {
-                $query->where('business_id', $business->id);
-            })
-            ->count();
 
         $lastMonthExpenses = (int) TaskPayment::query()
             ->where('status', TaskPaymentStatus::Paid->value)
@@ -287,16 +281,16 @@ class DashboardController extends Controller
                 $completedTasks = TaskApplication::query()
                     ->where('worker_id', $application->worker_id)
                     ->where('status', 'accepted')
-                    ->whereHas('payment', fn ($q) => $q->where('status', TaskPaymentStatus::Paid->value))
+                    ->whereHas('payment', fn($q) => $q->where('status', TaskPaymentStatus::Paid->value))
                     ->count();
 
                 return [
                     'id' => $application->id,
                     'taskId' => $application->task_id,
-                    'taskTitle' => $application->task->title ?? '-',
-                    'name' => $worker->name ?? 'Pencari Kerja',
-                    'email' => $worker->email ?? '-',
-                    'initials' => $this->getInitials($worker->name ?? 'PK'),
+                    'taskTitle' => $application->task?->title ?? '-',
+                    'name' => $worker?->name ?? 'Pencari Kerja',
+                    'email' => $worker?->email ?? '-',
+                    'initials' => $this->getInitials($worker?->name ?? 'PK'),
                     'verified' => $worker?->verification_status === 'approved',
                     'rating' => '4.9',
                     'reviewsCount' => max(1, $completedTasks),
@@ -330,7 +324,7 @@ class DashboardController extends Controller
 
             $hours = '-';
             if ($task && $task->starts_at && $task->ends_at) {
-                $diffMinutes = (int) $task->starts_at->diffInMinutes($task->ends_at);
+                $diffMinutes = $task->starts_at->diffInMinutes($task->ends_at);
                 $h = intdiv($diffMinutes, 60);
                 $m = $diffMinutes % 60;
                 $hours = $h > 0 ? ($m > 0 ? "{$h}j {$m}m" : "{$h} Jam") : "{$m} Menit";
@@ -339,9 +333,9 @@ class DashboardController extends Controller
             return [
                 'id' => $payment->id,
                 'code' => sprintf('#KN-%05d', $payment->id),
-                'taskTitle' => $task->title ?? 'Tugas UMKM',
-                'workerName' => $worker->name ?? 'Pekerja',
-                'workerInitials' => $this->getInitials($worker->name ?? 'P'),
+                'taskTitle' => $task?->title ?? 'Tugas UMKM',
+                'workerName' => $worker?->name ?? 'Pekerja',
+                'workerInitials' => $this->getInitials($worker?->name ?? 'P'),
                 'date' => $date ? $date->translatedFormat('d M Y') : '-',
                 'shortDate' => $date ? $date->translatedFormat('d M') : '-',
                 'hours' => $hours,
@@ -356,7 +350,7 @@ class DashboardController extends Controller
             ->latest('id')
             ->limit(5)
             ->get()
-            ->map(fn (Task $task): array => [
+            ->map(fn(Task $task): array => [
                 'id' => $task->id,
                 'title' => $task->title,
                 'category' => $task->category,
@@ -387,7 +381,6 @@ class DashboardController extends Controller
                 'currentMonthName' => $now->translatedFormat('F Y'),
                 'lastMonthName' => $now->copy()->subMonth()->translatedFormat('F'),
                 'expensePercentageChange' => $expensePercentageChange,
-                'pendingPayments' => $pendingPayments,
             ],
             'chartData' => [
                 'items' => $chartMonths,
@@ -404,24 +397,22 @@ class DashboardController extends Controller
 
     private function getInitials(string $name): string
     {
-        $words = preg_split('/\s+/', trim($name)) ?: [];
+        $words = preg_split('/\s+/', trim($name));
         $initials = '';
         foreach (array_slice($words, 0, 2) as $w) {
             $initials .= mb_substr($w, 0, 1);
         }
-
         return mb_strtoupper($initials ?: 'KN');
     }
 
     private function formatCompactRupiah(int $amount): string
     {
         if ($amount >= 1_000_000_000) {
-            return 'Rp '.rtrim(rtrim(number_format($amount / 1_000_000_000, 2, ',', '.'), '0'), ',').' M';
+            return 'Rp ' . rtrim(rtrim(number_format($amount / 1_000_000_000, 2, ',', '.'), '0'), ',') . ' M';
         }
         if ($amount >= 1_000_000) {
-            return 'Rp '.rtrim(rtrim(number_format($amount / 1_000_000, 2, ',', '.'), '0'), ',').' jt';
+            return 'Rp ' . rtrim(rtrim(number_format($amount / 1_000_000, 2, ',', '.'), '0'), ',') . ' jt';
         }
-
-        return 'Rp '.number_format($amount, 0, ',', '.');
+        return 'Rp ' . number_format($amount, 0, ',', '.');
     }
 }

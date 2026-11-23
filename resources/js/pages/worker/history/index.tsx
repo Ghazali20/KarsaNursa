@@ -1,5 +1,11 @@
 import { Head, usePage } from '@inertiajs/react';
-import { BadgeCheck, Briefcase, FileSpreadsheet, Star, X } from 'lucide-react';
+import {
+    BadgeCheck,
+    Briefcase,
+    FileSpreadsheet,
+    Star,
+    X,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 type HistoryItem = {
@@ -326,9 +332,7 @@ export default function WorkerHistoryIndex({ profile, histories }: Props) {
                                     {item.canReview && (
                                         <button
                                             type="button"
-                                            onClick={() =>
-                                                openReviewModal(item)
-                                            }
+                                            onClick={() => openReviewModal(item)}
                                             className="text-xs font-semibold text-slate-500 transition hover:text-[#1E4479]"
                                         >
                                             Beri Ulasan

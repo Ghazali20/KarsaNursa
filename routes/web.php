@@ -10,10 +10,10 @@ use App\Http\Controllers\Employer\TaskApplicationController as EmployerTaskAppli
 use App\Http\Controllers\Employer\TaskController as EmployerTaskController;
 use App\Http\Controllers\Employer\TaskPaymentController as EmployerTaskPaymentController;
 use App\Http\Controllers\Worker\DashboardController as WorkerDashboardController;
-use App\Http\Controllers\Worker\EarningsController as WorkerEarningsController;
 use App\Http\Controllers\Worker\NotificationController as WorkerNotificationController;
 use App\Http\Controllers\Worker\TaskApplicationController as WorkerTaskApplicationController;
 use App\Http\Controllers\Worker\TaskController as WorkerTaskController;
+use App\Http\Controllers\Worker\EarningsController as WorkerEarningsController;
 use App\Http\Controllers\Worker\WorkHistoryController as WorkerWorkHistoryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -76,8 +76,23 @@ Route::middleware(['auth'])->group(function () {
             return redirect()->route('dashboard');
         }
 
-        // Untuk akun lama yang belum approved.
-        return Inertia::render('auth/verification-pending');
+        // Cari dokumen yang ditolak beserta alasan penolakan dari admin
+        $rejectedDocument = $user->verificationDocuments()
+            ->where('status', 'rejected')
+            ->latest('reviewed_at')
+            ->first();
+
+        $status = $user->verification_status;
+        if ($status !== 'approved' && ($status === 'rejected' || $rejectedDocument !== null)) {
+            $status = 'rejected';
+        }
+
+        $reviewNotes = $rejectedDocument?->review_notes;
+
+        return Inertia::render('auth/verification-pending', [
+            'status' => $status,
+            'reviewNotes' => $reviewNotes,
+        ]);
     })->name('verification.pending');
 
     // ========================================
@@ -242,6 +257,18 @@ Route::middleware(['auth'])->group(function () {
                 [EmployerTaskApplicationController::class, 'decide']
             )->name('employer.tasks.applications.decide');
 
+            // Setujui hasil kerja & berikan upah.
+            Route::patch(
+                '/employer/tasks/{task}/applications/{application}/approve-work',
+                [EmployerTaskApplicationController::class, 'approveWork']
+            )->name('employer.tasks.applications.approve-work');
+
+            // Beri saran atau catatan perbaikan hasil kerja.
+            Route::patch(
+                '/employer/tasks/{task}/applications/{application}/feedback',
+                [EmployerTaskApplicationController::class, 'giveFeedback']
+            )->name('employer.tasks.applications.feedback');
+
             // Mencatat pembayaran pekerja.
             Route::patch(
                 '/employer/applications/{application}/mark-paid',
@@ -336,7 +363,7 @@ Route::middleware(['auth'])->group(function () {
             // pada pengembangan berikutnya.
             Route::get(
                 '/admin/reports',
-                fn () => Inertia::render(
+                fn() => Inertia::render(
                     'admin/section-placeholder',
                     [
                         'title' => 'Sengketa & Laporan',
@@ -353,7 +380,7 @@ Route::middleware(['auth'])->group(function () {
             // Backend audit log belum tersedia.
             Route::get(
                 '/admin/logs',
-                fn () => Inertia::render(
+                fn() => Inertia::render(
                     'admin/section-placeholder',
                     [
                         'title' => 'Log Aktivitas',
@@ -370,7 +397,7 @@ Route::middleware(['auth'])->group(function () {
             // Redirect ke halaman Manajemen Akun.
             Route::get(
                 '/admin/documents',
-                fn () => redirect()->route('admin.users.index')
+                fn() => redirect()->route('admin.users.index')
             )->name('admin.documents.index');
 
             // ====================================
@@ -412,4 +439,4 @@ Route::middleware(['auth'])->group(function () {
 // SETTINGS
 // ========================================
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';

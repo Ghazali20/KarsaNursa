@@ -1,8 +1,11 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowRight,
+    Calendar,
     ChevronDown,
+    Clock,
     FileText,
+    Info,
     ShieldCheck,
     X,
 } from 'lucide-react';
@@ -290,7 +293,7 @@ export default function CreateTask() {
 
             {/* CONTAINER OVERLAY MODAL */}
             <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-3 antialiased backdrop-blur-sm sm:p-6"
+                className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-3 sm:p-6 backdrop-blur-sm antialiased"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
                 {/* KARTU MODAL */}
@@ -298,7 +301,7 @@ export default function CreateTask() {
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="create-task-title"
-                    className="flex max-h-[calc(100dvh-28px)] w-full max-w-[640px] flex-col overflow-hidden rounded-2xl border border-[#DFE6ED] bg-white shadow-2xl sm:max-h-[calc(100dvh-48px)]"
+                    className="flex max-h-[calc(100dvh-28px)] sm:max-h-[calc(100dvh-48px)] w-full max-w-[640px] flex-col overflow-hidden rounded-2xl border border-[#DFE6ED] bg-white shadow-2xl"
                 >
                     {/* ========================================================
                         HEADER MODAL
@@ -336,7 +339,7 @@ export default function CreateTask() {
                                 }
                             }}
                             aria-label="Tutup dan kembali"
-                            className="cursor-pointer rounded-xl border border-[#DFE6ED] p-2 text-[#607087] transition hover:bg-[#F7F9FB] hover:text-[#17233A]"
+                            className="rounded-xl border border-[#DFE6ED] p-2 text-[#607087] transition hover:bg-[#F7F9FB] hover:text-[#17233A] cursor-pointer"
                         >
                             <X className="size-4.5" />
                         </button>
@@ -392,7 +395,7 @@ export default function CreateTask() {
                                                     e.target.value,
                                                 )
                                             }
-                                            className={`${inputClass} cursor-pointer appearance-none pr-8`}
+                                            className={`${inputClass} appearance-none pr-8 cursor-pointer`}
                                         >
                                             <option value="">
                                                 Pilih kategori
@@ -406,7 +409,7 @@ export default function CreateTask() {
                                                 </option>
                                             ))}
                                         </select>
-                                        <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-[#93A2B5]" />
+                                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-4 text-[#93A2B5]" />
                                     </div>
                                     <FieldError message={errors.category} />
                                 </div>
@@ -585,7 +588,7 @@ export default function CreateTask() {
                                             e.target.value,
                                         )
                                     }
-                                    className={`${inputClass} h-auto resize-y py-2.5 leading-relaxed`}
+                                    className={`${inputClass} h-auto py-2.5 resize-y leading-relaxed`}
                                     placeholder="Jelaskan aktivitas, kebutuhan, dan hasil yang diharapkan..."
                                 />
                                 <FieldError message={errors.description} />
@@ -595,14 +598,14 @@ export default function CreateTask() {
                                 7. SECTION TAMBAHAN — DETAIL PENDAFTARAN
                                 (TANPA INPUT MANUAL LATITUDE & LONGITUDE)
                             ======================================================== */}
-                            <div className="overflow-hidden rounded-xl border border-[#DFE6ED] bg-white">
+                            <div className="rounded-xl border border-[#DFE6ED] bg-white overflow-hidden">
                                 <button
                                     type="button"
                                     onClick={() =>
                                         setDetailsOpen((value) => !value)
                                     }
                                     aria-expanded={detailsOpen}
-                                    className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-xs font-semibold text-[#173765] transition hover:bg-[#F7F9FB]"
+                                    className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-xs font-semibold text-[#173765] hover:bg-[#F7F9FB] transition"
                                 >
                                     <span className="flex items-center gap-2">
                                         <FileText className="size-4 text-[#173765]" />
@@ -686,7 +689,7 @@ export default function CreateTask() {
                                                     Perkiraan selesai
                                                 </label>
                                                 <div
-                                                    className={`${inputClass} flex cursor-not-allowed items-center bg-[#F7F9FB] font-medium text-[#607087]`}
+                                                    className={`${inputClass} flex items-center bg-[#F7F9FB] text-[#607087] font-medium cursor-not-allowed`}
                                                 >
                                                     {formatEndDisplay(endsAt)}
                                                 </div>
@@ -711,7 +714,7 @@ export default function CreateTask() {
                                                         e.target.value,
                                                     )
                                                 }
-                                                className={`${inputClass} h-auto resize-y py-2.5`}
+                                                className={`${inputClass} h-auto py-2.5 resize-y`}
                                                 placeholder="Contoh: Teliti, disiplin, dan tepat waktu"
                                             />
                                             <FieldError
@@ -737,7 +740,7 @@ export default function CreateTask() {
                                                         e.target.value,
                                                     )
                                                 }
-                                                className={`${inputClass} h-auto resize-y py-2.5`}
+                                                className={`${inputClass} h-auto py-2.5 resize-y`}
                                                 placeholder="Contoh: Bawa pakaian kerja yang nyaman"
                                             />
                                             <FieldError
@@ -773,7 +776,7 @@ export default function CreateTask() {
                                 type="button"
                                 onClick={() => submitTask('draft')}
                                 disabled={processing}
-                                className="rounded-xl px-4 py-2.5 text-xs font-bold text-[#17233A] transition hover:bg-[#F7F9FB] disabled:opacity-50"
+                                className="rounded-xl px-4 py-2.5 text-xs font-bold text-[#17233A] hover:bg-[#F7F9FB] transition disabled:opacity-50"
                             >
                                 Simpan Draft
                             </button>

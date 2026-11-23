@@ -35,51 +35,32 @@ class TaskApplicationController extends Controller
             ->get()
             ->map(fn (TaskApplication $application): array => [
                 'id' => $application->id,
-
-                'taskId' => $application->task->id,
                 'taskTitle' => $application->task->title,
                 'businessName' => $application->task->business->name,
-
-                'locationAddress' => $application->task->location_address,
-                'startsAt' => $application->task->starts_at
-                    ?->format('d/m/Y H:i'),
-                'endsAt' => $application->task->ends_at
-                    ?->format('d/m/Y H:i'),
-
                 'wageAmount' => $application->payment->amount
                     ?? (int) $application->task->wage_amount,
-
                 'paymentStatus' => $application->payment?->status,
                 'paidAt' => $application->payment?->paid_at
                     ?->format('d/m/Y H:i'),
-
                 'status' => $application->status,
-
                 'appliedAt' => $application->created_at
                     ?->format('d/m/Y H:i'),
-
-                'reviewNotes' => $application->review_notes,
+                'reviewNotes' => $application->review_notes ?? null,
                 'reviewedAt' => $application->reviewed_at
-                    ?->format('d/m/Y H:i'),
-
+                    ? Carbon::parse($application->reviewed_at)->format('d/m/Y H:i')
+                    : null,
                 'checkedInAt' => $application->checked_in_at
                     ?->format('d/m/Y H:i'),
-
                 'checkedInIso' => $application->checked_in_at
                     ?->toIso8601String(),
-
                 'checkedOutAt' => $application->checked_out_at
                     ?->format('d/m/Y H:i'),
-
                 'checkedOutIso' => $application->checked_out_at
                     ?->toIso8601String(),
-
                 'proofPhotoUrl' => $application->proof_photo_path
                     ? Storage::url($application->proof_photo_path)
                     : null,
-
                 'activityNotes' => $application->activity_notes,
-
                 'proofSubmittedAt' => $application->proof_submitted_at
                     ?->format('d/m/Y H:i'),
             ])
@@ -102,7 +83,40 @@ class TaskApplicationController extends Controller
             403
         );
 
-        DB::transaction(function () use ($worker, $task): void {
+        $validated = $request->validate([
+            'applicant_note' => [
+                'required',
+                'string',
+                'min:10',
+                'max:500',
+            ],
+            'qualification_document' => [
+                'nullable',
+                'file',
+                'mimes:jpg,jpeg,png,pdf',
+                'max:5120',
+            ],
+            'schedule_confirmed' => [
+                'accepted',
+            ],
+        ], [
+            'applicant_note.required' => 'Pesan pengajuan wajib diisi.',
+            'applicant_note.min' => 'Pesan pengajuan minimal terdiri dari 10 karakter.',
+            'applicant_note.max' => 'Pesan pengajuan maksimal 500 karakter.',
+            'qualification_document.mimes' => 'Dokumen pendukung harus berformat JPG, JPEG, PNG, atau PDF.',
+            'qualification_document.max' => 'Ukuran dokumen pendukung maksimal 5 MB.',
+            'schedule_confirmed.accepted' => 'Wajib menyetujui kesanggupan jadwal dan persyaratan pekerjaan.',
+        ]);
+
+        $qualificationDocPath = null;
+        if ($request->hasFile('qualification_document')) {
+            $qualificationDocPath = $request->file('qualification_document')->store(
+                'application-documents',
+                'public'
+            );
+        }
+
+        DB::transaction(function () use ($worker, $task, $validated, $qualificationDocPath): void {
             $lockedTask = Task::query()
                 ->with('business.user')
                 ->lockForUpdate()
@@ -146,6 +160,10 @@ class TaskApplicationController extends Controller
                 'task_id' => $lockedTask->id,
                 'worker_id' => $worker->id,
                 'status' => 'pending',
+                'applicant_note' => $validated['applicant_note'],
+                'message' => $validated['applicant_note'],
+                'qualification_document_path' => $qualificationDocPath,
+                'schedule_confirmed' => true,
             ]);
         }, 3);
 

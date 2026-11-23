@@ -22,6 +22,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $proof_photo_path
  * @property string|null $activity_notes
  * @property Carbon|null $proof_submitted_at
+ * @property string|null $applicant_note
+ * @property string|null $qualification_document_path
+ * @property bool $schedule_confirmed
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -30,6 +33,9 @@ use Illuminate\Support\Carbon;
     'worker_id',
     'status',
     'message',
+    'applicant_note',
+    'qualification_document_path',
+    'schedule_confirmed',
     'reviewed_by',
     'reviewed_at',
     'review_notes',
@@ -75,6 +81,7 @@ class TaskApplication extends Model
             'checked_in_at' => 'datetime',
             'checked_out_at' => 'datetime',
             'proof_submitted_at' => 'datetime',
+            'schedule_confirmed' => 'boolean',
         ];
     }
 }

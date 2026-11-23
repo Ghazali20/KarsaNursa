@@ -1,5 +1,13 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Check, Clock3, FileText, Search, UsersRound, X } from 'lucide-react';
+import {
+    Check,
+    Clock3,
+    Download,
+    FileText,
+    Search,
+    UsersRound,
+    X,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 // ========================================
@@ -27,6 +35,8 @@ type PendingUser = {
     documentsRemaining: number;
     createdLabel: string;
     downloadUrl: string | null;
+    documentFileName?: string | null;
+    documentMimeType?: string | null;
 };
 
 type PaginatedQueue = {
@@ -82,6 +92,7 @@ export default function AdminUsers({ stats, queue, filters }: Props) {
     }, [search, status]);
 
     const [rejecting, setRejecting] = useState<PendingUser | null>(null);
+    const [previewUser, setPreviewUser] = useState<PendingUser | null>(null);
 
     const [reviewNotes, setReviewNotes] = useState('');
 
@@ -89,6 +100,25 @@ export default function AdminUsers({ stats, queue, filters }: Props) {
 
     const [error, setError] = useState<string | null>(null);
     const [notice, setNotice] = useState<string | null>(null);
+
+    function isImageFile(
+        fileName?: string | null,
+        mimeType?: string | null,
+    ): boolean {
+        if (mimeType && mimeType.startsWith('image/')) return true;
+        if (fileName && /\.(jpe?g|png|webp|gif|svg)$/i.test(fileName))
+            return true;
+        return false;
+    }
+
+    function isPdfFile(
+        fileName?: string | null,
+        mimeType?: string | null,
+    ): boolean {
+        if (mimeType && mimeType === 'application/pdf') return true;
+        if (fileName && /\.pdf$/i.test(fileName)) return true;
+        return false;
+    }
 
     // ========================================
     // VERIFIKASI DOKUMEN
@@ -469,17 +499,20 @@ export default function AdminUsers({ stats, queue, filters }: Props) {
                                                 <td className="px-2 py-4">
                                                     <div className="flex items-center justify-end gap-2">
                                                         {user.downloadUrl && (
-                                                            <a
-                                                                href={
-                                                                    user.downloadUrl
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    setPreviewUser(
+                                                                        user,
+                                                                    )
                                                                 }
-                                                                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
+                                                                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 shadow-xs transition hover:bg-slate-100"
                                                             >
                                                                 <FileText
                                                                     size={15}
                                                                 />{' '}
                                                                 Dokumen
-                                                            </a>
+                                                            </button>
                                                         )}
                                                         {user.documentId !==
                                                             null && (
@@ -689,6 +722,147 @@ export default function AdminUsers({ stats, queue, filters }: Props) {
                                     ? 'Memproses...'
                                     : 'Tolak Dokumen'}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ========================================
+                MODAL PRATINJAU DOKUMEN (POPUP)
+            ======================================== */}
+            {previewUser && previewUser.downloadUrl && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs"
+                    onClick={() => setPreviewUser(null)}
+                >
+                    <div
+                        className="flex max-h-[92vh] w-full max-w-4xl flex-col rounded-2xl bg-white shadow-2xl transition-all"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header Modal */}
+                        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="truncate text-base font-bold text-slate-900">
+                                        Pratinjau Dokumen {previewUser.documentType}
+                                    </h3>
+                                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600">
+                                        {previewUser.role === 'employer'
+                                            ? 'UMKM'
+                                            : 'Pencari Kerja'}
+                                    </span>
+                                </div>
+                                <p className="mt-0.5 truncate text-xs text-slate-500">
+                                    {previewUser.name}{' '}
+                                    {previewUser.businessName
+                                        ? `(${previewUser.businessName})`
+                                        : ''}{' '}
+                                    · ID #{previewUser.id} · {previewUser.email}
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setPreviewUser(null)}
+                                className="ml-3 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                                title="Tutup"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Konten Dokumen */}
+                        <div className="flex-1 overflow-auto p-6">
+                            {isImageFile(
+                                previewUser.documentFileName,
+                                previewUser.documentMimeType,
+                            ) ? (
+                                <div className="flex max-h-[62vh] min-h-[300px] items-center justify-center overflow-auto rounded-xl bg-slate-100/80 p-3">
+                                    <img
+                                        src={previewUser.downloadUrl}
+                                        alt={`Dokumen ${previewUser.name}`}
+                                        className="max-h-[58vh] w-auto max-w-full rounded-lg object-contain shadow-sm"
+                                    />
+                                </div>
+                            ) : isPdfFile(
+                                  previewUser.documentFileName,
+                                  previewUser.documentMimeType,
+                              ) ? (
+                                <div className="h-[62vh] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                                    <iframe
+                                        src={previewUser.downloadUrl}
+                                        title={`Dokumen ${previewUser.name}`}
+                                        className="h-full w-full border-0"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex max-h-[62vh] min-h-[300px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-8 text-center">
+                                    <FileText
+                                        size={48}
+                                        className="text-slate-400"
+                                    />
+                                    <p className="mt-3 text-sm font-semibold text-slate-800">
+                                        {previewUser.documentFileName ||
+                                            `Dokumen_${previewUser.documentType}`}
+                                    </p>
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Format file tidak mendukung pratinjau
+                                        langsung di peramban. Silakan klik
+                                        tombol unduh di bawah untuk melihat isi
+                                        dokumen.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer Modal */}
+                        <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/50 px-6 py-4">
+                            <a
+                                href={`${previewUser.downloadUrl}?download=1`}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100"
+                            >
+                                <Download size={15} />
+                                Unduh File
+                            </a>
+
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewUser(null)}
+                                    className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100"
+                                >
+                                    Tutup
+                                </button>
+
+                                {previewUser.documentId !== null && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const target = previewUser;
+                                                setPreviewUser(null);
+                                                setRejecting(target);
+                                                setReviewNotes('');
+                                                setError(null);
+                                            }}
+                                            className="rounded-lg bg-red-100 px-4 py-2 text-xs font-bold text-red-700 transition hover:bg-red-200"
+                                        >
+                                            Tolak
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const target = previewUser;
+                                                setPreviewUser(null);
+                                                approveDocument(target);
+                                            }}
+                                            className="rounded-lg bg-[#39C900] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#32B300]"
+                                        >
+                                            Verifikasi
+                                        </button>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
