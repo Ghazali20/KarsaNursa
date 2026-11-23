@@ -58,7 +58,7 @@ class WorkHistoryController extends Controller
                 ? 'Disetujui'
                 : ($isSubmitted ? 'Diproses' : 'Berjalan');
 
-            $dateRef = $app->payment?->paid_at
+            $dateRef = $app->payment->paid_at
                 ?? $app->proof_submitted_at
                 ?? $app->checked_out_at
                 ?? $app->updated_at;
@@ -68,7 +68,7 @@ class WorkHistoryController extends Controller
                 'taskTitle' => $app->task->title,
                 'businessName' => $app->task->business->name ?? 'UMKM Mitra',
                 'dateLabel' => $dateRef?->translatedFormat('d M Y') ?? '-',
-                'wageAmount' => (int) ($app->payment?->amount ?? $app->task->wage_amount ?? 0),
+                'wageAmount' => (int) ($app->payment->amount ?? $app->task->wage_amount ?? 0),
                 'statusKey' => $statusKey,
                 'statusLabel' => $statusLabel,
                 'rating' => null,

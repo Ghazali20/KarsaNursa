@@ -158,7 +158,7 @@ class TaskPaymentController extends Controller
             $hours = '-';
             if ($task && $task->starts_at && $task->ends_at) {
                 $diffMinutes = $task->starts_at->diffInMinutes($task->ends_at);
-                $h = intdiv($diffMinutes, 60);
+                $h = intdiv((int) $diffMinutes, 60);
                 $m = $diffMinutes % 60;
                 $hours = $h > 0 ? ($m > 0 ? "{$h}j {$m}m" : "{$h} Jam") : "{$m} Menit";
             }
@@ -166,9 +166,9 @@ class TaskPaymentController extends Controller
             return [
                 'id' => $payment->id,
                 'code' => sprintf('#KN-%05d', $payment->id),
-                'taskTitle' => $task?->title ?? 'Tugas UMKM',
-                'workerName' => $worker?->name ?? 'Pekerja',
-                'workerInitials' => $this->getInitials($worker?->name ?? 'P'),
+                'taskTitle' => $task->title ?? 'Tugas UMKM',
+                'workerName' => $worker->name ?? 'Pekerja',
+                'workerInitials' => $this->getInitials($worker->name ?? 'P'),
                 'date' => $date ? $date->translatedFormat('d M Y') : '-',
                 'shortDate' => $date ? $date->translatedFormat('d M') : '-',
                 'hours' => $hours,
@@ -286,7 +286,7 @@ class TaskPaymentController extends Controller
 
     private function getInitials(string $name): string
     {
-        $words = preg_split('/\s+/', trim($name));
+        $words = preg_split('/\s+/', trim($name)) ?: [];
         $initials = '';
         foreach (array_slice($words, 0, 2) as $w) {
             $initials .= mb_substr($w, 0, 1);

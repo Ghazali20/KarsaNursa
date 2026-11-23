@@ -60,21 +60,23 @@ class TaskApplicationController extends Controller
                     ->whereHas('payment', fn ($q) => $q->where('status', TaskPaymentStatus::Paid->value))
                     ->count();
 
-                $skills = $profile?->skills;
-                if (! is_array($skills) || empty($skills)) {
+                $rawSkills = $profile?->skills;
+                if (is_array($rawSkills) && count($rawSkills) > 0) {
+                    $skills = $rawSkills;
+                } else {
                     $skills = ['Ketelitian', 'Operasional', 'Kerja Tim'];
                 }
 
                 return [
                     'id' => $application->id,
                     'status' => $this->statusValue($application->status),
-                    'workerName' => $worker?->name ?? 'Pekerja tidak tersedia',
-                    'workerEmail' => $worker?->email ?? '-',
-                    'workerPhone' => $worker?->phone ?? '-',
-                    'isVerified' => $worker?->verification_status === 'approved',
+                    'workerName' => $worker->name ?? 'Pekerja tidak tersedia',
+                    'workerEmail' => $worker->email ?? '-',
+                    'workerPhone' => $worker->phone ?? '-',
+                    'isVerified' => $worker->verification_status === 'approved',
                     'rating' => $completed > 0 ? '4.9' : '5.0',
                     'completedTasks' => $completed,
-                    'skills' => array_values($skills),
+                    'skills' => $skills,
                     'appliedAt' => $application->created_at?->format('d/m/Y H:i'),
                     'appliedAtHuman' => $application->created_at ? 'Diajukan '.$application->created_at->diffForHumans() : 'Baru saja',
                     'applicantNote' => $application->applicant_note ?? $application->message ?? null,
@@ -93,7 +95,7 @@ class TaskApplicationController extends Controller
                     'activityNotes' => $application->activity_notes,
                     'proofSubmittedAt' => $application->proof_submitted_at?->format('d/m/Y H:i'),
                     'payment' => [
-                        'status' => $application->payment?->status ?? 'pending',
+                        'status' => $application->payment->status ?? 'pending',
                         'amount' => $application->payment?->amount !== null
                             ? (int) $application->payment->amount
                             : (int) ($task->wage_amount ?? 0),

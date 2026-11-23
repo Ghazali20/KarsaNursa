@@ -113,15 +113,4 @@ class ApplicationInboxController extends Controller
             'applications' => $applicationList,
         ]);
     }
-
-    private function getInitials(string $name): string
-    {
-        $words = preg_split('/\s+/', trim($name));
-        $initials = '';
-        foreach (array_slice($words, 0, 2) as $w) {
-            $initials .= mb_substr($w, 0, 1);
-        }
-
-        return mb_strtoupper($initials ?: 'PK');
-    }
 }

@@ -286,11 +286,11 @@ class DashboardController extends Controller
                 return [
                     'id' => $application->id,
                     'taskId' => $application->task_id,
-                    'taskTitle' => $application->task?->title ?? '-',
-                    'name' => $worker?->name ?? 'Pencari Kerja',
-                    'email' => $worker?->email ?? '-',
-                    'initials' => $this->getInitials($worker?->name ?? 'PK'),
-                    'verified' => $worker?->verification_status === 'approved',
+                    'taskTitle' => $application->task->title ?? '-',
+                    'name' => $worker->name ?? 'Pencari Kerja',
+                    'email' => $worker->email ?? '-',
+                    'initials' => $this->getInitials($worker->name ?? 'PK'),
+                    'verified' => $worker->verification_status === 'approved',
                     'rating' => '4.9',
                     'reviewsCount' => max(1, $completedTasks),
                     'completedTasks' => $completedTasks,
@@ -324,7 +324,7 @@ class DashboardController extends Controller
             $hours = '-';
             if ($task && $task->starts_at && $task->ends_at) {
                 $diffMinutes = $task->starts_at->diffInMinutes($task->ends_at);
-                $h = intdiv($diffMinutes, 60);
+                $h = intdiv((int) $diffMinutes, 60);
                 $m = $diffMinutes % 60;
                 $hours = $h > 0 ? ($m > 0 ? "{$h}j {$m}m" : "{$h} Jam") : "{$m} Menit";
             }
@@ -332,9 +332,9 @@ class DashboardController extends Controller
             return [
                 'id' => $payment->id,
                 'code' => sprintf('#KN-%05d', $payment->id),
-                'taskTitle' => $task?->title ?? 'Tugas UMKM',
-                'workerName' => $worker?->name ?? 'Pekerja',
-                'workerInitials' => $this->getInitials($worker?->name ?? 'P'),
+                'taskTitle' => $task->title ?? 'Tugas UMKM',
+                'workerName' => $worker->name ?? 'Pekerja',
+                'workerInitials' => $this->getInitials($worker->name ?? 'P'),
                 'date' => $date ? $date->translatedFormat('d M Y') : '-',
                 'shortDate' => $date ? $date->translatedFormat('d M') : '-',
                 'hours' => $hours,
@@ -396,7 +396,7 @@ class DashboardController extends Controller
 
     private function getInitials(string $name): string
     {
-        $words = preg_split('/\s+/', trim($name));
+        $words = preg_split('/\s+/', trim($name)) ?: [];
         $initials = '';
         foreach (array_slice($words, 0, 2) as $w) {
             $initials .= mb_substr($w, 0, 1);

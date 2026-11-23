@@ -42,10 +42,7 @@ class DashboardController extends Controller
         $recommendedTasks = $tasksCollection
             ->map(function (Task $task) use ($applicationsByTaskId): array {
                 $application = $applicationsByTaskId->get($task->id);
-                $rawStatus = $application?->status;
-                $applicationStatus = $rawStatus instanceof TaskApplicationStatus
-                    ? $rawStatus->value
-                    : $rawStatus;
+                $applicationStatus = $application?->status;
 
                 return [
                     'id' => $task->id,
